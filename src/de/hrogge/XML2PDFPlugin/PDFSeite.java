@@ -34,6 +34,7 @@ public class PDFSeite {
 			* DEFAULT_USER_SPACE_UNIT_DPI;
 
 	protected final int cellCountX, cellCountY;
+	protected final int halbeBreite, viertelBreite;
 
 	protected final float pageWidth, pageHeight;
 	protected final float cellWidth, cellHeight;
@@ -45,43 +46,46 @@ public class PDFSeite {
 
 	protected final PDPage page;
 	protected final PDDocument doc;
-	
-	public PDFSeite(PDDocument d, float lrPageMargin, float tbPageMargin, float tMargin,
-			int cx, int cy) {
+	protected PDPageContentStream stream;
+
+	public PDFSeite(PDDocument d, float lrPageMargin, float tbPageMargin,
+			float tMargin, int cy) {
 		this.page = new PDPage(PDPage.PAGE_SIZE_A4);
 		this.doc = d;
 		this.doc.addPage(page);
-		
-		cellCountX = cx;
-		cellCountY = cy;
+		this.stream = null;
 
-		leftEdge = lrPageMargin * MM_TO_UNITS;
-		bottomEdge = tbPageMargin * MM_TO_UNITS;
+		this.cellCountX = 63;
+		this.cellCountY = cy;
 
-		textMargin = tMargin;
-		pageWidth = page.findMediaBox().getWidth() - leftEdge * 2;
-		pageHeight = page.findMediaBox().getHeight() - bottomEdge * 2;
+		this.halbeBreite = 31;
+		this.viertelBreite = 15;
 
-		rightEdge = leftEdge + pageWidth;
-		topEdge = bottomEdge + pageHeight;
+		this.leftEdge = lrPageMargin * MM_TO_UNITS;
+		this.bottomEdge = tbPageMargin * MM_TO_UNITS;
 
-		cellWidth = pageWidth / cellCountX;
-		cellHeight = pageHeight / cellCountY;
+		this.textMargin = tMargin;
+		this.pageWidth = page.findMediaBox().getWidth() - this.leftEdge * 2;
+		this.pageHeight = page.findMediaBox().getHeight() - this.bottomEdge * 2;
+
+		this.rightEdge = this.leftEdge + this.pageWidth;
+		this.topEdge = this.bottomEdge + this.pageHeight;
+
+		this.cellWidth = this.pageWidth / this.cellCountX;
+		this.cellHeight = this.pageHeight / this.cellCountY;
 	}
 
-	public void addLine(PDPageContentStream stream, int x1, int y1, int x2,
-			int y2) throws IOException {
+	public void addLine(int x1, int y1, int x2, int y2) throws IOException {
 		stream.addLine(getX(x1), getY(y1), getX(x2), getY(y2));
 	}
 
-	public void addRect(PDPageContentStream stream, int x1, int y1, int x2,
-			int y2) throws IOException {
+	public void addRect(int x1, int y1, int x2, int y2) throws IOException {
 		stream.addRect(getX(x1), getY(y1), getX(x2) - getX(x1), getY(y2)
 				- getY(y1));
 	}
 
-	public void drawImage(PDPageContentStream stream, int x1, int y1, int x2,
-			int y2, PDJpeg bild) throws IOException {
+	public void drawImage(int x1, int y1, int x2, int y2, PDJpeg bild)
+			throws IOException {
 		float x, y, w, h, tmp;
 
 		x = getX(x1);
@@ -89,44 +93,41 @@ public class PDFSeite {
 
 		w = getX(x2) - getX(x1);
 		h = getY(y1) - getY(y2);
-		
-		if (w/bild.getWidth() > h/bild.getHeight()) {
-			tmp = h * bild.getWidth()/bild.getHeight();
-			x = x + (w-tmp)/2;
+
+		if (w / bild.getWidth() > h / bild.getHeight()) {
+			tmp = h * bild.getWidth() / bild.getHeight();
+			x = x + (w - tmp) / 2;
 			w = tmp;
-		}
-		else {
-			tmp = w * bild.getHeight()/bild.getWidth();
-			y = y + (h-tmp)/2;
+		} else {
+			tmp = w * bild.getHeight() / bild.getWidth();
+			y = y + (h - tmp) / 2;
 			h = tmp;
 		}
-		
-		stream.drawXObject(bild, x, y, w,h);
+
+		stream.drawXObject(bild, x, y, w, h);
 	}
 
-	public void drawLabeledBox(PDPageContentStream stream, int x1, int y1,
-			int x2, int y2, String label) throws IOException {
+	public void drawLabeledBox(int x1, int y1, int x2, int y2, String label)
+			throws IOException {
 		stream.setStrokingColor(Color.BLACK);
 		stream.setNonStrokingColor(Color.GRAY);
 		stream.setLineWidth(1f);
 
-		addRect(stream, x1, y1, x2, y1 + 1);
+		addRect(x1, y1, x2, y1 + 1);
 		stream.fill(PathIterator.WIND_NON_ZERO);
 
-		addRect(stream, x1, y1, x2, y2);
-		addLine(stream, x1, y1 + 1, x2, y1 + 1);
+		addRect(x1, y1, x2, y2);
+		addLine(x1, y1 + 1, x2, y1 + 1);
 		stream.closeAndStroke();
 
 		stream.setNonStrokingColor(Color.BLACK);
 		if (label != null) {
-			drawText(stream, PDType1Font.HELVETICA_BOLD, x1, x2, y1, label,
-					true);
+			drawText(PDType1Font.HELVETICA_BOLD, x1, x2, y1, label, true);
 		}
 	}
 
-	public int drawTabelle(PDPageContentStream stream, int x1, int x2, int y1,
-			Object[] objects, ITabellenZugriff table)
-			throws IOException {
+	public int drawTabelle(int x1, int x2, int y1, Object[] objects,
+			ITabellenZugriff table) throws IOException {
 		int i, x, span;
 		boolean newSpan;
 		int colX[];
@@ -153,13 +154,13 @@ public class PDFSeite {
 
 					stream.setNonStrokingColor(table.getBackgroundColor(
 							objects[j], i));
-					addRect(stream, colX[i], y1 + j + 1, x, y1 + j + 2);
+					addRect(colX[i], y1 + j + 1, x, y1 + j + 2);
 					stream.fill(PathIterator.WIND_NON_ZERO);
 				}
 			}
 		}
 
-		drawLabeledBox(stream, x1, y1, x2, y1 + objects.length + 1, null);
+		drawLabeledBox(x1, y1, x2, y1 + objects.length + 1, null);
 
 		stream.setStrokingColor(Color.BLACK);
 
@@ -169,8 +170,8 @@ public class PDFSeite {
 			newSpan = span == 0;
 			if (newSpan) {
 				span = table.getColumnSpan(i);
-				
-				drawText(stream, PDType1Font.HELVETICA_BOLD, colX[i], colX[i + span],
+
+				drawText(PDType1Font.HELVETICA_BOLD, colX[i], colX[i + span],
 						y1, table.getColumn(i), true);
 			}
 
@@ -180,20 +181,18 @@ public class PDFSeite {
 
 			if (span > 1) {
 				stream.setLineWidth(0.1f);
-				addLine(stream, colX[i + 1], y1+1, colX[i + 1], y1 + objects.length
+				addLine(colX[i + 1], y1 + 1, colX[i + 1], y1 + objects.length
 						+ 1);
-			}
-			else {
+			} else {
 				stream.setLineWidth(1f);
-				addLine(stream, colX[i + 1], y1, colX[i + 1], y1 + objects.length
-						+ 1);
+				addLine(colX[i + 1], y1, colX[i + 1], y1 + objects.length + 1);
 			}
 			stream.closeAndStroke();
 		}
 
 		stream.setLineWidth(0.1f);
 		for (x = 0; x < objects.length - 1; x++) {
-			addLine(stream, x1, y1 + 2 + x, x2, y1 + 2 + x);
+			addLine(x1, y1 + 2 + x, x2, y1 + 2 + x);
 		}
 		stream.closeAndStroke();
 
@@ -206,9 +205,9 @@ public class PDFSeite {
 				for (i = 0; i < table.getColumnCount(); i++) {
 					x = colX[i + 1];
 
-					drawText(stream, table.getFont(objects[j], i), colX[i]
-							+ table.getIndent(objects[j], i), x, y1 + j + 1,
-							table.get(objects[j], i),
+					drawText(table.getFont(objects[j], i),
+							colX[i] + table.getIndent(objects[j], i), x, y1 + j
+									+ 1, table.get(objects[j], i),
 							table.getCentered(objects[j], i));
 				}
 			}
@@ -216,22 +215,28 @@ public class PDFSeite {
 		return y1 + objects.length + 2;
 	}
 
-	public void drawText(PDPageContentStream stream, PDFont font, int x1,
-			int x2, int y1, int y2, String text, boolean center)
-			throws IOException {
+	public void drawText(PDFont font, int x1, int x2, int y1, int y2,
+			String text, boolean center) throws IOException {
 		PDFontDescriptor descr = font.getFontDescriptor();
 		float boxProp, textProp;
 		float boxWidth, boxHeight;
 		float textWidth, textHeight;
 		float shiftX, shiftY;
 
-		boxWidth = (getX(x2) - getX(x1)) - 2 * textMargin;
 		boxHeight = (getY(y1) - getY(y2)) - 2 * textMargin;
+		boxWidth = (getX(x2) - getX(x1)) - 2 * textMargin;
 		boxProp = boxWidth / boxHeight;
 
-		textWidth = font.getStringWidth(text) / 1000f;
 		textHeight = (descr.getFontBoundingBox().getHeight()) / 1000f;
+		textWidth = font.getStringWidth(text) / 1000f;
 		textProp = textWidth / textHeight;
+
+		/* begrenze vertikale Skalierung */
+		while (textProp / boxProp > 1.75 && text.contains(" ")) {
+			text = text.substring(0, text.lastIndexOf(' ')) + "...";
+			textWidth = font.getStringWidth(text) / 1000f;
+			textProp = textWidth / textHeight;
+		}
 
 		stream.beginText();
 
@@ -261,9 +266,13 @@ public class PDFSeite {
 		stream.endText();
 	}
 
-	public void drawText(PDPageContentStream stream, PDFont font, int x1,
-			int x2, int y1, String text, boolean center) throws IOException {
-		drawText(stream, font, x1, x2, y1, y1 + 1, text, center);
+	public void drawText(PDFont font, int x1, int x2, int y1, String text,
+			boolean center) throws IOException {
+		drawText(font, x1, x2, y1, y1 + 1, text, center);
+	}
+
+	public PDPageContentStream getStream() {
+		return stream;
 	}
 
 	public float getX(int x) {

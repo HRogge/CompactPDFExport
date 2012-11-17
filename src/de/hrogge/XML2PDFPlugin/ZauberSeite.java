@@ -16,12 +16,10 @@
 
 package de.hrogge.XML2PDFPlugin;
 
-import java.awt.Color;
 import java.io.IOException;
 import java.util.*;
 
 import jaxbGenerated.datenxml.Daten;
-import jaxbGenerated.datenxml.Sonderfertigkeit;
 import jaxbGenerated.datenxml.Zauber;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -29,83 +27,33 @@ import org.apache.pdfbox.pdmodel.edit.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
-public class ZauberSeite extends PDFSeite {
-	PDPageContentStream stream;
+import de.hrogge.XML2PDFPlugin.PDFSonderfertigkeiten.Kategorie;
 
+public class ZauberSeite extends PDFSeite {
 	public ZauberSeite(PDDocument d, float marginX, float marginY,
 			float textMargin) throws IOException {
-		super(d, marginX, marginY, textMargin, 63, 72);
+		super(d, marginX, marginY, textMargin, 72);
 	}
 
-	public void erzeugeSeite(Daten daten, String[] guteEigenschaften)
-			throws IOException {
+	public void erzeugeSeite(Daten daten, String[] guteEigenschaften,
+			List<PDFSonderfertigkeiten> alleSF) throws IOException {
+		List<PDFSonderfertigkeiten> sfList;
 		int sfBreite;
 
 		sfBreite = 16;
-		List<Sonderfertigkeit> sonderfertigkeiten;
-		sonderfertigkeiten = new ArrayList<Sonderfertigkeit>();
-		for (Sonderfertigkeit s : daten.getSonderfertigkeiten()
-				.getSonderfertigkeit()) {
-			if (s.getBereich().contains("Magisch")
-					&& !s.getBereich().contains("Talentspezialisierung")) {
-				sonderfertigkeiten.add(s);
-			}
-		}
+		PDFSonderfertigkeiten.Kategorie kat[] = { Kategorie.MAGISCH };
+		sfList = PDFSonderfertigkeiten.extrahiereKategorien(alleSF, kat);
+		Collections.sort(sfList);
 
 		stream = new PDPageContentStream(doc, page);
 
 		titelzeile(guteEigenschaften);
 		zauber(daten, cellCountX - sfBreite - 1);
-		sonderfertigkeiten(sonderfertigkeiten, sfBreite);
+
+		PDFSonderfertigkeiten.zeichneTabelle(this, cellCountX - sfBreite, 2,
+				cellCountX, cellCountY, "Sonderfertigkeiten", sfList);
 
 		stream.close();
-	}
-
-	private void sonderfertigkeiten(List<Sonderfertigkeit> sf, int breite)
-			throws IOException {
-		String kategorie;
-		Sonderfertigkeit s;
-		drawLabeledBox(stream, cellCountX - breite, 2, cellCountX,
-				cellCountY, "Magische Sonderfertigkeiten");
-
-		stream.setStrokingColor(Color.BLACK);
-		stream.setLineWidth(0.1f);
-		for (int y = 3; y < cellCountY; y++) {
-			addLine(stream, cellCountX - breite, y, cellCountX, y);
-		}
-
-		kategorie = null;
-		for (int y = 3; !sf.isEmpty() && y < cellCountY; y++) {
-			int idx;
-			String name, k;
-
-			s = sf.remove(0);
-			name = s.getNameausfuehrlich();
-
-			idx = name.indexOf(": ");
-			if (idx == -1) {
-				kategorie = null;
-
-				drawText(stream, PDType1Font.HELVETICA,
-						cellCountX - breite, cellCountX, y, name, false);
-			} else {
-				k = name.substring(0, idx + 2);
-
-				if (!k.equals(kategorie)) {
-					kategorie = k;
-
-					if (y >= cellCountY - 1) {
-						/* Nicht genug platz mit Kategorie */
-						break;
-					}
-					drawText(stream, PDType1Font.HELVETICA, cellCountX
-							- breite, cellCountX, y++, k, false);
-				}
-				drawText(stream, PDType1Font.HELVETICA, cellCountX - breite
-						+ 2, cellCountX, y, name.substring(idx + 2), false);
-			}
-		}
-		stream.closeAndStroke();
 	}
 
 	private void titelzeile(String[] guteEigenschaften) throws IOException {
@@ -115,9 +63,9 @@ public class ZauberSeite extends PDFSeite {
 		for (int i = 0; i < titel.length; i++) {
 			int x = i * 8 + 1;
 
-			drawText(stream, PDType1Font.HELVETICA_BOLD, x + 0, x + 3, 0, 2,
-					titel[i], true);
-			drawText(stream, PDType1Font.HELVETICA_BOLD, x + 3, x + 6, 0, 2,
+			drawText(PDType1Font.HELVETICA_BOLD, x + 0, x + 3, 0, 2, titel[i],
+					true);
+			drawText(PDType1Font.HELVETICA_BOLD, x + 3, x + 6, 0, 2,
 					guteEigenschaften[i], true);
 		}
 	}
@@ -153,8 +101,8 @@ public class ZauberSeite extends PDFSeite {
 			zauberListe.add(null);
 		}
 
-		drawTabelle(stream, 0, breite, 2, zauberListe.toArray(),
-				new ZauberTabelle(cellCountX - 17));
+		drawTabelle(0, breite, 2, zauberListe.toArray(), new ZauberTabelle(
+				cellCountX - 17));
 
 		stream.closeAndStroke();
 	}

@@ -20,6 +20,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
@@ -30,8 +32,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
-import jaxbGenerated.datenxml.Daten;
-import jaxbGenerated.datenxml.Eigenschaften;
+import jaxbGenerated.datenxml.*;
 
 import org.apache.pdfbox.exceptions.COSVisitorException;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -40,9 +41,11 @@ import org.w3c.dom.Document;
 
 public class PDFGenerator {
 	public void erzeugePDF(JFrame frame, File output, Document input,
-			float marginX, float marginY, float textMargin, boolean tzm) throws IOException,
-			COSVisitorException, JAXBException {
+			float marginX, float marginY, float textMargin, boolean tzm)
+			throws IOException, COSVisitorException, JAXBException {
 		String[] guteEigenschaften;
+		List<PDFSonderfertigkeiten> sflist;
+
 		PDDocument doc = null;
 
 		/* JAXB Repräsentation des XML-Dokuments erzeugen */
@@ -72,6 +75,26 @@ public class PDFGenerator {
 		guteEigenschaften[7] = eigenschaften.getKonstitution().getAkt()
 				.toString();
 
+		sflist = new ArrayList<PDFSonderfertigkeiten>();
+		for (Sonderfertigkeit sf : daten.getSonderfertigkeiten()
+				.getSonderfertigkeit()) {
+			if (sf.getAuswahlen() != null
+					&& sf.getAuswahlen().getAuswahl().size() > 0) {
+				for (Auswahl a : sf.getAuswahlen().getAuswahl()) {
+					for (Object o : a.getContent()) {
+						if (o instanceof Feld) {
+							Feld f = (Feld) o;
+							sflist.add(new PDFSonderfertigkeiten(sf, f
+									.getContent()));
+							break;
+						}
+					}
+				}
+			} else {
+				sflist.add(new PDFSonderfertigkeiten(sf));
+			}
+		}
+
 		try {
 			String pfad;
 			PDJpeg bild = null;
@@ -95,16 +118,16 @@ public class PDFGenerator {
 			}
 
 			FrontSeite page1 = new FrontSeite(doc, marginX, marginY, textMargin);
-			page1.erzeugeSeite(daten, bild, guteEigenschaften, tzm);
+			page1.erzeugeSeite(daten, bild, guteEigenschaften, sflist, tzm);
 
 			TalentSeite page2 = new TalentSeite(doc, marginX, marginY,
 					textMargin);
-			page2.erzeugeSeite(daten, guteEigenschaften);
+			page2.erzeugeSeite(daten, guteEigenschaften, sflist);
 
 			if (daten.getAngaben().isMagisch()) {
 				ZauberSeite page3 = new ZauberSeite(doc, marginX, marginY,
 						textMargin);
-				page3.erzeugeSeite(daten, guteEigenschaften);
+				page3.erzeugeSeite(daten, guteEigenschaften, sflist);
 			}
 
 			if (output == null) {
@@ -155,14 +178,11 @@ public class PDFGenerator {
 		output = chooser.getSelectedFile();
 
 		if (output.exists()) {
-			int result = JOptionPane
-					.showConfirmDialog(
-							frame,
-							"Die Datei "
-									+ output.getAbsolutePath()
-									+ " existiert schon.\nSoll sie überschrieben werden?",
-							"Datei überschreiben?", JOptionPane.YES_NO_OPTION);
-			
+			int result = JOptionPane.showConfirmDialog(frame, "Die Datei "
+					+ output.getAbsolutePath()
+					+ " existiert schon.\nSoll sie überschrieben werden?",
+					"Datei überschreiben?", JOptionPane.YES_NO_OPTION);
+
 			if (result != JOptionPane.YES_OPTION) {
 				return null;
 			}

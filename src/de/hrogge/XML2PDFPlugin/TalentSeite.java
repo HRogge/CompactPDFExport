@@ -16,30 +16,28 @@
 
 package de.hrogge.XML2PDFPlugin;
 
-import java.awt.Color;
 import java.io.IOException;
 import java.util.*;
 
 import jaxbGenerated.datenxml.Daten;
-import jaxbGenerated.datenxml.Sonderfertigkeit;
 import jaxbGenerated.datenxml.Talent;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.edit.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
-public class TalentSeite extends PDFSeite {
-	PDPageContentStream stream;
+import de.hrogge.XML2PDFPlugin.PDFSonderfertigkeiten.Kategorie;
 
+public class TalentSeite extends PDFSeite {
 	public TalentSeite(PDDocument d, float marginX, float marginY,
 			float textMargin) throws IOException {
-		super(d, marginX, marginY, textMargin, 63, 72);
+		super(d, marginX, marginY, textMargin, 72);
 	}
 
-	public void erzeugeSeite(Daten daten, String[] guteEigenschaften)
-			throws IOException {
+	public void erzeugeSeite(Daten daten, String[] guteEigenschaften,
+			List<PDFSonderfertigkeiten> alleSF) throws IOException {
 		List<Talent> talente;
-		List<Sonderfertigkeit> sonderfertigkeiten;
+		List<PDFSonderfertigkeiten> sfList;
 
 		String kategorien1[] = { "Kampftalente", "Körperliche Talente",
 				"Gesellschaftliche Talente", "Naturtalente" };
@@ -49,7 +47,7 @@ public class TalentSeite extends PDFSeite {
 		TalentListe gruppe1[] = new TalentListe[4];
 		TalentListe gruppe2[] = new TalentListe[4];
 		TalentListe metatalente = new TalentListe();
-		sonderfertigkeiten = new ArrayList<Sonderfertigkeit>();
+
 		int sf_offset;
 
 		for (int i = 0; i < gruppe1.length; i++) {
@@ -99,19 +97,13 @@ public class TalentSeite extends PDFSeite {
 			}
 		}
 
-		for (Sonderfertigkeit s : daten.getSonderfertigkeiten()
-				.getSonderfertigkeit()) {
-			if (!s.getBereich().contains("Magisch") && (
-					s.getBereich().contains("Sonst")
-					)) {
-				sonderfertigkeiten.add(s);
-			}
-		}
+		PDFSonderfertigkeiten.Kategorie kat[] = { Kategorie.TALENT };
+		sfList = PDFSonderfertigkeiten.extrahiereKategorien(alleSF, kat);
+		Collections.sort(sfList);
 
-		if (sonderfertigkeiten.size() < 10) {
+		sf_offset = (PDFSonderfertigkeiten.anzeigeGroesse(sfList) + 1) / 2 + 1;
+		if (sf_offset < 5) {
 			sf_offset = 5;
-		} else {
-			sf_offset = (sonderfertigkeiten.size() + 3) / 2 + 1;
 		}
 
 		stream = new PDPageContentStream(doc, page);
@@ -120,31 +112,36 @@ public class TalentSeite extends PDFSeite {
 		titelzeile(guteEigenschaften);
 
 		/* linke spalte */
-		talentSpalte(gruppe1, kategorien1, 0, (cellCountX - 1) / 2, 6, true);
+		talentSpalte(gruppe1, kategorien1, 0, halbeBreite, 6, true);
 
 		/* Metatalente */
 		zeichneTalentKategorie(metatalente, cellCountY - 6, 0,
-				(cellCountX - 1) / 2, "Metatalente", 5);
+				halbeBreite, "Metatalente", 5);
 
 		/* rechte spalte */
-		talentSpalte(gruppe2, kategorien2, (cellCountX - 1) / 2 + 1,
+		talentSpalte(gruppe2, kategorien2, halbeBreite + 1,
 				cellCountX, sf_offset, false);
 
 		/* Sonderfertigkeiten */
-		sonderfertigkeiten(sonderfertigkeiten, (cellCountX - 1) / 2 + 1,
-				sf_offset);
+		PDFSonderfertigkeiten.zeichneTabelle(this, halbeBreite + 1, cellCountY
+				- sf_offset, cellCountX - (viertelBreite + 1), cellCountY,
+				"Sonderfertigkeiten (1)", sfList);
+		PDFSonderfertigkeiten.zeichneTabelle(this, cellCountX - viertelBreite,
+				cellCountY - sf_offset, cellCountX, cellCountY,
+				"Sonderfertigkeiten (2)", sfList);
 		stream.close();
 	}
 
-	private void zeichneKampfTalentKategorie(TalentListe tl, int offset, int x1,
-			int x2, int anzahl) throws IOException {
+	private void zeichneKampfTalentKategorie(TalentListe tl, int offset,
+			int x1, int x2, int anzahl) throws IOException {
 		Collections.sort(tl, new TalentComparator());
 
 		/* leerzeilen hinzufügen */
 		while (tl.size() < anzahl) {
 			tl.add(null);
 		}
-		drawTabelle(stream, x1, x2, offset, tl.toArray(), new KampfTalentTabelle(x2 - x1));
+		drawTabelle(x1, x2, offset, tl.toArray(), new KampfTalentTabelle(x2
+				- x1));
 	}
 
 	private void zeichneTalentKategorie(TalentListe tl, int offset, int x1,
@@ -155,51 +152,8 @@ public class TalentSeite extends PDFSeite {
 		while (tl.size() < anzahl) {
 			tl.add(null);
 		}
-		drawTabelle(stream, x1, x2, offset, tl.toArray(), new TalentTabelle(titel, x2 - x1));
-	}
-
-	private void sonderfertigkeiten(List<Sonderfertigkeit> sf, int offsetX,
-			int hoehe) throws IOException {
-		Sonderfertigkeit s;
-		String name;
-		int breite, y1, y2;
-		breite = cellCountX - offsetX;
-
-		drawLabeledBox(stream, offsetX, cellCountY - hoehe, cellCountX,
-				cellCountY, "Talent-Sonderfertigkeiten");
-
-		stream.setStrokingColor(Color.BLACK);
-		stream.setLineWidth(0.1f);
-		addLine(stream, offsetX + breite / 2, cellCountY - (hoehe - 1),
-				offsetX + breite / 2, cellCountY);
-		for (int y = cellCountY - (hoehe - 2); y < cellCountY; y++) {
-			addLine(stream, offsetX, y, cellCountX, y);
-		}
-		stream.closeAndStroke();
-
-		y1 = cellCountY - hoehe + 1;
-		y2 = cellCountY;
-		for (int y = y1; !sf.isEmpty() && y < y2; y++) {
-			s = sf.remove(0);
-			name = s.getName();
-			if (s.getBereich().contains("Geländekunde")) {
-				name = "Geländekunde (" + name + ")";
-			}
-			drawText(stream, PDType1Font.HELVETICA, offsetX, offsetX + breite
-					/ 2, y, name, false);
-			if (sf.isEmpty()) {
-				break;
-			}
-			
-			s = sf.remove(0);
-			name = s.getName();
-			if (s.getBereich().contains("Geländekunde")) {
-				name = "Geländekunde (" + name + ")";
-			}
-			drawText(stream, PDType1Font.HELVETICA, offsetX + breite / 2,
-					cellCountX, y, name, false);
-		}
-
+		drawTabelle(x1, x2, offset, tl.toArray(), new TalentTabelle(titel, x2
+				- x1));
 	}
 
 	private void talentSpalte(TalentListe[] talentListen, String[] kategorien,
@@ -246,9 +200,9 @@ public class TalentSeite extends PDFSeite {
 		for (int i = 0; i < titel.length; i++) {
 			int x = i * 8 + 1;
 
-			drawText(stream, PDType1Font.HELVETICA_BOLD, x + 0, x + 3, 0, 2,
-					titel[i], true);
-			drawText(stream, PDType1Font.HELVETICA_BOLD, x + 3, x + 6, 0, 2,
+			drawText(PDType1Font.HELVETICA_BOLD, x + 0, x + 3, 0, 2, titel[i],
+					true);
+			drawText(PDType1Font.HELVETICA_BOLD, x + 3, x + 6, 0, 2,
 					guteEigenschaften[i], true);
 		}
 	}
@@ -270,12 +224,14 @@ public class TalentSeite extends PDFSeite {
 				case 0:
 					return ts.getSpezName();
 				case 1:
-					return Integer.toString(Integer.parseInt(ts.getSpezReferenz().getAt())+1);
+					return Integer.toString(Integer.parseInt(ts
+							.getSpezReferenz().getAt()) + 1);
 				case 3:
-					return Integer.toString(Integer.parseInt(ts.getSpezReferenz().getPa())+1);
+					return Integer.toString(Integer.parseInt(ts
+							.getSpezReferenz().getPa()) + 1);
 				case 5:
 					return Integer.toString(ts.getSpezValue());
-				} 
+				}
 				return "";
 			}
 
@@ -293,12 +249,12 @@ public class TalentSeite extends PDFSeite {
 			}
 			return "";
 		}
-		
+
 		@Override
 		public int getIndent(Object o, int x) {
-			return (o instanceof TalentSpezialisierung) && x == 0 ? 2:0;
+			return (o instanceof TalentSpezialisierung) && x == 0 ? 2 : 0;
 		}
-		
+
 		@Override
 		public int getColumnSpan(int x) {
 			if (x == 1 || x == 3 || x == 5) {
@@ -307,7 +263,7 @@ public class TalentSeite extends PDFSeite {
 			return 1;
 		}
 	}
-	
+
 	private class TalentComparator implements Comparator<Talent> {
 		@Override
 		public int compare(Talent o1, Talent o2) {
@@ -451,7 +407,7 @@ public class TalentSeite extends PDFSeite {
 			}
 			return "";
 		}
-		
+
 		@Override
 		public int getColumnSpan(int x) {
 			return x == 2 ? 2 : 1;
