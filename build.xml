@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create_run_jar" name="Create Runnable Jar for Project XML2PDFPlugin">
+    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
+    <!--ANT 1.7 is required                                        -->
+    <target name="create_run_jar">
+        <jar destfile="CompactPDFExport.jar" filesetmanifest="mergewithoutmain">
+            <manifest>
+                <attribute name="Main-Class" value="de.hrogge.XML2PDFPlugin.MainStart"/>
+                <attribute name="Class-Path" value="."/>
+            	<attribute name="HeldenPluginClass" value="de.hrogge.XML2PDFPlugin.PluginStart.class"/>
+            </manifest>
+            <fileset dir="bin/"/>
+            <zipfileset excludes="META-INF/*.SF" src="lib/commons-logging-1.1.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="lib/pdfbox-1.7.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="lib/fontbox-1.7.1.jar"/>
+        </jar>
+    </target>
+	
+	<target name="create_source_archive">
+		<zip destfile="CompactPDFExport.zip">
+		    <zipfileset dir="src/" prefix="src/"/>
+		    <zipfileset dir="." includes="build.xml,LICENSE.txt"/>
+		    <zipfileset dir="lib/" prefix="lib/"/>
+		</zip>
+	</target>
+</project>
