@@ -20,8 +20,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileFilter;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -36,19 +34,13 @@ public class MainStart {
 		File input, output;
 		
 		if (args.length != 2) {
-			/* User wählt Eingabefile */
-			input = waehleEingabeDatei();
-			if (input == null) {
-				return;
-			}
-			
-			output = new File(input.getAbsolutePath() + ".pdf");
+			System.err.println("Bitte Ein- und Ausgabedatei als Parameter angeben.");
+			System.exit(1);
 		}
-		else {
-			/* Steuerung über Kommandozeilenparameter */
-			input = new File(args[0]);
-			output = new File(args[1]);
-		}
+
+		/* Steuerung über Kommandozeilenparameter */
+		input = new File(args[0]);
+		output = new File(args[1]);
 		
 		/* XML-Dokument des Eingabefiles erzeugen */
 		DocumentBuilderFactory documentFactory = DocumentBuilderFactory
@@ -63,36 +55,7 @@ public class MainStart {
 			creator.erzeugePDF(null, output, doc, 5f, 10f, 0.5f, true);
 		} catch (Exception e) {
 			e.printStackTrace();
+			System.exit(1);
 		}
 	}
-
-	private static File waehleEingabeDatei() {
-		JFileChooser chooser;
-		
-		chooser = new JFileChooser();
-		chooser.setApproveButtonText("Konvertieren");
-		chooser.setApproveButtonToolTipText("Konvertiert das selektierte Helden XML-Dokument in ein PDF");
-
-		FileFilter filter = new FileFilter() {
-			@Override
-			public String getDescription() {
-				return "Helden XML-Dateien";
-			}
-			@Override
-			public boolean accept(File f) {
-				return f.isDirectory() || f.getName().endsWith(".xml");
-			}
-		};
-		chooser.setFileFilter(filter);
-
-		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-		chooser.setMultiSelectionEnabled(false);
-		chooser.setDialogType(JFileChooser.OPEN_DIALOG);
-		if (chooser.showOpenDialog(null) != JFileChooser.APPROVE_OPTION) {
-			return null;
-		}
-		
-		return chooser.getSelectedFile();
-	}
-
 }
