@@ -224,11 +224,24 @@ public class TalentSeite extends PDFSeite {
 				case 0:
 					return ts.getSpezName();
 				case 1:
-					return Integer.toString(Integer.parseInt(ts
-							.getSpezReferenz().getAt()) + 1);
+					if (ts.getSpezReferenz().getAt().length() > 0) {
+						int at = Integer.parseInt(ts.getSpezReferenz().getAt());
+						
+						at++;
+						
+						if (ts.getSpezReferenz().getPa().length() == 0) {
+							/* Fernkampf/Lanzenreiten hat keinen PA-Wert */
+							at++;
+						}
+						return Integer.toString(at); 
+					}
+					return "";
 				case 3:
-					return Integer.toString(Integer.parseInt(ts
-							.getSpezReferenz().getPa()) + 1);
+					if (ts.getSpezReferenz().getPa().length() > 0) {
+						return Integer.toString(Integer.parseInt(ts
+								.getSpezReferenz().getPa()) + 1);
+					}
+					return "";
 				case 5:
 					return Integer.toString(ts.getSpezValue());
 				}
