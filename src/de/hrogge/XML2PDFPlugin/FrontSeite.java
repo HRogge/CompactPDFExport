@@ -963,8 +963,13 @@ public class FrontSeite extends PDFSeite {
 			if (obj instanceof VorteilAuswahl) {
 				VorteilAuswahl va = (VorteilAuswahl) obj;
 
-				return va.getVAReferenz().getBezeichner() + ": "
+				if (x == 0) {
+					return va.getVAReferenz().getBezeichner() + ": "
 						+ va.getVAText();
+				}
+				else {
+					return "";
+				}
 			}
 
 			Vorteil v = (Vorteil) obj;

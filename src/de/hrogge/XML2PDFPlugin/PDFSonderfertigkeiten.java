@@ -181,7 +181,11 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 			this.name = sf.getNameausfuehrlich();
 			break;
 		case MAGISCH:
-			if (idx != -1) {
+			if (auswahl != null) {
+				this.typ = sf.getBezeichner();
+				this.name = auswahl;
+			}
+			else if (idx != -1) {
 				this.typ = n.substring(0, idx+1);
 				this.name = n.substring(idx + 2);
 			} else {

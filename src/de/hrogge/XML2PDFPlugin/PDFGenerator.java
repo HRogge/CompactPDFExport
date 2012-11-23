@@ -28,9 +28,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.*;
 
 import jaxbGenerated.datenxml.*;
 
@@ -41,7 +39,7 @@ import org.w3c.dom.Document;
 
 public class PDFGenerator {
 	public void erzeugePDF(JFrame frame, File output, Document input,
-			float marginX, float marginY, float textMargin, boolean tzm)
+			float marginX, float marginY, float textMargin, Boolean tzm)
 			throws IOException, COSVisitorException, JAXBException {
 		String[] guteEigenschaften;
 		List<PDFSonderfertigkeiten> sflist;
@@ -86,6 +84,12 @@ public class PDFGenerator {
 							Feld f = (Feld) o;
 							sflist.add(new PDFSonderfertigkeiten(sf, f
 									.getContent()));
+							break;
+						}
+						if (o instanceof JAXBElement<?>) {
+							@SuppressWarnings("rawtypes")
+							JAXBElement j = (JAXBElement) o;
+							sflist.add(new PDFSonderfertigkeiten(sf, (String)j.getValue()));
 							break;
 						}
 					}

@@ -384,6 +384,12 @@ public class TalentSeite extends PDFSeite {
 					}
 					name += ")";
 				}
+				if (t.getBereich().contains("Liturgiekenntnis")) {
+					name = "Liturgiekenntnis: " + name;
+				}
+				if (t.getBereich().contains("Ritualkenntnis")) {
+					name = "Ritualkenntnis: " + name;
+				}
 				return name;
 			case 1:
 				return t.getProbe();
