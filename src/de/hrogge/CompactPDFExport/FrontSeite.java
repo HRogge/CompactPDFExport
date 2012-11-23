@@ -265,13 +265,13 @@ public class FrontSeite extends PDFSeite {
 		String[][] werte;
 
 		werte = new String[4][3];
-		werte[0] = new String[] { "Attacke-Basiswert",
+		werte[0] = new String[] { "Attacke",
 				eigen.getAttacke().getAkt().toString(), "(MU+GE+KK)/5" };
-		werte[1] = new String[] { "Parade-Basiswert",
+		werte[1] = new String[] { "Parade",
 				eigen.getParade().getAkt().toString(), "(IN+GE+KK)/5" };
-		werte[2] = new String[] { "Fernkampf-Basiswert",
+		werte[2] = new String[] { "Fernkampf",
 				eigen.getFernkampfBasis().getAkt().toString(), "(IN+FF+KK)/5" };
-		werte[3] = new String[] { "Initiative-Basiswert",
+		werte[3] = new String[] { "Initiative",
 				eigen.getInitiative().getAkt().toString(), "(2xMU+IN+GE)/5" };
 
 		drawTabelle(x1, x2, y, werte, new BasisKampfTabelle(x2 - x1));
@@ -669,7 +669,7 @@ public class FrontSeite extends PDFSeite {
 	private class BasisKampfTabelle extends AbstractTabellenZugriff {
 		public BasisKampfTabelle(int breite) {
 			super(new String[] { null, "Wert", "Formel" },
-					new int[] { 0, 3, 12 }, 0, "Basiswerte", breite);
+					new int[] { 0, 4, 12 }, 0, "Basiswerte", breite);
 		}
 
 		@Override
