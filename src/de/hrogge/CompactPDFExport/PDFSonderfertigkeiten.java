@@ -1,4 +1,4 @@
-package de.hrogge.XML2PDFPlugin;
+package de.hrogge.CompactPDFExport;
 
 import java.awt.Color;
 import java.io.IOException;

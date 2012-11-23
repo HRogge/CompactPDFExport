@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.hrogge.XML2PDFPlugin;
+package de.hrogge.CompactPDFExport;
 
 import java.awt.Color;
 import java.awt.geom.PathIterator;

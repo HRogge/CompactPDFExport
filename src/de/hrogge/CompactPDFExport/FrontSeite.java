@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.hrogge.XML2PDFPlugin;
+package de.hrogge.CompactPDFExport;
 
 import java.awt.Color;
 import java.io.IOException;
@@ -30,7 +30,7 @@ import org.apache.pdfbox.pdmodel.edit.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
 
-import de.hrogge.XML2PDFPlugin.PDFSonderfertigkeiten.Kategorie;
+import de.hrogge.CompactPDFExport.PDFSonderfertigkeiten.Kategorie;
 
 public class FrontSeite extends PDFSeite {
 	public FrontSeite(PDDocument d, float marginX, float marginY,
@@ -64,6 +64,18 @@ public class FrontSeite extends PDFSeite {
 			kampfsets.add(set);
 		}
 
+		if (kampfsets.size() == 0) {
+			/* KEINE aktiven Kampfsets... zumindest das erste nehmen und aktivieren! */
+			for (Kampfset set : daten.getKampfsets().getKampfset()) {
+				if (set.isTzm() == tzm) {
+					kampfsets.add(set);
+					
+					set.setInbenutzung(true);
+					break;
+				}
+			}
+		}
+		
 		/* Vor und Nachteile sind statisch */
 		vorteile = new ArrayList<Vorteil>();
 		nachteile = new ArrayList<Vorteil>();

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.hrogge.XML2PDFPlugin;
+package de.hrogge.CompactPDFExport;
 
 import java.io.IOException;
 import java.util.*;
@@ -26,7 +26,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.edit.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
-import de.hrogge.XML2PDFPlugin.PDFSonderfertigkeiten.Kategorie;
+import de.hrogge.CompactPDFExport.PDFSonderfertigkeiten.Kategorie;
 
 public class TalentSeite extends PDFSeite {
 	public TalentSeite(PDDocument d, float marginX, float marginY,

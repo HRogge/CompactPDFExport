@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.hrogge.XML2PDFPlugin;
+package de.hrogge.CompactPDFExport;
 
 import java.io.File;
 import java.io.FileReader;
