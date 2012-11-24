@@ -14,7 +14,7 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 	static public int anzeigeGroesse(List<PDFSonderfertigkeiten> sflist) {
 		String typ = null;
 		int count = 0;
-		
+
 		for (PDFSonderfertigkeiten sf : sflist) {
 			if (sf.getTyp().length() == 0) {
 				typ = null;
@@ -28,7 +28,7 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 		}
 		return count;
 	}
-	
+
 	static public List<PDFSonderfertigkeiten> extrahiereKategorien(
 			List<PDFSonderfertigkeiten> sflist, Kategorie[] k) {
 		List<Kategorie> katlist;
@@ -65,7 +65,7 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 
 			if (s != null && s.getTyp().length() == 0) {
 				typ = null;
-			
+
 				seite.drawText(PDType1Font.HELVETICA, x1, x2, y, s.getName(),
 						false);
 			} else if (s != null) {
@@ -74,7 +74,7 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 						break;
 					}
 					typ = s.getTyp();
-					
+
 					seite.drawText(PDType1Font.HELVETICA_BOLD, x1, x2, y,
 							s.getTyp(), false);
 					y++;
@@ -83,7 +83,7 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 				seite.drawText(PDType1Font.HELVETICA, x1 + 2, x2, y,
 						s.getName(), false);
 			}
-			
+
 			sflist.remove(0);
 		}
 	}
@@ -106,7 +106,7 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 	public int compareTo(PDFSonderfertigkeiten o2) {
 		int result;
 		String typ1, typ2;
-		
+
 		result = this.getKategorie().compareTo(o2.getKategorie());
 		if (result != 0) {
 			return result;
@@ -172,7 +172,8 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 		return Kategorie.UNBEKANNT;
 	}
 
-	private void berechneTypName(Sonderfertigkeit sf, Kategorie k, String auswahl) {
+	private void berechneTypName(Sonderfertigkeit sf, Kategorie k,
+			String auswahl) {
 		String n;
 		int idx;
 
@@ -188,12 +189,11 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 			if (auswahl != null) {
 				this.typ = sf.getBezeichner();
 				this.name = auswahl;
-			}
-			else if (idx != -1) {
-				this.typ = n.substring(0, idx+1);
+			} else if (idx != -1) {
+				this.typ = n.substring(0, idx + 1);
 				this.name = n.substring(idx + 2);
 			} else {
-				this.typ = "Magische SF:";
+				this.typ = "Generische Magische SF:";
 				this.name = n;
 			}
 			break;
@@ -202,7 +202,7 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 			this.name = n.substring(n.indexOf(' ') + 1);
 			break;
 		case GEWEIHT:
-			this.typ = "Karmale SF:";
+			this.typ = "Generische Karmale SF:";
 			this.name = n;
 			break;
 		case LITURGIE:
@@ -224,7 +224,7 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 				this.name = auswahl;
 				break;
 			}
-			this.typ = "Talent-SF:";
+			this.typ = "Generische Talent-SF:";
 			this.name = n;
 			break;
 		case UNBEKANNT:
@@ -235,6 +235,6 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 	}
 
 	public enum Kategorie {
-		KAMPF, MAGISCH, ZAUBERSPEZ, GEWEIHT, LITURGIE, TALENT, TALENTSPEZ, UNBEKANNT;
+		KAMPF, GEWEIHT, LITURGIE, TALENT, TALENTSPEZ, MAGISCH, ZAUBERSPEZ, UNBEKANNT;
 	}
 }

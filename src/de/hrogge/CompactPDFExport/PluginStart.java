@@ -79,7 +79,7 @@ public class PluginStart implements HeldenXMLDatenPlugin {
 	@Override
 	public ArrayList<String> getUntermenus() {
 		ArrayList<String> l = new ArrayList<String>();
-		
+
 		l.add("Einfache Rüstungen");
 		l.add("Trefferzonen Rüstungen");
 		return l;

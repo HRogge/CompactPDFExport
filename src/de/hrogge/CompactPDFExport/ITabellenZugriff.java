@@ -22,12 +22,20 @@ import org.apache.pdfbox.pdmodel.font.PDFont;
 
 public interface ITabellenZugriff {
 	public String getColumn(int x);
+
 	public int getWidth(int x);
+
 	public int getColumnCount();
+
 	public String get(Object obj, int x);
+
 	public PDFont getFont(Object o, int x);
+
 	public boolean getCentered(Object o, int x);
+
 	public Color getBackgroundColor(Object o, int x);
+
 	public int getIndent(Object o, int x);
+
 	public int getColumnSpan(int x);
 }

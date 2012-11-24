@@ -32,21 +32,22 @@ public class MainStart {
 	public static void main(String[] args) throws ParserConfigurationException,
 			SAXException, IOException {
 		File input, output;
-		
+
 		if (args.length != 2) {
-			System.err.println("Bitte Ein- und Ausgabedatei als Parameter angeben.");
+			System.err
+					.println("Bitte Ein- und Ausgabedatei als Parameter angeben.");
 			System.exit(1);
 		}
 
 		/* Steuerung über Kommandozeilenparameter */
 		input = new File(args[0]);
 		output = new File(args[1]);
-		
+
 		/* XML-Dokument des Eingabefiles erzeugen */
 		DocumentBuilderFactory documentFactory = DocumentBuilderFactory
 				.newInstance();
 		DocumentBuilder documentBuilder = documentFactory.newDocumentBuilder();
-		
+
 		FileReader reader = new FileReader(input);
 		Document doc = documentBuilder.parse(new InputSource(reader));
 

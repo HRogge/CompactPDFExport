@@ -35,7 +35,7 @@ import de.hrogge.CompactPDFExport.PDFSonderfertigkeiten.Kategorie;
 public class FrontSeite extends PDFSeite {
 	public FrontSeite(PDDocument d, float marginX, float marginY,
 			float textMargin) throws IOException {
-		super(d, marginX, marginY, textMargin, 61);
+		super(d, marginX, marginY, textMargin, 72);
 	}
 
 	public boolean erzeugeSeite(Daten daten, PDJpeg bild,
@@ -47,7 +47,7 @@ public class FrontSeite extends PDFSeite {
 		List<Kampfset> kampfsets;
 		List<Nahkampfwaffe> nahkampf;
 		List<Fernkampfwaffe> fernkampf;
-		List<Vorteil> vorteile, nachteile, schlechteEigenschaften;
+		List<Vorteil> vorteile, nachteile;
 		List<Kampfset> ruestung;
 		List<Schild> schilde;
 		List<PDFSonderfertigkeiten> sfList;
@@ -65,29 +65,27 @@ public class FrontSeite extends PDFSeite {
 		}
 
 		if (kampfsets.size() == 0) {
-			/* KEINE aktiven Kampfsets... zumindest das erste nehmen und aktivieren! */
+			/*
+			 * KEINE aktiven Kampfsets... zumindest das erste nehmen und
+			 * aktivieren!
+			 */
 			for (Kampfset set : daten.getKampfsets().getKampfset()) {
 				if (set.isTzm() == tzm) {
 					kampfsets.add(set);
-					
+
 					set.setInbenutzung(true);
 					break;
 				}
 			}
 		}
-		
+
 		/* Vor und Nachteile sind statisch */
 		vorteile = new ArrayList<Vorteil>();
 		nachteile = new ArrayList<Vorteil>();
-		schlechteEigenschaften = new ArrayList<Vorteil>();
 
-		extrahiereVorNachteile(daten, vorteile, nachteile,
-				schlechteEigenschaften);
+		extrahiereVorNachteile(daten, vorteile, nachteile);
 
-		vorNachTeileLaenge = (vorteile.size() + 1) / 2;
-		vorNachTeileLaenge = Math.max(vorNachTeileLaenge, nachteile.size());
-		vorNachTeileLaenge = Math.max(vorNachTeileLaenge,
-				schlechteEigenschaften.size());
+		vorNachTeileLaenge = (Math.max(vorteile.size(), nachteile.size()) + 1) / 2;
 
 		/* Fixen Teil der PDF Seite erzeugen */
 		stream = new PDPageContentStream(doc, page);
@@ -204,7 +202,7 @@ public class FrontSeite extends PDFSeite {
 
 		/* Flexiblen Teil der PDF Seite erzeugen */
 		y = vorteileNachteile(festerHeaderHoehe, vorteile, nachteile,
-				schlechteEigenschaften, vorNachTeileLaenge);
+				vorNachTeileLaenge);
 
 		PDFSonderfertigkeiten.zeichneTabelle(this, kampfBreite + 1, y,
 				cellCountX, cellCountY, "Sonderfertigkeiten", sfList);
@@ -258,7 +256,7 @@ public class FrontSeite extends PDFSeite {
 				kampfBreite, y);
 
 		stream.close();
-		
+
 		return sfList.size() > 0;
 	}
 
@@ -499,18 +497,14 @@ public class FrontSeite extends PDFSeite {
 	}
 
 	private void extrahiereVorNachteile(Daten daten, List<Vorteil> vorteile,
-			List<Vorteil> nachteile, List<Vorteil> schlechteEigenschaften) {
+			List<Vorteil> nachteile) {
 		for (Vorteil v : daten.getVorteile().getVorteil()) {
 			List<Vorteil> gruppe = null;
 
 			if (v.isIstvorteil()) {
 				gruppe = vorteile;
 			} else if (v.isIstnachteil()) {
-				if (Boolean.TRUE.equals(v.isIstschlechteeigenschaft())) {
-					gruppe = schlechteEigenschaften;
-				} else {
-					gruppe = nachteile;
-				}
+				gruppe = nachteile;
 			}
 
 			if (v.getAuswahlen() != null
@@ -583,19 +577,24 @@ public class FrontSeite extends PDFSeite {
 	}
 
 	private int vorteileNachteile(int offset, List<Vorteil> vorteile,
-			List<Vorteil> nachteile, List<Vorteil> schlechteEigenschaft,
-			int count) throws IOException {
+			List<Vorteil> nachteile, int count) throws IOException {
 		int breite, y;
-		List<Vorteil> vorteile1, vorteile2;
+		List<Vorteil> vorteile1, vorteile2, nachteile1, nachteile2;
 		breite = 15;
 
-		/* Vorteile aufspalten */
+		/* aufspalten */
 		vorteile1 = new ArrayList<Vorteil>();
 		vorteile2 = new ArrayList<Vorteil>();
+		nachteile1 = new ArrayList<Vorteil>();
+		nachteile2 = new ArrayList<Vorteil>();
 
 		y = (vorteile.size() + 1) / 2;
 		vorteile1.addAll(vorteile.subList(0, y));
 		vorteile2.addAll(vorteile.subList(y, vorteile.size()));
+
+		y = (nachteile.size() + 1) / 2;
+		nachteile1.addAll(nachteile.subList(0, y));
+		nachteile2.addAll(nachteile.subList(y, nachteile.size()));
 
 		/* add padding */
 		for (y = vorteile1.size(); y < count; y++) {
@@ -604,11 +603,11 @@ public class FrontSeite extends PDFSeite {
 		for (y = vorteile2.size(); y < count; y++) {
 			vorteile2.add(null);
 		}
-		for (y = nachteile.size(); y < count; y++) {
-			nachteile.add(null);
+		for (y = nachteile1.size(); y < count; y++) {
+			nachteile1.add(null);
 		}
-		for (y = schlechteEigenschaft.size(); y < count; y++) {
-			schlechteEigenschaft.add(null);
+		for (y = nachteile2.size(); y < count; y++) {
+			nachteile2.add(null);
 		}
 
 		drawTabelle(0, breite, offset, vorteile1.toArray(), new VorteilTabelle(
@@ -616,10 +615,9 @@ public class FrontSeite extends PDFSeite {
 		drawTabelle(breite + 1, 2 * breite + 1, offset, vorteile2.toArray(),
 				new VorteilTabelle(breite));
 		drawTabelle(2 * breite + 2, 3 * breite + 2, offset,
-				nachteile.toArray(), new VorteilTabelle("Nachteile", breite));
-		drawTabelle(3 * breite + 3, cellCountX, offset,
-				schlechteEigenschaft.toArray(), new VorteilTabelle(
-						"Schlechte Eigenschaften", breite));
+				nachteile1.toArray(), new VorteilTabelle("Nachteile", breite));
+		drawTabelle(3 * breite + 3, cellCountX, offset, nachteile2.toArray(),
+				new VorteilTabelle("Nachteile", breite));
 
 		return offset + count + 2;
 	}
@@ -979,9 +977,8 @@ public class FrontSeite extends PDFSeite {
 
 				if (x == 0) {
 					return va.getVAReferenz().getBezeichner() + ": "
-						+ va.getVAText();
-				}
-				else {
+							+ va.getVAText();
+				} else {
 					return "";
 				}
 			}

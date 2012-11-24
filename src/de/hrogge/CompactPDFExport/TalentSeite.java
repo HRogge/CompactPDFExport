@@ -33,7 +33,7 @@ public class TalentSeite extends PDFSeite {
 		super(d, marginX, marginY, textMargin, 72);
 	}
 
-	public void erzeugeSeite(Daten daten, String[] guteEigenschaften,
+	public boolean erzeugeSeite(Daten daten, String[] guteEigenschaften,
 			List<PDFSonderfertigkeiten> alleSF) throws IOException {
 		List<Talent> talente;
 		List<PDFSonderfertigkeiten> sfList;
@@ -47,7 +47,7 @@ public class TalentSeite extends PDFSeite {
 		TalentListe gruppe2[] = new TalentListe[4];
 		TalentListe metatalente = new TalentListe();
 
-		int sf_offset;
+		int sf_offset, uebrig;
 
 		for (int i = 0; i < gruppe1.length; i++) {
 			gruppe1[i] = new TalentListe();
@@ -96,13 +96,15 @@ public class TalentSeite extends PDFSeite {
 			}
 		}
 
+		/* kalkuliere Platz für Sonderfertigkeiten */
 		PDFSonderfertigkeiten.Kategorie kat[] = { Kategorie.TALENT };
 		sfList = PDFSonderfertigkeiten.extrahiereKategorien(alleSF, kat);
 		Collections.sort(sfList);
 
 		sf_offset = (PDFSonderfertigkeiten.anzeigeGroesse(sfList) + 1) / 2 + 1;
-		if (sf_offset < 5) {
-			sf_offset = 5;
+		uebrig = restZeilen(gruppe2, sf_offset) - 4;
+		if (uebrig < 0) {
+			sf_offset = sf_offset - (-uebrig);
 		}
 
 		stream = new PDPageContentStream(doc, page);
@@ -114,12 +116,12 @@ public class TalentSeite extends PDFSeite {
 		talentSpalte(gruppe1, kategorien1, 0, halbeBreite, 6, true);
 
 		/* Metatalente */
-		zeichneTalentKategorie(metatalente, cellCountY - 6, 0,
-				halbeBreite, "Metatalente", 5);
+		zeichneTalentKategorie(metatalente, cellCountY - 6, 0, halbeBreite,
+				"Metatalente", 5);
 
 		/* rechte spalte */
-		talentSpalte(gruppe2, kategorien2, halbeBreite + 1,
-				cellCountX, sf_offset, false);
+		talentSpalte(gruppe2, kategorien2, halbeBreite + 1, cellCountX,
+				sf_offset, false);
 
 		/* Sonderfertigkeiten */
 		PDFSonderfertigkeiten.zeichneTabelle(this, halbeBreite + 1, cellCountY
@@ -129,6 +131,8 @@ public class TalentSeite extends PDFSeite {
 				cellCountY - sf_offset, cellCountX, cellCountY,
 				"Sonderfertigkeiten (2)", sfList);
 		stream.close();
+
+		return uebrig < 0;
 	}
 
 	private void zeichneKampfTalentKategorie(TalentListe tl, int offset,
@@ -155,17 +159,23 @@ public class TalentSeite extends PDFSeite {
 				- x1));
 	}
 
-	private void talentSpalte(TalentListe[] talentListen, String[] kategorien,
-			int x1, int x2, int footer, boolean links) throws IOException {
-		int maximaleTalente, uebrig;
-		int offset[], leer[];
+	private int restZeilen(TalentListe[] talentListen, int footer) {
+		int uebrig;
 
-		maximaleTalente = cellCountY - 2 * kategorien.length - 2 - footer;
-
-		uebrig = maximaleTalente;
+		uebrig = cellCountY - 2 * talentListen.length - 2 - footer;
+		;
 		for (TalentListe tl : talentListen) {
 			uebrig -= tl.size();
 		}
+		return uebrig;
+	}
+
+	private void talentSpalte(TalentListe[] talentListen, String[] kategorien,
+			int x1, int x2, int footer, boolean links) throws IOException {
+		int uebrig;
+		int offset[], leer[];
+
+		uebrig = restZeilen(talentListen, footer);
 
 		offset = new int[talentListen.length];
 		leer = new int[talentListen.length];
@@ -211,14 +221,14 @@ public class TalentSeite extends PDFSeite {
 				case 1:
 					if (ts.getSpezReferenz().getAt().length() > 0) {
 						int at = Integer.parseInt(ts.getSpezReferenz().getAt());
-						
+
 						at++;
-						
+
 						if (ts.getSpezReferenz().getPa().length() == 0) {
 							/* Fernkampf/Lanzenreiten hat keinen PA-Wert */
 							at++;
 						}
-						return Integer.toString(at); 
+						return Integer.toString(at);
 					}
 					return "";
 				case 3:

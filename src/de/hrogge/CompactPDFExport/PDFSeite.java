@@ -54,7 +54,7 @@ public class PDFSeite {
 		this.stream = null;
 
 		neueSeite();
-		
+
 		this.cellCountX = 63;
 		this.cellCountY = cy;
 
@@ -78,7 +78,7 @@ public class PDFSeite {
 	public void addLine(int x1, int y1, int x2, int y2) throws IOException {
 		stream.addLine(getX(x1), getY(y1), getX(x2), getY(y2));
 	}
-	
+
 	public void addRect(int x1, int y1, int x2, int y2) throws IOException {
 		stream.addRect(getX(x1), getY(y1), getX(x2) - getX(x1), getY(y2)
 				- getY(y1));
@@ -293,10 +293,10 @@ public class PDFSeite {
 	protected void titelzeile(String[] guteEigenschaften) throws IOException {
 		String[] titel = { "MU:", "KL:", "IN:", "CH:", "FF:", "GE:", "KK:",
 				"KO:" };
-	
+
 		for (int i = 0; i < titel.length; i++) {
 			int x = i * 8 + 1;
-	
+
 			drawText(PDType1Font.HELVETICA_BOLD, x + 0, x + 3, 0, 2, titel[i],
 					true);
 			drawText(PDType1Font.HELVETICA_BOLD, x + 3, x + 6, 0, 2,
