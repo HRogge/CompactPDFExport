@@ -24,7 +24,6 @@ import jaxbGenerated.datenxml.Talent;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.edit.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
 import de.hrogge.CompactPDFExport.PDFSonderfertigkeiten.Kategorie;
 
@@ -190,20 +189,6 @@ public class TalentSeite extends PDFSeite {
 				zeichneTalentKategorie(talentListen[k], offset[k], x1, x2,
 						kategorien[k], talentListen[k].size() + leer[k]);
 			}
-		}
-	}
-
-	private void titelzeile(String[] guteEigenschaften) throws IOException {
-		String[] titel = { "MU:", "KL:", "IN:", "CH:", "FF:", "GE:", "KK:",
-				"KO:" };
-
-		for (int i = 0; i < titel.length; i++) {
-			int x = i * 8 + 1;
-
-			drawText(PDType1Font.HELVETICA_BOLD, x + 0, x + 3, 0, 2, titel[i],
-					true);
-			drawText(PDType1Font.HELVETICA_BOLD, x + 3, x + 6, 0, 2,
-					guteEigenschaften[i], true);
 		}
 	}
 

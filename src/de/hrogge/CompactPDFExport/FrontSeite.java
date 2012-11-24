@@ -38,7 +38,7 @@ public class FrontSeite extends PDFSeite {
 		super(d, marginX, marginY, textMargin, 61);
 	}
 
-	public void erzeugeSeite(Daten daten, PDJpeg bild,
+	public boolean erzeugeSeite(Daten daten, PDJpeg bild,
 			String[] guteEigenschaften, List<PDFSonderfertigkeiten> alleSF,
 			boolean tzm) throws IOException {
 		int patzerHoehe, patzerBreite, festerHeaderHoehe;
@@ -258,6 +258,8 @@ public class FrontSeite extends PDFSeite {
 				kampfBreite, y);
 
 		stream.close();
+		
+		return sfList.size() > 0;
 	}
 
 	private int basisKampfBlock(Eigenschaften eigen, int x1, int x2, int y)

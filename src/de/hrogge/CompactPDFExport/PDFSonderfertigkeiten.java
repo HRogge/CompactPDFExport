@@ -63,19 +63,19 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 		for (int y = y1 + 1; !sflist.isEmpty() && y < y2; y++) {
 			s = sflist.get(0);
 
-			if (s.getTyp().length() == 0) {
+			if (s != null && s.getTyp().length() == 0) {
 				typ = null;
 			
 				seite.drawText(PDType1Font.HELVETICA, x1, x2, y, s.getName(),
 						false);
-			} else {
+			} else if (s != null) {
 				if (!s.getTyp().equals(typ)) {
 					if (y == y2 - 1) {
 						break;
 					}
 					typ = s.getTyp();
 					
-					seite.drawText(PDType1Font.HELVETICA, x1, x2, y,
+					seite.drawText(PDType1Font.HELVETICA_BOLD, x1, x2, y,
 							s.getTyp(), false);
 					y++;
 				}
@@ -126,6 +126,10 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 		}
 
 		return this.getName().compareTo(o2.getName());
+	}
+
+	public Kategorie getKategorie() {
+		return this.kategorie;
 	}
 
 	public String getName() {
@@ -189,7 +193,7 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 				this.typ = n.substring(0, idx+1);
 				this.name = n.substring(idx + 2);
 			} else {
-				this.typ = "";
+				this.typ = "Magische SF:";
 				this.name = n;
 			}
 			break;
@@ -198,7 +202,7 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 			this.name = n.substring(n.indexOf(' ') + 1);
 			break;
 		case GEWEIHT:
-			this.typ = "";
+			this.typ = "Karmale SF:";
 			this.name = n;
 			break;
 		case LITURGIE:
@@ -220,21 +224,17 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 				this.name = auswahl;
 				break;
 			}
-			this.typ = "";
+			this.typ = "Talent-SF:";
 			this.name = n;
 			break;
 		case UNBEKANNT:
-			this.typ = "Unbekannt";
+			this.typ = "Unbekannt:";
 			this.name = n;
 			break;
 		}
 	}
 
-	private Kategorie getKategorie() {
-		return this.kategorie;
-	}
-
 	public enum Kategorie {
-		KAMPF, MAGISCH, ZAUBERSPEZ, GEWEIHT, LITURGIE, TALENTSPEZ, TALENT, UNBEKANNT;
+		KAMPF, MAGISCH, ZAUBERSPEZ, GEWEIHT, LITURGIE, TALENT, TALENTSPEZ, UNBEKANNT;
 	}
 }

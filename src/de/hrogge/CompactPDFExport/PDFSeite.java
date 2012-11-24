@@ -44,17 +44,17 @@ public class PDFSeite {
 
 	protected final float textMargin;
 
-	protected final PDPage page;
+	protected PDPage page;
 	protected final PDDocument doc;
 	protected PDPageContentStream stream;
 
 	public PDFSeite(PDDocument d, float lrPageMargin, float tbPageMargin,
 			float tMargin, int cy) {
-		this.page = new PDPage(PDPage.PAGE_SIZE_A4);
 		this.doc = d;
-		this.doc.addPage(page);
 		this.stream = null;
 
+		neueSeite();
+		
 		this.cellCountX = 63;
 		this.cellCountY = cy;
 
@@ -78,7 +78,7 @@ public class PDFSeite {
 	public void addLine(int x1, int y1, int x2, int y2) throws IOException {
 		stream.addLine(getX(x1), getY(y1), getX(x2), getY(y2));
 	}
-
+	
 	public void addRect(int x1, int y1, int x2, int y2) throws IOException {
 		stream.addRect(getX(x1), getY(y1), getX(x2) - getX(x1), getY(y2)
 				- getY(y1));
@@ -283,5 +283,24 @@ public class PDFSeite {
 	public float getY(int y) {
 		assert (y <= cellCountY);
 		return topEdge - (pageHeight * y) / cellCountY;
+	}
+
+	protected void neueSeite() {
+		this.page = new PDPage(PDPage.PAGE_SIZE_A4);
+		this.doc.addPage(page);
+	}
+
+	protected void titelzeile(String[] guteEigenschaften) throws IOException {
+		String[] titel = { "MU:", "KL:", "IN:", "CH:", "FF:", "GE:", "KK:",
+				"KO:" };
+	
+		for (int i = 0; i < titel.length; i++) {
+			int x = i * 8 + 1;
+	
+			drawText(PDType1Font.HELVETICA_BOLD, x + 0, x + 3, 0, 2, titel[i],
+					true);
+			drawText(PDType1Font.HELVETICA_BOLD, x + 3, x + 6, 0, 2,
+					guteEigenschaften[i], true);
+		}
 	}
 }

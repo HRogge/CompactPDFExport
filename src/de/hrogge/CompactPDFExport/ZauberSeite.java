@@ -35,45 +35,20 @@ public class ZauberSeite extends PDFSeite {
 		super(d, marginX, marginY, textMargin, 72);
 	}
 
-	public void erzeugeSeite(Daten daten, String[] guteEigenschaften,
+	public boolean erzeugeSeite(Daten daten, String[] guteEigenschaften,
 			List<PDFSonderfertigkeiten> alleSF) throws IOException {
 		List<PDFSonderfertigkeiten> sfList;
+		List<Zauber> zauberListe;
 		int sfBreite;
-
+		boolean first;
 		sfBreite = 16;
+		
+		/* Generiere Liste der magischen Sonderfertigkeiten */
 		PDFSonderfertigkeiten.Kategorie kat[] = { Kategorie.MAGISCH };
 		sfList = PDFSonderfertigkeiten.extrahiereKategorien(alleSF, kat);
 		Collections.sort(sfList);
 
-		stream = new PDPageContentStream(doc, page);
-
-		titelzeile(guteEigenschaften);
-		zauber(daten, cellCountX - sfBreite - 1);
-
-		PDFSonderfertigkeiten.zeichneTabelle(this, cellCountX - sfBreite, 2,
-				cellCountX, cellCountY, "Sonderfertigkeiten", sfList);
-
-		stream.close();
-	}
-
-	private void titelzeile(String[] guteEigenschaften) throws IOException {
-		String[] titel = { "MU:", "KL:", "IN:", "CH:", "FF:", "GE:", "KK:",
-				"KO:" };
-
-		for (int i = 0; i < titel.length; i++) {
-			int x = i * 8 + 1;
-
-			drawText(PDType1Font.HELVETICA_BOLD, x + 0, x + 3, 0, 2, titel[i],
-					true);
-			drawText(PDType1Font.HELVETICA_BOLD, x + 3, x + 6, 0, 2,
-					guteEigenschaften[i], true);
-		}
-	}
-
-	private void zauber(Daten daten, int breite) throws IOException {
-		List<Zauber> zauberListe;
-
-		/* lade Zauber */
+		/* Generiere Liste der Zauber */
 		zauberListe = new ArrayList<Zauber>();
 
 		for (Zauber z : daten.getZauberliste().getZauber()) {
@@ -90,18 +65,53 @@ public class ZauberSeite extends PDFSeite {
 		}
 		Collections.sort(zauberListe, new ZauberComparator());
 
-		/* zu viele Zauber ? */
-		while (zauberListe.size() >= cellCountY - 3) {
-			while (zauberListe.remove(zauberListe.size() - 1) instanceof ZauberSpezialisierung)
-				;
+		first = true;
+		while (zauberListe.size() > 0) {
+			if (first) {
+				first = false;
+			}
+			else {
+				neueSeite();
+			}
+			stream = new PDPageContentStream(doc, page);
+
+			titelzeile(guteEigenschaften);
+			zeichneZauber(zauberListe, cellCountX - sfBreite - 1);
+
+			PDFSonderfertigkeiten.zeichneTabelle(this, cellCountX - sfBreite, 2,
+					cellCountX, cellCountY, "Sonderfertigkeiten", sfList);
+
+			stream.close();
+		}
+		
+		return sfList.size() > 0;
+	}
+
+	private void zeichneZauber(List<Zauber> zauberListe, int breite) throws IOException {
+		List<Zauber> seitenListe;
+		int count;
+
+		seitenListe = new ArrayList<Zauber>();
+		
+		count = Math.min(zauberListe.size(), cellCountY - 3);
+		
+		/* Liste von Spezialisierungen aufgespalten? */
+		if (count < zauberListe.size()) {
+			while (zauberListe.get(count) instanceof ZauberSpezialisierung) {
+				count--;
+			}
 		}
 
+		for (int i=0; i<count; i++) {
+			seitenListe.add(zauberListe.remove(0));
+		}
+		
 		/* zu wenige Zauber ? */
-		while (zauberListe.size() < cellCountY - 3) {
-			zauberListe.add(null);
+		while (seitenListe.size() < cellCountY - 3) {
+			seitenListe.add(null);
 		}
 
-		drawTabelle(0, breite, 2, zauberListe.toArray(), new ZauberTabelle(
+		drawTabelle(0, breite, 2, seitenListe.toArray(), new ZauberTabelle(
 				cellCountX - 17));
 
 		stream.closeAndStroke();

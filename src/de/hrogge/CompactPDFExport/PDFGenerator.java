@@ -102,7 +102,8 @@ public class PDFGenerator {
 		try {
 			String pfad;
 			PDJpeg bild = null;
-
+			boolean sf_uebrig = false;
+			
 			/* PDF erzeugen */
 			doc = new PDDocument();
 
@@ -122,16 +123,26 @@ public class PDFGenerator {
 			}
 
 			FrontSeite page1 = new FrontSeite(doc, marginX, marginY, textMargin);
-			page1.erzeugeSeite(daten, bild, guteEigenschaften, sflist, tzm);
+			sf_uebrig |= page1.erzeugeSeite(daten, bild, guteEigenschaften, sflist, tzm);
 
 			TalentSeite page2 = new TalentSeite(doc, marginX, marginY,
 					textMargin);
 			page2.erzeugeSeite(daten, guteEigenschaften, sflist);
 
 			if (daten.getAngaben().isMagisch()) {
-				ZauberSeite page3 = new ZauberSeite(doc, marginX, marginY,
-						textMargin);
-				page3.erzeugeSeite(daten, guteEigenschaften, sflist);
+				if (daten.getZauberliste().getZauber().size() > 0) {
+					ZauberSeite page3 = new ZauberSeite(doc, marginX, marginY,
+							textMargin);
+					sf_uebrig |= page3.erzeugeSeite(daten, guteEigenschaften, sflist);
+				}
+				else {
+					sf_uebrig = true;
+				}
+			}
+			
+			if (sf_uebrig) {
+				SFSeite page4 = new SFSeite(doc, marginX, marginY, textMargin);
+				page4.erzeugeSeite(guteEigenschaften, sflist);
 			}
 
 			if (output == null) {
