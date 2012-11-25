@@ -41,7 +41,7 @@ public class ZauberSeite extends PDFSeite {
 		List<Zauber> zauberListe;
 		int sfBreite;
 		boolean first;
-		sfBreite = 16;
+		sfBreite = 15;
 
 		/* Generiere Liste der magischen Sonderfertigkeiten */
 		PDFSonderfertigkeiten.Kategorie kat[] = { Kategorie.MAGISCH };
@@ -112,7 +112,7 @@ public class ZauberSeite extends PDFSeite {
 		}
 
 		drawTabelle(0, breite, 2, seitenListe.toArray(), new ZauberTabelle(
-				cellCountX - 17));
+				breite));
 
 		stream.closeAndStroke();
 	}
@@ -190,7 +190,7 @@ public class ZauberSeite extends PDFSeite {
 		public ZauberTabelle(int breite) {
 			super(new String[] { null, "Probe", "ZfW", "", "Seite", "*", "SKT",
 					"Merkmal", "Repräsentation" }, new int[] { 0, 6, 2, 2, 3,
-					2, 2, 8, 6 }, 0, "Zaubername", breite);
+					2, 2, 9, 6 }, 0, "Zaubername", breite);
 		}
 
 		@Override
