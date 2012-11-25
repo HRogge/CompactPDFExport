@@ -31,7 +31,6 @@ import javax.swing.filechooser.FileFilter;
 import javax.xml.bind.*;
 
 import jaxbGenerated.datenxml.*;
-
 import org.apache.pdfbox.exceptions.COSVisitorException;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
@@ -78,22 +77,9 @@ public class PDFGenerator {
 				.getSonderfertigkeit()) {
 			if (sf.getAuswahlen() != null
 					&& sf.getAuswahlen().getAuswahl().size() > 0) {
-				for (Auswahl a : sf.getAuswahlen().getAuswahl()) {
-					for (Object o : a.getContent()) {
-						if (o instanceof Feld) {
-							Feld f = (Feld) o;
-							sflist.add(new PDFSonderfertigkeiten(sf, f
-									.getContent()));
-							break;
-						}
-						if (o instanceof JAXBElement<?>) {
-							@SuppressWarnings("rawtypes")
-							JAXBElement j = (JAXBElement) o;
-							sflist.add(new PDFSonderfertigkeiten(sf, (String) j
-									.getValue()));
-							break;
-						}
-					}
+				for (Sonderfertigkeit.Auswahlen.Auswahl a : sf.getAuswahlen()
+						.getAuswahl()) {
+					sflist.add(new PDFSonderfertigkeiten(sf, a.getName()));
 				}
 			} else {
 				sflist.add(new PDFSonderfertigkeiten(sf));

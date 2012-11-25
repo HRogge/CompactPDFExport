@@ -509,9 +509,8 @@ public class FrontSeite extends PDFSeite {
 
 			if (v.getAuswahlen() != null
 					&& v.getAuswahlen().getAuswahl().size() > 0) {
-				for (Auswahl auswahl : v.getAuswahlen().getAuswahl()) {
-					gruppe.add(new VorteilAuswahl(v, (String) auswahl
-							.getContent().get(0)));
+				for (String auswahl : v.getAuswahlen().getAuswahl()) {
+					gruppe.add(new VorteilAuswahl(v, auswahl));
 				}
 			} else {
 				gruppe.add(v);
