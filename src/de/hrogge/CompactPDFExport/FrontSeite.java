@@ -431,8 +431,8 @@ public class FrontSeite extends PDFSeite {
 
 		/* zweite Zeile (evt. doppelt) */
 		if (angaben.getRasse().length() > 20
-				|| angaben.getKultur().length() > 30
-				|| angaben.getProfession().getText().length() > 40) {
+				|| angaben.getKultur().length() > 40
+				|| angaben.getProfession().getText().length() > 60) {
 			drawText(PDType1Font.HELVETICA_BOLD, 0, 4, zeile, "Rasse:", false);
 			drawText(PDType1Font.HELVETICA, 4, 30, zeile, angaben.getRasse(),
 					true);
@@ -460,7 +460,7 @@ public class FrontSeite extends PDFSeite {
 
 			drawText(PDType1Font.HELVETICA_BOLD, 30, 36, zeile, "Profession:",
 					false);
-			drawText(PDType1Font.HELVETICA, 34, cellCountX, zeile, angaben
+			drawText(PDType1Font.HELVETICA, 36, cellCountX, zeile, angaben
 					.getProfession().getText(), true);
 			zeile++;
 		}
