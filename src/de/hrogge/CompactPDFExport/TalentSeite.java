@@ -101,7 +101,10 @@ public class TalentSeite extends PDFSeite {
 		sfList = PDFSonderfertigkeiten.extrahiereKategorien(alleSF, kat);
 		Collections.sort(sfList);
 
-		sf_offset = (PDFSonderfertigkeiten.anzeigeGroesse(sfList) + 1) / 2 + 1;
+		sf_offset = (PDFSonderfertigkeiten.anzeigeGroesse(sfList) + 1) / 2 + 2;
+		if (sf_offset < 6) {
+			sf_offset = 6;
+		}
 		uebrig = restZeilen(gruppe2, sf_offset) - 4;
 		if (uebrig < 0) {
 			sf_offset = sf_offset - (-uebrig);
