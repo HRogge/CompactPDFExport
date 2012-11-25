@@ -681,7 +681,7 @@ public class FrontSeite extends PDFSeite {
 	private class FernkampfTabelle extends AbstractTabellenZugriff {
 		public FernkampfTabelle(int breite) {
 			super(new String[] { "#", null, "AT", "TP", "Entfernung",
-					"TP/Entfernung" }, new int[] { 2, 0, 3, 5, 8, 8 }, 0,
+					"TP/Entfernung" }, new int[] { 2, 0, 3, 5, 10, 8 }, 0,
 					"Fernkampfwaffe", breite);
 		}
 
@@ -1005,10 +1005,10 @@ public class FrontSeite extends PDFSeite {
 	private class WaffenlosTabelle extends AbstractTabellenZugriff {
 		public WaffenlosTabelle(int breite, int anzahl) {
 			super(
-					new String[] { null, "TP(A)", anzahl == 1 ? "AT" : "AT#1",
-							anzahl == 1 ? "PA" : "PA#1", "AT#2", "PA#2",
-							"AT#3", "PA#3" }, new int[] { 0, 4, 3, 3, 3, 3, 3,
-							3 }, anzahl, "Waffenlos", breite);
+					new String[] { null, "TP(A)", anzahl == 1 ? "AT/PA" : "AT/PA #1",
+							"", "AT/PA #2", "", "AT/PA #3", "" },
+							new int[] { 0, 4, 3, 3, 3, 3, 3, 3 },
+							anzahl, "Waffenlos", breite);
 		}
 
 		@Override
@@ -1020,6 +1020,11 @@ public class FrontSeite extends PDFSeite {
 		@Override
 		public Color getBackgroundColor(Object o, int x) {
 			return x == 4 || x == 5 ? Color.LIGHT_GRAY : null;
+		}
+		
+		@Override
+		public int getColumnSpan(int x) {
+			return (x == 2 || x == 4 || x == 6) ? 2 : 1;
 		}
 	}
 }
