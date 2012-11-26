@@ -20,7 +20,7 @@
 		<zip destfile="CompactPDFExport.zip">
 		    <zipfileset dir="src/" prefix="src/"/>
 		    <zipfileset dir="." includes="build.xml,LICENSE.txt"/>
-		    <zipfileset dir="lib/" prefix="lib/"/>
+		    <zipfileset dir="lib/" prefix="lib/" excludes="helden5.jar"/>
 		</zip>
 	</target>
 </project>
