@@ -67,9 +67,9 @@ public class PDFGenerator {
 				.toString();
 		guteEigenschaften[5] = eigenschaften.getGewandtheit().getAkt()
 				.toString();
-		guteEigenschaften[6] = eigenschaften.getKoerperkraft().getAkt()
+		guteEigenschaften[6] = eigenschaften.getKonstitution().getAkt()
 				.toString();
-		guteEigenschaften[7] = eigenschaften.getKonstitution().getAkt()
+		guteEigenschaften[7] = eigenschaften.getKoerperkraft().getAkt()
 				.toString();
 
 		sflist = new ArrayList<PDFSonderfertigkeiten>();

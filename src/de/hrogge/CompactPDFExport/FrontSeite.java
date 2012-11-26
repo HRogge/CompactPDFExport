@@ -288,7 +288,7 @@ public class FrontSeite extends PDFSeite {
 		int height;
 
 		String[] guteEig = { "Mut", "Klugheit", "Intuition", "Charisma",
-				"Fingerfertigkeit", "Gewandheit", "Körperkraft", "Konstitution" };
+				"Fingerfertigkeit", "Gewandheit", "Konstitution", "Körperkraft" };
 
 		String[] basis = { "Lebensenergie", "Ausdauer", "Astralenergie",
 				"Karmaenergie", "Magieresistenz", "Abenteuerpunkte",
@@ -558,12 +558,12 @@ public class FrontSeite extends PDFSeite {
 		String fernkampfPatzer[][];
 
 		nahkampfPatzer = new String[6][3];
-		nahkampfPatzer[0] = new String[] { "2", "-4", "Waffe zerstört (verloren wenn BF<0)" };
-		nahkampfPatzer[1] = new String[] { "3-5", "-2", "Sturz (GE-Probe +BE zum aufstehen)" };
+		nahkampfPatzer[0] = new String[] { "2", "-4", "Waffe zerstört" };
+		nahkampfPatzer[1] = new String[] { "3-5", "-2", "Sturz" };
 		nahkampfPatzer[2] = new String[] { "6-8", "-2", "Stolpern" };
-		nahkampfPatzer[3] = new String[] { "9-10", "-2", "Waffe verloren (GE-Probe zum aufheben)" };
-		nahkampfPatzer[4] = new String[] { "11", "-3", "Eigentreffer (ohne TP/KK)" };
-		nahkampfPatzer[5] = new String[] { "12", "-4", "Schwerer Eigentreffer (TP*2 ohne TP/KK)" };
+		nahkampfPatzer[3] = new String[] { "9-10", "-2", "Waffe verloren" };
+		nahkampfPatzer[4] = new String[] { "11", "-3", "Eigentreffer" };
+		nahkampfPatzer[5] = new String[] { "12", "-4", "Schwerer Eigentreffer" };
 
 		fernkampfPatzer = new String[4][3];
 		fernkampfPatzer[0] = new String[] { "2", "-4", "Waffe zerstört" };
@@ -832,7 +832,7 @@ public class FrontSeite extends PDFSeite {
 
 	private class PatzerTabelle extends AbstractTabellenZugriff {
 		public PatzerTabelle(String titel, int breite) {
-			super(new String[] { "Wurf", "INI", null }, new int[] { 3, 2, 0 },
+			super(new String[] { "Wurf", "INI", null }, new int[] { 3, 3, 0 },
 					0, titel, breite);
 		}
 
