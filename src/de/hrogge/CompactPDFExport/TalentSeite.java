@@ -32,176 +32,238 @@ public class TalentSeite extends PDFSeite {
 			float textMargin) throws IOException {
 		super(d, marginX, marginY, textMargin, 72);
 	}
-
+	
 	public boolean erzeugeSeite(Daten daten, String[] guteEigenschaften,
 			List<PDFSonderfertigkeiten> alleSF) throws IOException {
-		List<Talent> talente;
+		List<TalentGruppe> gruppen;
 		List<PDFSonderfertigkeiten> sfList;
-
-		String kategorien1[] = { "Kampftalente", "Körperliche Talente",
-				"Gesellschaftliche Talente", "Naturtalente" };
-		String kategorien2[] = { "Wissenstalente", "Sprachen/Schriften",
-				"Handwerkstalente", "Sondertalente/Gaben" };
-
-		TalentListe gruppe1[] = new TalentListe[4];
-		TalentListe gruppe2[] = new TalentListe[4];
-		TalentListe metatalente = new TalentListe();
-
-		int sf_offset, uebrig;
-
-		for (int i = 0; i < gruppe1.length; i++) {
-			gruppe1[i] = new TalentListe();
-		}
-		for (int i = 0; i < gruppe2.length; i++) {
-			gruppe2[i] = new TalentListe();
-		}
-
-		talente = daten.getTalentliste().getTalent();
-
-		for (Talent t : talente) {
-			TalentListe liste;
-
-			if (t.getBereich().equals("Kampf")) {
-				liste = gruppe1[0];
-			} else if (t.getBereich().equals("Körperlich")) {
-				liste = gruppe1[1];
-			} else if (t.getBereich().equals("Gesellschaft")) {
-				liste = gruppe1[2];
-			} else if (t.getBereich().equals("Natur")) {
-				if (t.isMetatalent()) {
-					liste = metatalente;
-				} else {
-					liste = gruppe1[3];
+		int sfLaenge, uebrig;
+		int links;
+		
+		gruppen = new ArrayList<TalentSeite.TalentGruppe>();
+		
+		gruppen.add(new TalentGruppe("Kampftalente", "Kampf", false));
+		gruppen.add(new TalentGruppe("Körperliche Talente", "Körperlich", false));
+		gruppen.add(new TalentGruppe("Gesellschaftliche Talente", "Gesellschaft", false));
+		gruppen.add(new TalentGruppe("Naturtalente", "Natur",false));
+		gruppen.add(new TalentGruppe("Metatalente", "Natur", true));
+		gruppen.add(new TalentGruppe("Wissenstalente", "Wissen", false));
+		gruppen.add(new TalentGruppe("Sprachen/Schriften", "Sprachen", "Schriften", false));
+		gruppen.add(new TalentGruppe("Handwerkstalente", "Handwerk", false));
+		gruppen.add(new TalentGruppe("Sondertalente/Gaben", null, false));
+		
+		/* Talente in Gruppen einsortieren */
+		for (Talent t : daten.getTalentliste().getTalent()) {
+			TalentGruppe gruppe = null;
+			for (TalentGruppe g : gruppen) {
+				if (g.passendesTalent(t)) {
+					gruppe = g;
+					break;
 				}
-			} else if (t.getBereich().equals("Wissen")) {
-				liste = gruppe2[0];
-			} else if (t.getBereich().equals("Sprachen")
-					|| t.getBereich().equals("Schriften")) {
-				liste = gruppe2[1];
-			} else if (t.getBereich().equals("Handwerk")) {
-				liste = gruppe2[2];
-			} else {
-				liste = gruppe2[3];
 			}
 
-			liste.add(t);
+			assert(gruppe != null);
+
+			gruppe.add(t);
 
 			if (t.getSpezialisierungen() != null
 					&& t.getSpezialisierungen().length() > 0) {
 				for (String s : t.getSpezialisierungen().split(",")) {
 					s = s.trim();
 
-					liste.add(new TalentSpezialisierung(t, s));
+					gruppe.add(new TalentSpezialisierung(t, s));
 				}
 			}
 		}
 
-		/* kalkuliere Platz für Sonderfertigkeiten */
+		/* Extrahiere Sonderfertigkeiten */
 		PDFSonderfertigkeiten.Kategorie kat[] = { Kategorie.TALENT };
 		sfList = PDFSonderfertigkeiten.extrahiereKategorien(alleSF, kat);
 		Collections.sort(sfList);
-
-		sf_offset = (PDFSonderfertigkeiten.anzeigeGroesse(sfList) + 1) / 2 + 2;
-		if (sf_offset < 6) {
-			sf_offset = 6;
-		}
-		uebrig = restZeilen(gruppe2, sf_offset) - 4;
-		if (uebrig < 0) {
-			sf_offset = sf_offset - (-uebrig);
+		
+		/* kalkuliere Platz für Sonderfertigkeiten */
+		sfLaenge = (PDFSonderfertigkeiten.anzeigeGroesse(sfList) + 1) / 2 + 2;
+		if (sfLaenge < 6) {
+			sfLaenge = 6;
 		}
 
+		/* Sortiere Gruppen */
+		for (TalentGruppe g : gruppen) {
+			Collections.sort(g, new TalentComparator());
+		}
+		
+		/* berechne Layout */
+		links = berechneLayout(gruppen);
+		
+		uebrig = (cellCountY-2) - gesammtLaenge(gruppen, 0, links);
+		leerzeilenVerteilen(gruppen, 0, links, uebrig);
+		
+		uebrig = (cellCountY-2) - gesammtLaenge(gruppen, links, gruppen.size());
+		if (uebrig > sfLaenge + 4) {
+			uebrig -= (sfLaenge + 1);
+		}
+		else {
+			sfLaenge = 0;
+		}
+		leerzeilenVerteilen(gruppen, links, gruppen.size(), uebrig);
+		
 		stream = new PDPageContentStream(doc, page);
 
 		/* Titelzeile */
 		titelzeile(guteEigenschaften);
 
 		/* linke spalte */
-		talentSpalte(gruppe1, kategorien1, 0, halbeBreite, 6, true);
-
-		/* Metatalente */
-		zeichneTalentKategorie(metatalente, cellCountY - 6, 0, halbeBreite,
-				"Metatalente", 5);
+		talentSpalte(gruppen, 0, links, 0, halbeBreite, true);
 
 		/* rechte spalte */
-		talentSpalte(gruppe2, kategorien2, halbeBreite + 1, cellCountX,
-				sf_offset, false);
+		talentSpalte(gruppen, links, gruppen.size(), halbeBreite + 1, cellCountX,
+				false);
 
 		/* Sonderfertigkeiten */
-		PDFSonderfertigkeiten.zeichneTabelle(this, halbeBreite + 1, cellCountY
-				- sf_offset, cellCountX - (viertelBreite + 1), cellCountY,
-				"Sonderfertigkeiten (1)", sfList);
-		PDFSonderfertigkeiten.zeichneTabelle(this, cellCountX - viertelBreite,
-				cellCountY - sf_offset, cellCountX, cellCountY,
-				"Sonderfertigkeiten (2)", sfList);
+		if (sfLaenge > 0) {
+			PDFSonderfertigkeiten.zeichneTabelle(this, halbeBreite + 1, cellCountY
+					- sfLaenge, cellCountX - (viertelBreite + 1), cellCountY,
+					"Sonderfertigkeiten (1)", sfList);
+			PDFSonderfertigkeiten.zeichneTabelle(this, cellCountX - viertelBreite,
+					cellCountY - sfLaenge, cellCountX, cellCountY,
+					"Sonderfertigkeiten (2)", sfList);
+		}
+
 		stream.close();
 
-		return uebrig < 0;
+		return sfLaenge == 0 && sfList.size() > 0;
 	}
 
-	private void zeichneKampfTalentKategorie(TalentListe tl, int offset,
-			int x1, int x2, int anzahl) throws IOException {
-		Collections.sort(tl, new TalentComparator());
-
-		/* leerzeilen hinzufügen */
-		while (tl.size() < anzahl) {
-			tl.add(null);
+	private int berechneLayout(List<TalentGruppe> gruppen) {
+		TalentGruppe gruppeL, gruppeR;
+		boolean genugPlatz;
+		int unterschied, bestes;
+		int links;
+		int l1, l2;
+		
+		if (gesammtLaenge(gruppen, 0, gruppen.size()) + 3 > 2 * (cellCountY - 2)) {
+			/* okay, es ist einfach zu viel */
+			return -1;
 		}
-		drawTabelle(x1, x2, offset, tl.toArray(), new KampfTalentTabelle(x2
-				- x1));
-	}
+		
+		unterschied = Integer.MAX_VALUE;
+		bestes = -1;
+		genugPlatz = false;
+		for (links = 1; links < gruppen.size() - 1; links++) {
+			l1 = gesammtLaenge(gruppen, 0, links);
+			l2 = gesammtLaenge(gruppen, links, gruppen.size());
 
-	private void zeichneTalentKategorie(TalentListe tl, int offset, int x1,
-			int x2, String titel, int anzahl) throws IOException {
-		Collections.sort(tl, new TalentComparator());
-
-		/* leerzeilen hinzufügen */
-		while (tl.size() < anzahl) {
-			tl.add(null);
-		}
-		drawTabelle(x1, x2, offset, tl.toArray(), new TalentTabelle(titel, x2
-				- x1));
-	}
-
-	private int restZeilen(TalentListe[] talentListen, int footer) {
-		int uebrig;
-
-		uebrig = cellCountY - 2 * talentListen.length - 2 - footer;
-		;
-		for (TalentListe tl : talentListen) {
-			uebrig -= tl.size();
-		}
-		return uebrig;
-	}
-
-	private void talentSpalte(TalentListe[] talentListen, String[] kategorien,
-			int x1, int x2, int footer, boolean links) throws IOException {
-		int uebrig;
-		int offset[], leer[];
-
-		uebrig = restZeilen(talentListen, footer);
-
-		offset = new int[talentListen.length];
-		leer = new int[talentListen.length];
-
-		/* Offsets errechnen */
-		offset[0] = 2;
-		for (int k = 1; k < talentListen.length; k++) {
-			leer[k - 1] = uebrig / (talentListen.length - k + 1);
-			uebrig -= leer[k - 1];
-			offset[k] = offset[k - 1] + talentListen[k - 1].size()
-					+ leer[k - 1] + 2;
-		}
-		leer[leer.length - 1] = uebrig;
-
-		/* talentbloecke zeichnen */
-		for (int k = 0; k < talentListen.length; k++) {
-			if (links && k == 0) {
-				zeichneKampfTalentKategorie(talentListen[k], offset[k], x1, x2,
-						talentListen[k].size() + leer[k]);
-			} else {
-				zeichneTalentKategorie(talentListen[k], offset[k], x1, x2,
-						kategorien[k], talentListen[k].size() + leer[k]);
+			if (links == 5 && Math.max(l1,l2) < cellCountY-10) {
+				/* Standardlayout bevorzugen */
+				return 5;
 			}
+			
+			if (Math.abs(l1 - l2) < unterschied) {
+				bestes = links;
+				unterschied = Math.abs(l1-l2);
+				genugPlatz = Math.max(l1,l2) < cellCountY - 10;
+			}
+		}
+		
+		assert (bestes != -1);
+		
+		if (genugPlatz) {
+			return bestes;
+		}
+
+		/* nochmal auf die genauen Werte sehen */
+		l1 = gesammtLaenge(gruppen, 0, bestes);
+		l2 = gesammtLaenge(gruppen, bestes, gruppen.size());
+
+		if (l2 > l1) {
+			/* lieber immer von links nach rechts arbeiten */
+			bestes++;
+			
+			l1 = gesammtLaenge(gruppen, 0, links);
+			l2 = gesammtLaenge(gruppen, links, gruppen.size());
+		}
+		
+		/* Gruppe splitten */
+		gruppeL = gruppen.get(bestes-1);
+		gruppeL.leerzeilen = false;
+		gruppeR = new TalentGruppe(gruppeL.titel, gruppeL.bereich1, gruppeL.bereich2, gruppeL.metatalent);
+		gruppen.add(bestes, gruppeR);
+		
+		unterschied = l1 - (l2+2);
+		
+		do {
+			Talent t;
+			
+			t = gruppeL.remove(gruppeL.size()-1);
+			gruppeR.add(0, t);
+			
+			unterschied -= 2;
+		} while (unterschied > 1);
+		
+		if (gruppeR.get(0) instanceof TalentSpezialisierung) {
+			TalentSpezialisierung ts = (TalentSpezialisierung) gruppeR.get(0);
+			
+			gruppeR.add(0, ts.getSpezReferenz());
+		}
+		
+		return bestes;
+	}
+	
+	private int gesammtLaenge(List<TalentSeite.TalentGruppe> gruppen, int from, int to) {
+		int laenge = 0;
+		
+		for (int i=from; i<to; i++) {
+			if (i>from) {
+				/* Leerzeile */
+				laenge++;
+			}
+			
+			/* Titel */
+			laenge++;
+			
+			/* Einträge */
+			laenge += gruppen.get(i).size();
+			
+		}
+		return laenge;
+	}
+	
+	private void leerzeilenVerteilen(List<TalentSeite.TalentGruppe> gruppen, int from, int to, int zeilen) {
+		int i;
+		
+		i = from;
+		while (zeilen > 0) {
+			TalentGruppe g = gruppen.get(i);
+			
+			if (g.leerzeilen) {
+				gruppen.get(i).add(null);
+				zeilen--;
+			}
+			
+			i++;
+			if (i == to) {
+				i = from;
+			}
+		}
+	}
+
+	private void talentSpalte(List<TalentGruppe> gruppen, int from, int to,
+			int x1, int x2, boolean links) throws IOException {
+		int y;
+		
+		/* talentgruppen zeichnen */
+		y = 2;
+		for (int k = from; k < to; k++) {
+			TalentGruppe g = gruppen.get(k);
+			
+			if (links && k == 0) {
+				drawTabelle(x1, x2, y, g.toArray(), new KampfTalentTabelle(x2-x1));
+			}
+			else {
+				drawTabelle(x1, x2, y, g.toArray(), new TalentTabelle(g.titel, x2-x1));
+			}
+			
+			y += g.size() + 2;
 		}
 	}
 
@@ -262,16 +324,16 @@ public class TalentSeite extends PDFSeite {
 		}
 
 		@Override
-		public int getIndent(Object o, int x) {
-			return (o instanceof TalentSpezialisierung) && x == 0 ? 2 : 0;
-		}
-
-		@Override
 		public int getColumnSpan(int x) {
 			if (x == 1 || x == 3 || x == 5) {
 				return 2;
 			}
 			return 1;
+		}
+
+		@Override
+		public int getIndent(Object o, int x) {
+			return (o instanceof TalentSpezialisierung) && x == 0 ? 2 : 0;
 		}
 	}
 
@@ -313,8 +375,45 @@ public class TalentSeite extends PDFSeite {
 		}
 	}
 
-	private class TalentListe extends ArrayList<Talent> {
-		private static final long serialVersionUID = 1L;
+	private class TalentGruppe extends ArrayList<Talent> {
+		/**
+		 * random serialUID 
+		 */
+		private static final long serialVersionUID = -8391017860638548671L;
+		
+		public final String titel;
+		public final String bereich1, bereich2;
+		public final boolean metatalent;
+		public boolean leerzeilen;
+		
+		public TalentGruppe(String titel, String bereich, boolean metatalent) {
+			super();
+			this.titel = titel;
+			this.bereich1 = bereich;
+			this.bereich2 = bereich;
+			this.metatalent = metatalent;
+			this.leerzeilen = !metatalent;
+		}
+		
+		public TalentGruppe(String titel, String bereich1, String bereich2, boolean metatalent) {
+			super();
+			this.titel = titel;
+			this.bereich1 = bereich1;
+			this.bereich2 = bereich2;
+			this.metatalent = metatalent;
+			this.leerzeilen = !metatalent;
+		}
+		
+		public boolean passendesTalent(Talent t) {
+			if (this.bereich1 == null) {
+				return true;
+			}
+			if (t.isMetatalent() != this.metatalent) {
+				return false;
+			}
+			return t.getBereich().equals(this.bereich1)
+					 || t.getBereich().equals(this.bereich2);
+		}
 	}
 
 	private class TalentSpezialisierung extends Talent {
