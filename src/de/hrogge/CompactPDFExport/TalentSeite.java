@@ -24,6 +24,8 @@ import jaxbGenerated.datenxml.Talent;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.edit.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
 import de.hrogge.CompactPDFExport.PDFSonderfertigkeiten.Kategorie;
 
@@ -527,6 +529,24 @@ public class TalentSeite extends PDFSeite {
 		@Override
 		public int getColumnSpan(int x) {
 			return x == 2 ? 2 : 1;
+		}
+		
+		@Override
+		public PDFont getFont(Object o, int x) {
+			Talent t;
+			
+			if (o instanceof TalentSpezialisierung) {
+				TalentSpezialisierung ts = (TalentSpezialisierung) o;
+				t = ts.getSpezReferenz();
+			}
+			else {
+				t = (Talent) o;
+			}
+			
+			if (t.isBasis()) {
+				return PDType1Font.HELVETICA_BOLD;
+			}
+			return PDType1Font.HELVETICA;
 		}
 	}
 }
