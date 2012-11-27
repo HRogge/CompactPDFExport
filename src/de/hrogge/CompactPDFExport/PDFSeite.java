@@ -33,30 +33,29 @@ public class PDFSeite {
 	private static final float MM_TO_UNITS = 1 / (10 * 2.54f)
 			* DEFAULT_USER_SPACE_UNIT_DPI;
 
-	protected final int cellCountX, cellCountY;
+	protected final int cellCountX = 63;
 	protected final int halbeBreite, viertelBreite;
 
 	protected final float pageWidth, pageHeight;
-	protected final float cellWidth, cellHeight;
 
 	protected final float leftEdge, topEdge;
 	protected final float rightEdge, bottomEdge;
 
 	protected final float textMargin;
 
+	protected int cellCountY;
+	protected float cellWidth, cellHeight;
+
 	protected PDPage page;
 	protected final PDDocument doc;
 	protected PDPageContentStream stream;
 
 	public PDFSeite(PDDocument d, float lrPageMargin, float tbPageMargin,
-			float tMargin, int cy) {
+			float tMargin) {
 		this.doc = d;
 		this.stream = null;
 
 		neueSeite();
-
-		this.cellCountX = 63;
-		this.cellCountY = cy;
 
 		this.halbeBreite = 31;
 		this.viertelBreite = 15;
@@ -70,11 +69,17 @@ public class PDFSeite {
 
 		this.rightEdge = this.leftEdge + this.pageWidth;
 		this.topEdge = this.bottomEdge + this.pageHeight;
+	}
+
+	public void initPDFStream(int cy) throws IOException {
+		this.cellCountY = cy;
 
 		this.cellWidth = this.pageWidth / this.cellCountX;
 		this.cellHeight = this.pageHeight / this.cellCountY;
+		
+		this.stream = new PDPageContentStream(doc, page);
 	}
-
+	
 	public void addLine(int x1, int y1, int x2, int y2) throws IOException {
 		stream.addLine(getX(x1), getY(y1), getX(x2), getY(y2));
 	}

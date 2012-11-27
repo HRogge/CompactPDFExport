@@ -23,7 +23,6 @@ import jaxbGenerated.datenxml.Daten;
 import jaxbGenerated.datenxml.Talent;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.edit.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
@@ -32,15 +31,18 @@ import de.hrogge.CompactPDFExport.PDFSonderfertigkeiten.Kategorie;
 public class TalentSeite extends PDFSeite {
 	public TalentSeite(PDDocument d, float marginX, float marginY,
 			float textMargin) throws IOException {
-		super(d, marginX, marginY, textMargin, 72);
+		super(d, marginX, marginY, textMargin);
 	}
 	
 	public boolean erzeugeSeite(Daten daten, String[] guteEigenschaften,
 			List<PDFSonderfertigkeiten> alleSF) throws IOException {
 		List<TalentGruppe> gruppen;
 		List<PDFSonderfertigkeiten> sfList;
-		int sfLaenge, uebrig;
+		int sfLaenge, linksFrei, rechtsFrei;
 		int links;
+		int hoehe, beideFrei;
+		
+		hoehe = 72;
 		
 		gruppen = new ArrayList<TalentSeite.TalentGruppe>();
 		
@@ -95,21 +97,34 @@ public class TalentSeite extends PDFSeite {
 		}
 		
 		/* berechne Layout */
-		links = berechneLayout(gruppen);
+		links = berechneLayout(gruppen, hoehe);
 		
-		uebrig = (cellCountY-2) - gesammtLaenge(gruppen, 0, links);
-		leerzeilenVerteilen(gruppen, 0, links, uebrig);
+		linksFrei = (hoehe-2) - gesammtLaenge(gruppen, 0, links);
+		rechtsFrei = (hoehe-2) - gesammtLaenge(gruppen, links, gruppen.size());
 		
-		uebrig = (cellCountY-2) - gesammtLaenge(gruppen, links, gruppen.size());
-		if (uebrig > sfLaenge + 4) {
-			uebrig -= (sfLaenge + 1);
+		/* Platz für Sonderfertigkeiten? */
+		if (rechtsFrei > sfLaenge + 4) {
+			rechtsFrei -= (sfLaenge + 1);
 		}
 		else {
 			sfLaenge = 0;
 		}
-		leerzeilenVerteilen(gruppen, links, gruppen.size(), uebrig);
+
+		/* Eventuell Platz um Zeilenhöhe zu vergrößern? */
+		beideFrei = Math.min(linksFrei, rechtsFrei);
+		if (beideFrei > 8) {
+			beideFrei = Math.min(12, beideFrei - 8);
+			
+			linksFrei -= beideFrei;
+			rechtsFrei -= beideFrei;
+			hoehe -= beideFrei;
+		}
 		
-		stream = new PDPageContentStream(doc, page);
+		leerzeilenVerteilen(gruppen, 0, links, linksFrei);
+		leerzeilenVerteilen(gruppen, links, gruppen.size(), rechtsFrei);
+
+		/* Seite erzeugen */ 
+		initPDFStream(hoehe);
 
 		/* Titelzeile */
 		titelzeile(guteEigenschaften);
@@ -136,14 +151,14 @@ public class TalentSeite extends PDFSeite {
 		return sfLaenge == 0 && sfList.size() > 0;
 	}
 
-	private int berechneLayout(List<TalentGruppe> gruppen) {
+	private int berechneLayout(List<TalentGruppe> gruppen, int hoehe) {
 		TalentGruppe gruppeL, gruppeR;
 		boolean genugPlatz;
 		int unterschied, bestes;
 		int links;
 		int l1, l2;
 		
-		if (gesammtLaenge(gruppen, 0, gruppen.size()) + 3 > 2 * (cellCountY - 2)) {
+		if (gesammtLaenge(gruppen, 0, gruppen.size()) + 3 > 2 * (hoehe - 2)) {
 			/* okay, es ist einfach zu viel */
 			return -1;
 		}
@@ -155,7 +170,7 @@ public class TalentSeite extends PDFSeite {
 			l1 = gesammtLaenge(gruppen, 0, links);
 			l2 = gesammtLaenge(gruppen, links, gruppen.size());
 
-			if (links == 5 && Math.max(l1,l2) < cellCountY-10) {
+			if (links == 5 && Math.max(l1,l2) < hoehe-10) {
 				/* Standardlayout bevorzugen */
 				return 5;
 			}
@@ -163,7 +178,7 @@ public class TalentSeite extends PDFSeite {
 			if (Math.abs(l1 - l2) < unterschied) {
 				bestes = links;
 				unterschied = Math.abs(l1-l2);
-				genugPlatz = Math.max(l1,l2) < cellCountY - 10;
+				genugPlatz = Math.max(l1,l2) < hoehe - 10;
 			}
 		}
 		

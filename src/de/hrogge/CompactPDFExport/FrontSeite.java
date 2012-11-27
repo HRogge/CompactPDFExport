@@ -26,7 +26,6 @@ import java.util.List;
 import jaxbGenerated.datenxml.*;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.edit.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
 
@@ -35,7 +34,7 @@ import de.hrogge.CompactPDFExport.PDFSonderfertigkeiten.Kategorie;
 public class FrontSeite extends PDFSeite {
 	public FrontSeite(PDDocument d, float marginX, float marginY,
 			float textMargin) throws IOException {
-		super(d, marginX, marginY, textMargin, 72);
+		super(d, marginX, marginY, textMargin);
 	}
 
 	public boolean erzeugeSeite(Daten daten, PDJpeg bild,
@@ -43,7 +42,7 @@ public class FrontSeite extends PDFSeite {
 			boolean tzm) throws IOException {
 		int patzerHoehe, patzerBreite, festerHeaderHoehe;
 		int notizen, kampfBreite, blockBreite, vorNachTeileLaenge;
-		int leer, y, bloecke;
+		int leer, y, bloecke, hoehe;
 		List<Kampfset> kampfsets;
 		List<Nahkampfwaffe> nahkampf;
 		List<Fernkampfwaffe> fernkampf;
@@ -87,16 +86,21 @@ public class FrontSeite extends PDFSeite {
 
 		vorNachTeileLaenge = (Math.max(vorteile.size(), nachteile.size()) + 1) / 2;
 
-		/* Fixen Teil der PDF Seite erzeugen */
-		stream = new PDPageContentStream(doc, page);
-
-		stream.setStrokingColor(Color.BLACK);
-		stream.setLineWidth(1f);
-
-		y = charakterDaten(daten);
-		festerHeaderHoehe = basisWerte(y, daten, bild, guteEigenschaften);
+		/* Sonderfertigkeiten extrahieren */
+		PDFSonderfertigkeiten.Kategorie kat[] = { Kategorie.KAMPF,
+				Kategorie.GEWEIHT, Kategorie.LITURGIE };
+		sfListe = PDFSonderfertigkeiten.extrahiereKategorien(alleSF, kat);
+		if (sfListe.size() == 0) {
+			sfListe.addAll(alleSF);
+		}
+		Collections.sort(sfListe);
 
 		/* Layout für den Rest errechnen */
+		hoehe = 72;
+		patzerHoehe = 13;
+		blockBreite = (cellCountX - 3) / 4;
+		kampfBreite = blockBreite * 3 + 2;
+
 		do {
 			/* Variable Daten für Frontseite erfassen */
 			nahkampf = new ArrayList<Nahkampfwaffe>();
@@ -129,19 +133,7 @@ public class FrontSeite extends PDFSeite {
 				}
 			}
 
-			PDFSonderfertigkeiten.Kategorie kat[] = { Kategorie.KAMPF,
-					Kategorie.GEWEIHT, Kategorie.LITURGIE };
-			sfListe = PDFSonderfertigkeiten.extrahiereKategorien(alleSF, kat);
-			if (sfListe.size() == 0) {
-				sfListe.addAll(alleSF);
-			}
-			Collections.sort(sfListe);
-
 			/* Layout Parameter */
-			blockBreite = (cellCountX - 3) / 4;
-			kampfBreite = blockBreite * 3 + 2;
-			patzerHoehe = 13;
-
 			if (kampfsets.size() == 1) {
 				patzerBreite = (kampfBreite - 1) / 2;
 			} else {
@@ -154,8 +146,7 @@ public class FrontSeite extends PDFSeite {
 				bloecke++;
 			}
 
-			leer = cellCountY - festerHeaderHoehe
-					- (1 + vorNachTeileLaenge + 1) - patzerHoehe;
+			leer = hoehe - (5 + 1 + 9 + 1 + vorNachTeileLaenge + 1) - patzerHoehe;
 			leer -= 2 + nahkampf.size();
 			leer -= 2 + fernkampf.size();
 			leer -= 2 + ruestung.size();
@@ -179,6 +170,27 @@ public class FrontSeite extends PDFSeite {
 			}
 		} while (leer < 0);
 
+		/* Kann Seite gekürzt werden ? */
+		if (notizen > 8) {
+			int alteHoehe = hoehe;
+			
+			hoehe = Math.max(60, hoehe - (notizen-8));
+			notizen -= (alteHoehe - hoehe);
+		}
+		
+		/* Fixen Teil der PDF Seite erzeugen */
+		initPDFStream(hoehe);
+
+		stream.setStrokingColor(Color.BLACK);
+		stream.setLineWidth(1f);
+
+		y = charakterDaten(daten);
+		if (y == 4) {
+			/* korrigieren für kurzen Header */
+			leer++;
+		}
+		festerHeaderHoehe = basisWerte(y, daten, bild, guteEigenschaften);
+
 		/* Padding für Kampfblöcke und Vor/Nachteile */
 		while (leer > 0) {
 			if (leer > 0) {
@@ -195,11 +207,9 @@ public class FrontSeite extends PDFSeite {
 				ruestung.add(null);
 				leer--;
 			}
-			if (zeigeSchilde) {
-				if (leer > 0) {
-					schilde.add(null);
-					leer--;
-				}
+			if (zeigeSchilde && leer > 0) {
+				schilde.add(null);
+				leer--;
 			}
 		}
 
@@ -208,7 +218,7 @@ public class FrontSeite extends PDFSeite {
 				vorNachTeileLaenge);
 
 		PDFSonderfertigkeiten.zeichneTabelle(this, kampfBreite + 1, y,
-				cellCountX, cellCountY, "Sonderfertigkeiten", sfListe);
+				cellCountX, hoehe, "Sonderfertigkeiten", sfListe);
 
 		if (notizen > 0) {
 			drawLabeledBox(0, y, kampfBreite, y + notizen - 1, "Notizen");

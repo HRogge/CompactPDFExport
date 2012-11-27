@@ -5,20 +5,15 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.edit.PDPageContentStream;
 
 public class SFSeite extends PDFSeite {
 	public SFSeite(PDDocument d, float marginX, float marginY, float textMargin)
 			throws IOException {
-		super(d, marginX, marginY, textMargin, 72);
+		super(d, marginX, marginY, textMargin);
 	}
 
 	public boolean erzeugeSeite(String[] guteEigenschaften,
 			List<PDFSonderfertigkeiten> alleSF) throws IOException {
-
-		stream = new PDPageContentStream(doc, page);
-
-		titelzeile(guteEigenschaften);
 
 		Collections.sort(alleSF);
 
@@ -29,6 +24,15 @@ public class SFSeite extends PDFSeite {
 				i++;
 			}
 		}
+
+		if (alleSF.size()/3 > 55) {
+			initPDFStream(72);
+		}
+		else {
+			initPDFStream(60);
+		}
+		
+		titelzeile(guteEigenschaften);
 
 		filter(alleSF);
 		PDFSonderfertigkeiten.zeichneTabelle(this, 0, 2, 20, cellCountY,

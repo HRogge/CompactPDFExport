@@ -23,7 +23,6 @@ import jaxbGenerated.datenxml.Daten;
 import jaxbGenerated.datenxml.Zauber;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.edit.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
@@ -32,17 +31,16 @@ import de.hrogge.CompactPDFExport.PDFSonderfertigkeiten.Kategorie;
 public class ZauberSeite extends PDFSeite {
 	public ZauberSeite(PDDocument d, float marginX, float marginY,
 			float textMargin) throws IOException {
-		super(d, marginX, marginY, textMargin, 72);
+		super(d, marginX, marginY, textMargin);
 	}
 
 	public boolean erzeugeSeite(Daten daten, String[] guteEigenschaften,
 			List<PDFSonderfertigkeiten> alleSF) throws IOException {
 		List<PDFSonderfertigkeiten> sfList;
 		List<Zauber> zauberListe;
-		int sfBreite;
-		boolean first;
+		int sfBreite, hoehe;
 		sfBreite = 15;
-
+		
 		/* Generiere Liste der magischen Sonderfertigkeiten */
 		PDFSonderfertigkeiten.Kategorie kat[] = { Kategorie.MAGISCH };
 		sfList = PDFSonderfertigkeiten.extrahiereKategorien(alleSF, kat);
@@ -65,15 +63,20 @@ public class ZauberSeite extends PDFSeite {
 		}
 		Collections.sort(zauberListe, new ZauberComparator());
 
-		first = true;
+		/* Höhe der Seite bestimmen */ 
+		hoehe = Math.max(zauberListe.size(), sfList.size());
+		if (hoehe > 72) {
+			/* Maximum  72 */
+			hoehe = 72;
+		}
+		else if (hoehe < 72-5) {
+			/* Minimum 60, aber 5 Plätze frei */
+			hoehe = Math.max(60, hoehe + 5);
+		}
+		
 		while (zauberListe.size() > 0) {
-			if (first) {
-				first = false;
-			} else {
-				neueSeite();
-			}
-			stream = new PDPageContentStream(doc, page);
-
+			initPDFStream(hoehe);
+			
 			titelzeile(guteEigenschaften);
 			zeichneZauber(zauberListe, cellCountX - sfBreite - 1);
 
