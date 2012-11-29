@@ -80,8 +80,8 @@ public class PluginStart implements HeldenXMLDatenPlugin {
 	public ArrayList<String> getUntermenus() {
 		ArrayList<String> l = new ArrayList<String>();
 
-		l.add("Einfache Rüstungen");
-		l.add("Trefferzonen Rüstungen");
+		l.add("Keine Notizen für Zauber");
+		l.add("Notizen für Zauber");
 		return l;
 	}
 

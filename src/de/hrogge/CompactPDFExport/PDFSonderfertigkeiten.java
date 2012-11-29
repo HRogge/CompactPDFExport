@@ -2,9 +2,7 @@ package de.hrogge.CompactPDFExport;
 
 import java.awt.Color;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import jaxbGenerated.datenxml.Sonderfertigkeit;
 
@@ -30,7 +28,7 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 	}
 
 	static public List<PDFSonderfertigkeiten> extrahiereKategorien(
-			List<PDFSonderfertigkeiten> sflist, Kategorie[] k) {
+			Set<PDFSonderfertigkeiten> sflist, Kategorie[] k) {
 		List<Kategorie> katlist;
 		List<PDFSonderfertigkeiten> res;
 

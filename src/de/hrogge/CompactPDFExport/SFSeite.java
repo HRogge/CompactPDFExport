@@ -1,8 +1,7 @@
 package de.hrogge.CompactPDFExport;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 
@@ -12,20 +11,20 @@ public class SFSeite extends PDFSeite {
 		super(d, marginX, marginY, textMargin);
 	}
 
-	public boolean erzeugeSeite(String[] guteEigenschaften,
-			List<PDFSonderfertigkeiten> alleSF) throws IOException {
-
-		Collections.sort(alleSF);
-
-		for (int i = 1; i < alleSF.size(); i++) {
-			if (alleSF.get(i - 1).getKategorie() != alleSF.get(i)
+	public void erzeugeSeite(String[] guteEigenschaften,
+			SortedMap<PDFSonderfertigkeiten, Boolean> alleSF) throws IOException {
+		List<PDFSonderfertigkeiten> sfList;
+		
+		sfList = new ArrayList<PDFSonderfertigkeiten>(alleSF.keySet());
+		for (int i = 1; i < sfList.size(); i++) {
+			if (sfList.get(i - 1).getKategorie() != sfList.get(i)
 					.getKategorie()) {
-				alleSF.add(i, null);
+				sfList.add(i, null);
 				i++;
 			}
 		}
 
-		if (alleSF.size()/3 > 55) {
+		if (sfList.size()/3 > 55) {
 			initPDFStream(72);
 		}
 		else {
@@ -34,21 +33,19 @@ public class SFSeite extends PDFSeite {
 		
 		titelzeile(guteEigenschaften);
 
-		filter(alleSF);
+		filter(sfList);
 		PDFSonderfertigkeiten.zeichneTabelle(this, 0, 2, 20, cellCountY,
-				"Sonderfertigkeiten 1", alleSF);
+				"Sonderfertigkeiten 1", sfList);
 
-		filter(alleSF);
+		filter(sfList);
 		PDFSonderfertigkeiten.zeichneTabelle(this, 21, 2, 42, cellCountY,
-				"Sonderfertigkeiten 2", alleSF);
+				"Sonderfertigkeiten 2", sfList);
 
-		filter(alleSF);
+		filter(sfList);
 		PDFSonderfertigkeiten.zeichneTabelle(this, 43, 2, 63, cellCountY,
-				"Sonderfertigkeiten 3", alleSF);
+				"Sonderfertigkeiten 3", sfList);
 
 		stream.close();
-
-		return alleSF.size() > 0;
 	}
 
 	private void filter(List<PDFSonderfertigkeiten> alleSF) {

@@ -20,8 +20,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
@@ -38,11 +37,11 @@ import org.w3c.dom.Document;
 
 public class PDFGenerator {
 	public void erzeugePDF(JFrame frame, File output, Document input,
-			float marginX, float marginY, float textMargin, Boolean tzm)
+			float marginX, float marginY, float textMargin, boolean notizen)
 			throws IOException, COSVisitorException, JAXBException {
 		String[] guteEigenschaften;
-		List<PDFSonderfertigkeiten> sflist;
-
+		TreeMap<PDFSonderfertigkeiten, Boolean> sflist;
+		boolean tzm;
 		PDDocument doc = null;
 
 		/* JAXB Repräsentation des XML-Dokuments erzeugen */
@@ -53,6 +52,8 @@ public class PDFGenerator {
 		Daten daten = (Daten) jaxbUnmarshaller.unmarshal(input
 				.getDocumentElement());
 
+		tzm = daten.getConfig().getRsmodell().equals("zone");
+		
 		/*
 		 * Gute Eigenschaften auslesen, da sie seitenübergreifend gebraucht
 		 * werden
@@ -72,24 +73,23 @@ public class PDFGenerator {
 		guteEigenschaften[7] = eigenschaften.getKoerperkraft().getAkt()
 				.toString();
 
-		sflist = new ArrayList<PDFSonderfertigkeiten>();
+		sflist = new TreeMap<PDFSonderfertigkeiten, Boolean>();
 		for (Sonderfertigkeit sf : daten.getSonderfertigkeiten()
 				.getSonderfertigkeit()) {
 			if (sf.getAuswahlen() != null
 					&& sf.getAuswahlen().getAuswahl().size() > 0) {
 				for (Sonderfertigkeit.Auswahlen.Auswahl a : sf.getAuswahlen()
 						.getAuswahl()) {
-					sflist.add(new PDFSonderfertigkeiten(sf, a.getName()));
+					sflist.put(new PDFSonderfertigkeiten(sf, a.getName()), false);
 				}
 			} else {
-				sflist.add(new PDFSonderfertigkeiten(sf));
+				sflist.put(new PDFSonderfertigkeiten(sf), false);
 			}
 		}
 
 		try {
 			String pfad;
 			PDJpeg bild = null;
-			boolean sf_uebrig = false;
 
 			/* PDF erzeugen */
 			doc = new PDDocument();
@@ -110,27 +110,27 @@ public class PDFGenerator {
 			}
 
 			FrontSeite page1 = new FrontSeite(doc, marginX, marginY, textMargin);
-			sf_uebrig |= page1.erzeugeSeite(daten, bild, guteEigenschaften,
+			page1.erzeugeSeite(daten, bild, guteEigenschaften,
 					sflist, tzm);
 
 			TalentSeite page2 = new TalentSeite(doc, marginX, marginY,
 					textMargin);
-			sf_uebrig |= page2.erzeugeSeite(daten, guteEigenschaften, sflist);
+			page2.erzeugeSeite(daten, guteEigenschaften, sflist);
 
 			if (daten.getAngaben().isMagisch()) {
-				if (daten.getZauberliste().getZauber().size() > 0) {
-					ZauberSeite page3 = new ZauberSeite(doc, marginX, marginY,
-							textMargin);
-					sf_uebrig |= page3.erzeugeSeite(daten, guteEigenschaften,
-							sflist);
-				} else {
-					sf_uebrig = true;
-				}
+				ZauberSeite page3 = new ZauberSeite(doc, marginX, marginY,
+						textMargin);
+				page3.erzeugeSeite(daten, guteEigenschaften,
+							sflist, notizen);
 			}
 
-			if (sf_uebrig) {
-				SFSeite page4 = new SFSeite(doc, marginX, marginY, textMargin);
-				page4.erzeugeSeite(guteEigenschaften, sflist);
+			for (PDFSonderfertigkeiten sf : sflist.keySet()) {
+				if (!sflist.get(sf)) {
+					System.out.println(sf.getName());
+					SFSeite page4 = new SFSeite(doc, marginX, marginY, textMargin);
+					page4.erzeugeSeite(guteEigenschaften, sflist);
+					break;
+				}
 			}
 
 			if (output == null) {

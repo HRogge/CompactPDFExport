@@ -32,17 +32,19 @@ public class MainStart {
 	public static void main(String[] args) throws ParserConfigurationException,
 			SAXException, IOException {
 		File input, output;
-
-		if (args.length != 2) {
+		boolean notizen;
+		
+		if (args.length != 3) {
 			System.err
-					.println("Bitte Ein- und Ausgabedatei als Parameter angeben.");
+					.println("Bitte Ein-, Ausgabedatei, und Zauber-Notizen (true/false) als Parameter angeben.");
 			System.exit(1);
 		}
 
 		/* Steuerung über Kommandozeilenparameter */
 		input = new File(args[0]);
 		output = new File(args[1]);
-
+		notizen = Boolean.parseBoolean(args[2]);
+		
 		/* XML-Dokument des Eingabefiles erzeugen */
 		DocumentBuilderFactory documentFactory = DocumentBuilderFactory
 				.newInstance();
@@ -53,7 +55,7 @@ public class MainStart {
 
 		try {
 			PDFGenerator creator = new PDFGenerator();
-			creator.erzeugePDF(null, output, doc, 5f, 10f, 0.5f, true);
+			creator.erzeugePDF(null, output, doc, 5f, 10f, 0.5f, notizen);
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(1);

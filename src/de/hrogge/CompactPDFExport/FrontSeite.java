@@ -19,9 +19,7 @@ package de.hrogge.CompactPDFExport;
 import java.awt.Color;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import jaxbGenerated.datenxml.*;
 
@@ -37,8 +35,8 @@ public class FrontSeite extends PDFSeite {
 		super(d, marginX, marginY, textMargin);
 	}
 
-	public boolean erzeugeSeite(Daten daten, PDJpeg bild,
-			String[] guteEigenschaften, List<PDFSonderfertigkeiten> alleSF,
+	public void erzeugeSeite(Daten daten, PDJpeg bild,
+			String[] guteEigenschaften, SortedMap<PDFSonderfertigkeiten, Boolean> alleSF,
 			boolean tzm) throws IOException {
 		int patzerHoehe, patzerBreite, festerHeaderHoehe;
 		int notizen, kampfBreite, blockBreite, vorNachTeileLaenge;
@@ -89,11 +87,14 @@ public class FrontSeite extends PDFSeite {
 		/* Sonderfertigkeiten extrahieren */
 		PDFSonderfertigkeiten.Kategorie kat[] = { Kategorie.KAMPF,
 				Kategorie.GEWEIHT, Kategorie.LITURGIE };
-		sfListe = PDFSonderfertigkeiten.extrahiereKategorien(alleSF, kat);
+		sfListe = PDFSonderfertigkeiten.extrahiereKategorien(alleSF.keySet(), kat);
 		if (sfListe.size() == 0) {
-			sfListe.addAll(alleSF);
+			sfListe.addAll(alleSF.keySet());
 		}
-		Collections.sort(sfListe);
+		
+		for (PDFSonderfertigkeiten sf : sfListe) {
+			alleSF.put(sf, true);
+		}
 
 		/* Layout für den Rest errechnen */
 		hoehe = 72;
@@ -269,8 +270,6 @@ public class FrontSeite extends PDFSeite {
 				kampfBreite, y);
 
 		stream.close();
-
-		return sfListe.size() > 0;
 	}
 
 	private int basisKampfBlock(Eigenschaften eigen, int x1, int x2, int y)
