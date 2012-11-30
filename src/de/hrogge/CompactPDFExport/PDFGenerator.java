@@ -40,7 +40,7 @@ public class PDFGenerator {
 			float marginX, float marginY, float textMargin, boolean notizen)
 			throws IOException, COSVisitorException, JAXBException {
 		String[] guteEigenschaften;
-		TreeMap<PDFSonderfertigkeiten, Boolean> sflist;
+		List<PDFSonderfertigkeiten> sflist;
 		boolean tzm;
 		PDDocument doc = null;
 
@@ -73,17 +73,17 @@ public class PDFGenerator {
 		guteEigenschaften[7] = eigenschaften.getKoerperkraft().getAkt()
 				.toString();
 
-		sflist = new TreeMap<PDFSonderfertigkeiten, Boolean>();
+		sflist = new ArrayList<PDFSonderfertigkeiten>();
 		for (Sonderfertigkeit sf : daten.getSonderfertigkeiten()
 				.getSonderfertigkeit()) {
 			if (sf.getAuswahlen() != null
 					&& sf.getAuswahlen().getAuswahl().size() > 0) {
 				for (Sonderfertigkeit.Auswahlen.Auswahl a : sf.getAuswahlen()
 						.getAuswahl()) {
-					sflist.put(new PDFSonderfertigkeiten(sf, a.getName()), false);
+					sflist.add(new PDFSonderfertigkeiten(sf, a.getName()));
 				}
 			} else {
-				sflist.put(new PDFSonderfertigkeiten(sf), false);
+				sflist.add(new PDFSonderfertigkeiten(sf));
 			}
 		}
 
@@ -124,9 +124,8 @@ public class PDFGenerator {
 							sflist, notizen);
 			}
 
-			for (PDFSonderfertigkeiten sf : sflist.keySet()) {
-				if (!sflist.get(sf)) {
-					System.out.println(sf.getName());
+			for (PDFSonderfertigkeiten sf : sflist) {
+				if (!sf.istGedruckt()) {
 					SFSeite page4 = new SFSeite(doc, marginX, marginY, textMargin);
 					page4.erzeugeSeite(guteEigenschaften, sflist);
 					break;

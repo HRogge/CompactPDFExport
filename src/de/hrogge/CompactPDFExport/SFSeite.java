@@ -12,10 +12,12 @@ public class SFSeite extends PDFSeite {
 	}
 
 	public void erzeugeSeite(String[] guteEigenschaften,
-			SortedMap<PDFSonderfertigkeiten, Boolean> alleSF) throws IOException {
+			List<PDFSonderfertigkeiten> alleSF) throws IOException {
 		List<PDFSonderfertigkeiten> sfList;
-		
-		sfList = new ArrayList<PDFSonderfertigkeiten>(alleSF.keySet());
+
+		sfList = new ArrayList<PDFSonderfertigkeiten>(alleSF);
+		Collections.sort(sfList);
+
 		for (int i = 1; i < sfList.size(); i++) {
 			if (sfList.get(i - 1).getKategorie() != sfList.get(i)
 					.getKategorie()) {
@@ -24,13 +26,12 @@ public class SFSeite extends PDFSeite {
 			}
 		}
 
-		if (sfList.size()/3 > 55) {
+		if (sfList.size() / 3 > 55) {
 			initPDFStream(72);
-		}
-		else {
+		} else {
 			initPDFStream(60);
 		}
-		
+
 		titelzeile(guteEigenschaften);
 
 		filter(sfList);

@@ -36,7 +36,7 @@ public class FrontSeite extends PDFSeite {
 	}
 
 	public void erzeugeSeite(Daten daten, PDJpeg bild,
-			String[] guteEigenschaften, SortedMap<PDFSonderfertigkeiten, Boolean> alleSF,
+			String[] guteEigenschaften, List<PDFSonderfertigkeiten> alleSF,
 			boolean tzm) throws IOException {
 		int patzerHoehe, patzerBreite, festerHeaderHoehe;
 		int notizen, kampfBreite, blockBreite, vorNachTeileLaenge;
@@ -87,13 +87,13 @@ public class FrontSeite extends PDFSeite {
 		/* Sonderfertigkeiten extrahieren */
 		PDFSonderfertigkeiten.Kategorie kat[] = { Kategorie.KAMPF,
 				Kategorie.GEWEIHT, Kategorie.LITURGIE };
-		sfListe = PDFSonderfertigkeiten.extrahiereKategorien(alleSF.keySet(), kat);
+		sfListe = PDFSonderfertigkeiten.extrahiereKategorien(alleSF, kat);
 		if (sfListe.size() == 0) {
-			sfListe.addAll(alleSF.keySet());
+			sfListe = alleSF;
 		}
-		
+
 		for (PDFSonderfertigkeiten sf : sfListe) {
-			alleSF.put(sf, true);
+			sf.gedruckt();
 		}
 
 		/* Layout für den Rest errechnen */
@@ -147,7 +147,8 @@ public class FrontSeite extends PDFSeite {
 				bloecke++;
 			}
 
-			leer = hoehe - (5 + 1 + 9 + 1 + vorNachTeileLaenge + 1) - patzerHoehe;
+			leer = hoehe - (5 + 1 + 9 + 1 + vorNachTeileLaenge + 1)
+					- patzerHoehe;
 			leer -= 2 + nahkampf.size();
 			leer -= 2 + fernkampf.size();
 			leer -= 2 + ruestung.size();
@@ -174,11 +175,11 @@ public class FrontSeite extends PDFSeite {
 		/* Kann Seite gekürzt werden ? */
 		if (notizen > 8) {
 			int alteHoehe = hoehe;
-			
-			hoehe = Math.max(60, hoehe - (notizen-8));
+
+			hoehe = Math.max(60, hoehe - (notizen - 8));
 			notizen -= (alteHoehe - hoehe);
 		}
-		
+
 		/* Fixen Teil der PDF Seite erzeugen */
 		initPDFStream(hoehe);
 
@@ -1016,11 +1017,10 @@ public class FrontSeite extends PDFSeite {
 
 	private class WaffenlosTabelle extends AbstractTabellenZugriff {
 		public WaffenlosTabelle(int breite, int anzahl) {
-			super(
-					new String[] { null, "TP(A)", anzahl == 1 ? "AT/PA" : "AT/PA #1",
-							"", "AT/PA #2", "", "AT/PA #3", "" },
-							new int[] { 0, 4, 3, 3, 3, 3, 3, 3 },
-							anzahl, "Waffenlos", breite);
+			super(new String[] { null, "TP(A)",
+					anzahl == 1 ? "AT/PA" : "AT/PA #1", "", "AT/PA #2", "",
+					"AT/PA #3", "" }, new int[] { 0, 4, 3, 3, 3, 3, 3, 3 },
+					anzahl, "Waffenlos", breite);
 		}
 
 		@Override
@@ -1033,7 +1033,7 @@ public class FrontSeite extends PDFSeite {
 		public Color getBackgroundColor(Object o, int x) {
 			return x == 4 || x == 5 ? Color.LIGHT_GRAY : null;
 		}
-		
+
 		@Override
 		public int getColumnSpan(int x) {
 			return (x == 2 || x == 4 || x == 6) ? 2 : 1;

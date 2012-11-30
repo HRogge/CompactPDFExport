@@ -28,7 +28,7 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 	}
 
 	static public List<PDFSonderfertigkeiten> extrahiereKategorien(
-			Set<PDFSonderfertigkeiten> sflist, Kategorie[] k) {
+			List<PDFSonderfertigkeiten> sflist, Kategorie[] k) {
 		List<Kategorie> katlist;
 		List<PDFSonderfertigkeiten> res;
 
@@ -89,15 +89,18 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 	private Kategorie kategorie;
 	private String typ;
 	private String name;;
+	private boolean _gedruckt;
 
 	public PDFSonderfertigkeiten(Sonderfertigkeit sf) {
 		this.kategorie = berechneKategorie(sf);
 		berechneTypName(sf, this.kategorie, null);
+		_gedruckt = false;
 	}
 
 	public PDFSonderfertigkeiten(Sonderfertigkeit sf, String auswahl) {
 		this.kategorie = berechneKategorie(sf);
 		berechneTypName(sf, this.kategorie, auswahl);
+		_gedruckt = false;
 	}
 
 	@Override
@@ -126,6 +129,10 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 		return this.getName().compareTo(o2.getName());
 	}
 
+	public void gedruckt() {
+		_gedruckt = true;
+	}
+
 	public Kategorie getKategorie() {
 		return this.kategorie;
 	}
@@ -136,6 +143,10 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 
 	public String getTyp() {
 		return this.typ;
+	}
+
+	public boolean istGedruckt() {
+		return _gedruckt;
 	}
 
 	private Kategorie berechneKategorie(Sonderfertigkeit sf) {

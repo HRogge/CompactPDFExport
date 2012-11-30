@@ -35,8 +35,7 @@ public class TalentSeite extends PDFSeite {
 	}
 
 	public void erzeugeSeite(Daten daten, String[] guteEigenschaften,
-			SortedMap<PDFSonderfertigkeiten, Boolean> alleSF)
-			throws IOException {
+			List<PDFSonderfertigkeiten> alleSF) throws IOException {
 		List<TalentGruppe> gruppen;
 		List<PDFSonderfertigkeiten> sfListe;
 		int sfLaenge, linksFrei, rechtsFrei;
@@ -85,17 +84,16 @@ public class TalentSeite extends PDFSeite {
 
 		/* Extrahiere Sonderfertigkeiten */
 		PDFSonderfertigkeiten.Kategorie kat1[] = { Kategorie.TALENT };
-		sfListe = PDFSonderfertigkeiten.extrahiereKategorien(alleSF.keySet(),
-				kat1);
+		sfListe = PDFSonderfertigkeiten.extrahiereKategorien(alleSF, kat1);
 		for (PDFSonderfertigkeiten sf : sfListe) {
-			alleSF.put(sf, true);
+			sf.gedruckt();
 		}
 
 		/* diese Spezialisierungen werden direkt in der Talentliste angezeigt */
 		PDFSonderfertigkeiten.Kategorie kat2[] = { Kategorie.TALENTSPEZ };
 		for (PDFSonderfertigkeiten sf : PDFSonderfertigkeiten
-				.extrahiereKategorien(alleSF.keySet(), kat2)) {
-			alleSF.put(sf, true);
+				.extrahiereKategorien(alleSF, kat2)) {
+			sf.gedruckt();
 		}
 
 		/* kalkuliere Platz für Sonderfertigkeiten */
