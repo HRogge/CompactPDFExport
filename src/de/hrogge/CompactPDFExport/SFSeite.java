@@ -13,20 +13,20 @@ public class SFSeite extends PDFSeite {
 
 	public void erzeugeSeite(String[] guteEigenschaften,
 			List<PDFSonderfertigkeiten> alleSF) throws IOException {
-		List<PDFSonderfertigkeiten> sfList;
+		List<PDFSonderfertigkeiten> sfListe;
 
-		sfList = new ArrayList<PDFSonderfertigkeiten>(alleSF);
-		Collections.sort(sfList);
+		sfListe = new ArrayList<PDFSonderfertigkeiten>(alleSF);
+		Collections.sort(sfListe);
 
-		for (int i = 1; i < sfList.size(); i++) {
-			if (sfList.get(i - 1).getKategorie() != sfList.get(i)
+		for (int i = 1; i < sfListe.size(); i++) {
+			if (sfListe.get(i - 1).getKategorie() != sfListe.get(i)
 					.getKategorie()) {
-				sfList.add(i, null);
+				sfListe.add(i, null);
 				i++;
 			}
 		}
 
-		if (sfList.size() / 3 > 55) {
+		if (sfListe.size() / 3 > 55) {
 			initPDFStream(72);
 		} else {
 			initPDFStream(60);
@@ -34,17 +34,17 @@ public class SFSeite extends PDFSeite {
 
 		titelzeile(guteEigenschaften);
 
-		filter(sfList);
+		filter(sfListe);
 		PDFSonderfertigkeiten.zeichneTabelle(this, 0, 2, 20, cellCountY,
-				"Sonderfertigkeiten 1", sfList);
+				"Sonderfertigkeiten 1", sfListe);
 
-		filter(sfList);
+		filter(sfListe);
 		PDFSonderfertigkeiten.zeichneTabelle(this, 21, 2, 42, cellCountY,
-				"Sonderfertigkeiten 2", sfList);
+				"Sonderfertigkeiten 2", sfListe);
 
-		filter(sfList);
+		filter(sfListe);
 		PDFSonderfertigkeiten.zeichneTabelle(this, 43, 2, 63, cellCountY,
-				"Sonderfertigkeiten 3", sfList);
+				"Sonderfertigkeiten 3", sfListe);
 
 		stream.close();
 	}
