@@ -91,6 +91,7 @@ public class FrontSeite extends PDFSeite {
 		if (sfListe.size() == 0) {
 			sfListe = alleSF;
 		}
+		Collections.sort(sfListe);
 
 		for (PDFSonderfertigkeiten sf : sfListe) {
 			sf.gedruckt();

@@ -51,7 +51,9 @@ public class TalentSeite extends PDFSeite {
 		gruppen.add(new TalentGruppe("Gesellschaftliche Talente",
 				"Gesellschaft", false));
 		gruppen.add(new TalentGruppe("Naturtalente", "Natur", false));
-		gruppen.add(new TalentGruppe("Metatalente", "Natur", true));
+		if (daten.getConfig().isMetatalente()) {
+			gruppen.add(new TalentGruppe("Metatalente", "Natur", true));
+		}
 		gruppen.add(new TalentGruppe("Wissenstalente", "Wissen", false));
 		gruppen.add(new TalentGruppe("Sprachen/Schriften", "Sprachen",
 				"Schriften", false));
@@ -108,7 +110,8 @@ public class TalentSeite extends PDFSeite {
 		}
 
 		/* berechne Layout */
-		links = berechneLayout(gruppen, hoehe);
+		links = berechneLayout(gruppen, hoehe, daten.getConfig()
+				.isMetatalente());
 
 		linksFrei = (hoehe - 2) - gesammtLaenge(gruppen, 0, links);
 		rechtsFrei = (hoehe - 2)
@@ -160,61 +163,69 @@ public class TalentSeite extends PDFSeite {
 		stream.close();
 	}
 
-	private int berechneLayout(List<TalentGruppe> gruppen, int hoehe) {
+	private int berechneLayout(List<TalentGruppe> gruppen, int hoehe,
+			boolean metatalente) {
 		TalentGruppe gruppeL, gruppeR;
 		boolean genugPlatz;
-		int unterschied, bestes;
-		int links;
+		int unterschied, besteVerteilung;
+		int linkeBloecke;
 		int l1, l2;
+		int stdLayout;
 
 		if (gesammtLaenge(gruppen, 0, gruppen.size()) + 3 > 2 * (hoehe - 2)) {
 			/* okay, es ist einfach zu viel */
 			return -1;
 		}
 
-		unterschied = Integer.MAX_VALUE;
-		bestes = -1;
-		genugPlatz = false;
-		for (links = 1; links < gruppen.size() - 1; links++) {
-			l1 = gesammtLaenge(gruppen, 0, links);
-			l2 = gesammtLaenge(gruppen, links, gruppen.size());
+		if (metatalente) {
+			stdLayout = 5;
+		} else {
+			stdLayout = 4;
+		}
 
-			if (links == 5 && Math.max(l1, l2) < hoehe - 10) {
+		unterschied = Integer.MAX_VALUE;
+		besteVerteilung = -1;
+		genugPlatz = false;
+		for (linkeBloecke = 1; linkeBloecke < gruppen.size() - 1; linkeBloecke++) {
+			l1 = gesammtLaenge(gruppen, 0, linkeBloecke);
+			l2 = gesammtLaenge(gruppen, linkeBloecke, gruppen.size());
+
+			if (linkeBloecke == stdLayout && Math.max(l1, l2) < hoehe - 10) {
 				/* Standardlayout bevorzugen */
-				return 5;
+				return linkeBloecke;
 			}
 
 			if (Math.abs(l1 - l2) < unterschied) {
-				bestes = links;
+				besteVerteilung = linkeBloecke;
 				unterschied = Math.abs(l1 - l2);
 				genugPlatz = Math.max(l1, l2) < hoehe - 10;
 			}
 		}
 
-		assert (bestes != -1);
+		assert (besteVerteilung != -1);
 
 		if (genugPlatz) {
-			return bestes;
+			return besteVerteilung;
 		}
 
 		/* nochmal auf die genauen Werte sehen */
-		l1 = gesammtLaenge(gruppen, 0, bestes);
-		l2 = gesammtLaenge(gruppen, bestes, gruppen.size());
+		l1 = gesammtLaenge(gruppen, 0, besteVerteilung);
+		l2 = gesammtLaenge(gruppen, besteVerteilung, gruppen.size());
 
 		if (l2 > l1) {
 			/* lieber immer von links nach rechts arbeiten */
-			bestes++;
+			besteVerteilung++;
 
-			l1 = gesammtLaenge(gruppen, 0, links);
-			l2 = gesammtLaenge(gruppen, links, gruppen.size());
+			l1 = gesammtLaenge(gruppen, 0, linkeBloecke);
+			l2 = gesammtLaenge(gruppen, linkeBloecke, gruppen.size());
 		}
 
 		/* Gruppe splitten */
-		gruppeL = gruppen.get(bestes - 1);
+		gruppeL = gruppen.get(besteVerteilung - 1);
 		gruppeL.leerzeilen = false;
 		gruppeR = new TalentGruppe(gruppeL.titel, gruppeL.bereich1,
 				gruppeL.bereich2, gruppeL.metatalent);
-		gruppen.add(bestes, gruppeR);
+		gruppen.add(besteVerteilung, gruppeR);
 
 		unterschied = l1 - (l2 + 2);
 
@@ -233,7 +244,7 @@ public class TalentSeite extends PDFSeite {
 			gruppeR.add(0, ts.getSpezReferenz());
 		}
 
-		return bestes;
+		return besteVerteilung;
 	}
 
 	private int gesammtLaenge(List<TalentSeite.TalentGruppe> gruppen, int from,

@@ -204,44 +204,6 @@ public class ZauberSeite extends PDFSeite {
 		}
 	}
 
-	private class ZauberTabelleNotizen extends ZauberTabelle {
-		public ZauberTabelleNotizen() {
-			super(new String[] { null, "Probe", "MR", "ZfW", "", "Seite", "ZD",
-					"RW", "AsP", "WD", "SKT", "Merkmal", "Repräs.", },
-					new int[] { 0, 6, 3, 2, 2, 3, 4, 4, 4, 4, 2, 9, 4 },
-					cellCountX);
-		}
-
-		@Override
-		public String get(Object obj, int x) {
-			Zauber z;
-
-			if (obj instanceof ZauberSpezialisierung) {
-				return super.get(obj, x);
-			}
-			if (x < 6) {
-				return super.get(obj, x);
-			}
-			if (x > 9) {
-				return super.get(obj, x - 4);
-			}
-
-			z = (Zauber) obj;
-
-			switch (x) {
-			case 6:
-				return z.getZauberdauer();
-			case 7:
-				return z.getReichweite();
-			case 8:
-				return z.getKosten();
-			case 9:
-				return z.getWirkungsdauer();
-			}
-			return "";
-		}
-	}
-
 	private class ZauberTabelle extends AbstractTabellenZugriff {
 		public ZauberTabelle(int breite) {
 			super(new String[] { null, "Probe", "MR", "ZfW", "", "Seite",
@@ -292,6 +254,11 @@ public class ZauberSeite extends PDFSeite {
 		}
 
 		@Override
+		public int getColumnSpan(int x) {
+			return x == 3 ? 2 : 1;
+		}
+
+		@Override
 		public PDFont getFont(Object o, int x) {
 			Zauber z = (Zauber) o;
 			if (z instanceof ZauberSpezialisierung) {
@@ -312,10 +279,43 @@ public class ZauberSeite extends PDFSeite {
 			}
 			return 0;
 		}
+	}
+
+	private class ZauberTabelleNotizen extends ZauberTabelle {
+		public ZauberTabelleNotizen() {
+			super(new String[] { null, "Probe", "MR", "ZfW", "", "Seite", "ZD",
+					"RW", "AsP", "WD", "SKT", "Merkmal", "Repräs.", },
+					new int[] { 0, 6, 3, 2, 2, 3, 4, 4, 4, 4, 2, 9, 4 },
+					cellCountX);
+		}
 
 		@Override
-		public int getColumnSpan(int x) {
-			return x == 3 ? 2 : 1;
+		public String get(Object obj, int x) {
+			Zauber z;
+
+			if (obj instanceof ZauberSpezialisierung) {
+				return super.get(obj, x);
+			}
+			if (x < 6) {
+				return super.get(obj, x);
+			}
+			if (x > 9) {
+				return super.get(obj, x - 4);
+			}
+
+			z = (Zauber) obj;
+
+			switch (x) {
+			case 6:
+				return z.getZauberdauer();
+			case 7:
+				return z.getReichweite();
+			case 8:
+				return z.getKosten();
+			case 9:
+				return z.getWirkungsdauer();
+			}
+			return "";
 		}
 	}
 }
