@@ -151,7 +151,7 @@ public class PDFSeite {
 				}
 
 				for (i = 0; i < table.getColumnCount(); i++) {
-					if (table.getBackgroundColor(objects[j], i) == null) {
+					if (table.getBackgroundColor(objects[j], i) == null || table.getWidth(i) == 0) {
 						continue;
 					}
 
@@ -183,7 +183,9 @@ public class PDFSeite {
 			if (colX[i + 1] == x2) {
 				break;
 			}
-
+			if (table.getWidth(i) == 0) {
+				continue;
+			}
 			if (span > 1) {
 				stream.setLineWidth(0.1f);
 				addLine(colX[i + 1], y1 + 1, colX[i + 1], y1 + objects.length
@@ -210,10 +212,12 @@ public class PDFSeite {
 				for (i = 0; i < table.getColumnCount(); i++) {
 					x = colX[i + 1];
 
-					drawText(table.getFont(objects[j], i),
-							colX[i] + table.getIndent(objects[j], i), x, y1 + j
-									+ 1, table.get(objects[j], i),
-							table.getCentered(objects[j], i));
+					if (table.getWidth(i) > 0) {
+						drawText(table.getFont(objects[j], i),
+								colX[i] + table.getIndent(objects[j], i), x, y1 + j
+								+ 1, table.get(objects[j], i),
+								table.getCentered(objects[j], i));
+					}
 				}
 			}
 		}

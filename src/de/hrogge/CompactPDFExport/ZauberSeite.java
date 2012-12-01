@@ -39,7 +39,11 @@ public class ZauberSeite extends PDFSeite {
 			throws IOException {
 		List<PDFSonderfertigkeiten> sfListe;
 		List<Zauber> zauberListe;
-		int sfBreite, hoehe;
+		int zauberBreite, sfBreite, hoehe;
+		int zauberSpalten[];
+		boolean mehrereRepr;
+		String repr;
+		
 		sfBreite = 15;
 
 		/* Generiere Liste der magischen Sonderfertigkeiten */
@@ -59,10 +63,18 @@ public class ZauberSeite extends PDFSeite {
 
 		/* Generiere Liste der Zauber */
 		zauberListe = new ArrayList<Zauber>();
-
+		mehrereRepr = false;
+		repr = null;
+		
 		for (Zauber z : daten.getZauberliste().getZauber()) {
 			zauberListe.add(z);
 
+			/* Prüfe auf mehrere Repräsentationen */
+			if (repr != null) {
+				mehrereRepr |= !repr.equals(z.getRepräsentation());
+			}
+			repr = z.getRepräsentation();
+			
 			if (z.getSpezialisierungen() != null
 					&& z.getSpezialisierungen().length() > 0) {
 				for (String s : z.getSpezialisierungen().split(",")) {
@@ -84,18 +96,33 @@ public class ZauberSeite extends PDFSeite {
 			hoehe = Math.max(60, hoehe + 5);
 		}
 
+		if (notizen) {
+			zauberBreite = cellCountX;
+			
+			if (mehrereRepr) {
+				zauberSpalten = new int[] { 0, 6, 3, 2, 2, 3, 4, 4, 4, 4, 2, 9, 4 };
+			}
+			else {
+				zauberSpalten = new int[] { 0, 6, 3, 2, 2, 3, 5, 5, 5, 5, 2, 9, 0 };
+			}
+		} else {
+			zauberBreite = cellCountX - sfBreite - 1;
+			
+			if (mehrereRepr) {
+				zauberSpalten = new int[] { 0, 6, 3, 2, 2, 3, 0, 0, 0, 0, 2, 9, 4 };
+			}
+			else {
+				zauberSpalten = new int[] { 0, 6, 4, 2, 2, 3, 0, 0, 0, 0, 2, 10, 0 };
+			}
+		}
+		
 		while (zauberListe.size() > 0) {
 			initPDFStream(hoehe);
 
 			titelzeile(guteEigenschaften);
-
-			if (notizen) {
-				zeichneZauber(zauberListe, cellCountX,
-						new ZauberTabelleNotizen());
-			} else {
-				zeichneZauber(zauberListe, cellCountX - sfBreite - 1,
-						new ZauberTabelle(cellCountX - sfBreite - 1));
-
+			zeichneZauber(zauberListe, zauberBreite, zauberSpalten);
+			
+			if (!notizen) {
 				PDFSonderfertigkeiten.zeichneTabelle(this, cellCountX
 						- sfBreite, 2, cellCountX, cellCountY,
 						"Sonderfertigkeiten", sfListe);
@@ -106,7 +133,7 @@ public class ZauberSeite extends PDFSeite {
 	}
 
 	private void zeichneZauber(List<Zauber> zauberListe, int breite,
-			AbstractTabellenZugriff tabelle) throws IOException {
+			int [] spaltenBreite) throws IOException {
 		List<Zauber> seitenListe;
 		int count;
 
@@ -130,7 +157,8 @@ public class ZauberSeite extends PDFSeite {
 			seitenListe.add(null);
 		}
 
-		drawTabelle(0, breite, 2, seitenListe.toArray(), tabelle);
+		drawTabelle(0, breite, 2, seitenListe.toArray(), new ZauberTabelle(
+				spaltenBreite, breite));
 
 		stream.closeAndStroke();
 	}
@@ -205,15 +233,10 @@ public class ZauberSeite extends PDFSeite {
 	}
 
 	private class ZauberTabelle extends AbstractTabellenZugriff {
-		public ZauberTabelle(int breite) {
-			super(new String[] { null, "Probe", "MR", "ZfW", "", "Seite",
-					"SKT", "Merkmal", "Repräs." }, new int[] { 0, 6, 3, 2, 2,
-					3, 2, 9, 4 }, 0, "Zaubername", breite);
-		}
-
-		protected ZauberTabelle(String[] spaltenTitel, int[] spaltenBreite,
-				int breite) {
-			super(spaltenTitel, spaltenBreite, 0, "Zaubername", breite);
+		public ZauberTabelle(int[] spaltenBreite, int breite) {
+			super(new String[] { null, "Probe", "MR", "ZfW", "", "Seite", "ZD",
+					"RW", "AsP", "WD", "SKT", "Merkmal", "Repräs.", }, spaltenBreite,
+					0, "Zaubername", breite);
 		}
 
 		@Override
@@ -244,11 +267,20 @@ public class ZauberSeite extends PDFSeite {
 			case 5:
 				return z.getQuelle().getSeite().toString();
 			case 6:
-				return z.getLernkomplexität();
+				return z.getZauberdauer();
 			case 7:
-				return z.getMerkmale();
+				return z.getReichweite();
 			case 8:
+				return z.getKosten();
+			case 9:
+				return z.getWirkungsdauer();
+			case 10:
+				return z.getLernkomplexität();
+			case 11:
+				return z.getMerkmale();
+			case 12:
 				return z.getRepräsentation();
+
 			}
 			return "";
 		}
@@ -278,44 +310,6 @@ public class ZauberSeite extends PDFSeite {
 				return 2;
 			}
 			return 0;
-		}
-	}
-
-	private class ZauberTabelleNotizen extends ZauberTabelle {
-		public ZauberTabelleNotizen() {
-			super(new String[] { null, "Probe", "MR", "ZfW", "", "Seite", "ZD",
-					"RW", "AsP", "WD", "SKT", "Merkmal", "Repräs.", },
-					new int[] { 0, 6, 3, 2, 2, 3, 4, 4, 4, 4, 2, 9, 4 },
-					cellCountX);
-		}
-
-		@Override
-		public String get(Object obj, int x) {
-			Zauber z;
-
-			if (obj instanceof ZauberSpezialisierung) {
-				return super.get(obj, x);
-			}
-			if (x < 6) {
-				return super.get(obj, x);
-			}
-			if (x > 9) {
-				return super.get(obj, x - 4);
-			}
-
-			z = (Zauber) obj;
-
-			switch (x) {
-			case 6:
-				return z.getZauberdauer();
-			case 7:
-				return z.getReichweite();
-			case 8:
-				return z.getKosten();
-			case 9:
-				return z.getWirkungsdauer();
-			}
-			return "";
 		}
 	}
 }

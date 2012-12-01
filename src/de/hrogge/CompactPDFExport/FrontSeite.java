@@ -89,7 +89,7 @@ public class FrontSeite extends PDFSeite {
 				Kategorie.GEWEIHT, Kategorie.LITURGIE };
 		sfListe = PDFSonderfertigkeiten.extrahiereKategorien(alleSF, kat);
 		if (sfListe.size() == 0) {
-			sfListe = alleSF;
+			sfListe.addAll(alleSF);
 		}
 		Collections.sort(sfListe);
 
