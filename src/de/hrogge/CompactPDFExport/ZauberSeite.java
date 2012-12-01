@@ -49,7 +49,8 @@ public class ZauberSeite extends PDFSeite {
 		/* Generiere Liste der magischen Sonderfertigkeiten */
 		PDFSonderfertigkeiten.Kategorie kat1[] = { Kategorie.MAGISCH };
 		sfListe = PDFSonderfertigkeiten.extrahiereKategorien(alleSF, kat1);
-
+		Collections.sort(sfListe);
+		
 		for (PDFSonderfertigkeiten sf : sfListe) {
 			sf.gedruckt();
 		}
