@@ -864,28 +864,12 @@ public class FrontSeite extends PDFSeite {
 		@Override
 		public String get(Object obj, int x) {
 			Kampfset set = (Kampfset) obj;
-			String name, name2;
 
 			switch (x) {
 			case 0:
 				return set.getNr().toString();
 			case 1:
-				name = "";
-
-				for (Ruestung r : set.getRuestungen().getRuestung()) {
-					if (name.length() > 0) {
-						name2 = "/";
-					} else {
-						name2 = "";
-					}
-					name2 = name2 + r.getName();
-
-					if (name.length() + name2.length() > 60) {
-						return name + "/...";
-					}
-					name = name + name2;
-				}
-				return name;
+				return erzeugeName(set);
 			case 2:
 				if (!tzm) {
 					return filter(set.getRuestungeinfach().getGesamt());
@@ -916,6 +900,109 @@ public class FrontSeite extends PDFSeite {
 			return "";
 		}
 
+		private String erzeugeName(Kampfset set) {
+			String text1, text2;
+			
+			List<String> l = new ArrayList<String>();
+			List<Integer> prefix = new ArrayList<Integer>();
+			List<Integer> suffix = new ArrayList<Integer>();
+
+			Collections.sort(l);
+			
+			for (Ruestung r : set.getRuestungen().getRuestung()) {
+				String txt = r.getName();
+				
+				txt = txt.replace("(", "");
+				txt = txt.replace(")", "");
+				txt = txt.replace(",", "");
+				txt = txt.replace("links", "L");
+				txt = txt.replace("rechts", "R");
+				l.add(txt);
+			}
+			
+			for (int i=1; i<l.size(); i++) {
+				prefix.add(gemeinsamerPraefix(l.get(i-1), l.get(i)));
+				suffix.add(gemeinsamerSuffix(l.get(i-1), l.get(i)));
+			}
+			
+			while (true) {
+				int left = 0, max = 0;
+				int pr, su;
+				
+				for (int i=0; i<prefix.size(); i++) {
+					int gleich = prefix.get(i) + suffix.get(i);
+					
+					if (gleich > max) {
+						left = i;
+						max = gleich;
+					}
+				}
+				
+				if (max < 6) {
+					break;
+				}
+				
+				pr = prefix.get(left);
+				su = suffix.get(left);
+					
+				text1 = l.get(left);
+				text2 = l.get(left+1);
+				
+				/* entferne überflüssige Daten */
+				l.remove(left+1);
+				prefix.remove(left+1);
+				suffix.remove(left+1);
+
+				prefix.set(left, 0);
+				suffix.set(left, 0);
+				if (left > 0) {
+					prefix.set(left-1, 0);
+					suffix.set(left-1, 0);
+				}
+				
+				/* schreibe neuer Text */
+				l.set(left, text1.substring(0, text1.length()-su) + "/" + text2.substring(pr));
+			}
+			
+			text1 = "";
+			for (String t : l) {
+				text1 = text1 + ";" + t;
+			}
+			return text1.substring(1);
+		}
+
+		private int gemeinsamerPraefix(String a, String b) {
+			String[] aArray, bArray;
+			int len;
+			
+			aArray = a.split(" ");
+			bArray = b.split(" ");
+			len = 0;
+			for (int i=0; i<aArray.length && i<bArray.length; i++) {
+				if (!aArray[i].equals(bArray[i])) {
+					break;
+				}
+				len += aArray[i].length() + 1;
+			}
+			return len;
+		}
+		
+		private int gemeinsamerSuffix(String a, String b) {
+			String[] aArray, bArray;
+			int len;
+			
+			aArray = a.split(" ");
+			bArray = b.split(" ");
+			len = 0;
+			for (int i=0; i<aArray.length && i<bArray.length; i++) {
+				if (!aArray[aArray.length-1-i].equals(bArray[bArray.length-1-i])) {
+					break;
+				}
+				len += aArray[aArray.length-1-i].length() + 1;
+			}
+			return len;
+		}
+		
 		@Override
 		public Color getBackgroundColor(Object o, int x) {
 			Kampfset waffe = (Kampfset) o;
