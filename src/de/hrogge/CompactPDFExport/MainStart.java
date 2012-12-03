@@ -20,6 +20,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -27,6 +29,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import de.hrogge.CompactPDFExport.gui.KonfigurationsPanel;
 
 public class MainStart {
 	public static void main(String[] args) throws ParserConfigurationException,
@@ -53,6 +57,8 @@ public class MainStart {
 		FileReader reader = new FileReader(input);
 		Document doc = documentBuilder.parse(new InputSource(reader));
 
+		JOptionPane.showOptionDialog(null, new KonfigurationsPanel(), "Einstellungen für kompakten Heldenbogen", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, 0);
+		
 		try {
 			PDFGenerator creator = new PDFGenerator();
 			creator.erzeugePDF(null, output, doc, 5f, 10f, 0.5f, notizen);
