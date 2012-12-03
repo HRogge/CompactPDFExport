@@ -93,10 +93,6 @@ public class FrontSeite extends PDFSeite {
 		}
 		Collections.sort(sfListe);
 
-		for (PDFSonderfertigkeiten sf : sfListe) {
-			sf.gedruckt();
-		}
-
 		/* Layout für den Rest errechnen */
 		hoehe = 72;
 		patzerHoehe = 13;
@@ -885,8 +881,8 @@ public class FrontSeite extends PDFSeite {
 					}
 					name2 = name2 + r.getName();
 
-					if (name.length() + name2.length() > 45) {
-						return name.length() + "/...";
+					if (name.length() + name2.length() > 60) {
+						return name + "/...";
 					}
 					name = name + name2;
 				}

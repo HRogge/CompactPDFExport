@@ -87,9 +87,6 @@ public class TalentSeite extends PDFSeite {
 		/* Extrahiere Sonderfertigkeiten */
 		PDFSonderfertigkeiten.Kategorie kat1[] = { Kategorie.TALENT };
 		sfListe = PDFSonderfertigkeiten.extrahiereKategorien(alleSF, kat1);
-		for (PDFSonderfertigkeiten sf : sfListe) {
-			sf.gedruckt();
-		}
 
 		/* diese Spezialisierungen werden direkt in der Talentliste angezeigt */
 		PDFSonderfertigkeiten.Kategorie kat2[] = { Kategorie.TALENTSPEZ };
