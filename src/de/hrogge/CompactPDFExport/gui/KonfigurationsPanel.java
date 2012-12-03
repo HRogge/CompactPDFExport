@@ -2,10 +2,27 @@ package de.hrogge.CompactPDFExport.gui;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
+import java.io.*;
+import java.util.Properties;
 
 import javax.swing.*;
 
 public class KonfigurationsPanel extends JPanel {
+	private static final String ZAUBER_HAUSZAUBEROBEN = "zauber.hauszauberoben";
+	private static final String ZAUBER_NOTIZEN_ANMERKUNGEN = "zauber.notizen.anmerkungen";
+	private static final String ZAUBER_NOTIZEN_WERTE = "zauber.notizen.werte";
+	private static final String ZAUBER_NOTIZEN_KEINE = "zauber.notizen.keine";
+	private static final String ZAUBER_BEIBEDARF_REPRAESENTATION = "zauber.beibedarf.repraesentation";
+	private static final String TALENT_BASISTALENTE = "talent.basistalente";
+	private static final String TALENT_BEIBEDARF_LEERESPALTEN = "talent.beibedarf.leerespalten";
+	private static final String FRONT_MEHRSF = "front.mehrsf";
+	private static final String FRONT_ANFANGSEIGENSCHAFTEN = "front.anfangseigenschaften";
+	private static final String FRONT_BEIBEDARF_PARRIERWAFFEN = "front.beibedarf.parrierwaffen";
+	private static final String FRONT_BEIBEDARF_FERNKAMPF = "front.beibedarf.fernkampf";
+	private static final String FRONT_BEIBEDARF_RUESTUNGEN = "front.beibedarf.ruestungen";
+	private static final String HINTERGRUND = "hintergrund";
+	private static final String ZIELORDNER = "zielordner";
+
 	/**
 	 * Zufällige ID
 	 */
@@ -58,8 +75,55 @@ public class KonfigurationsPanel extends JPanel {
 
 		erzeugeFrontPanel();
 		erzeugeTalentPanel();
-
 		erzeugeZauberPanel();
+
+		/* Standardkonfiguration */
+		konfiguriere(new Properties());
+	}
+
+	public void ladeKonfiguration(File f) throws IOException {
+		FileInputStream fis = new FileInputStream(f);
+
+		Properties p = new Properties();
+		p.load(fis);
+
+		konfiguriere(p);
+	}
+
+	public void schreibeKonfig(File f) throws IOException {
+		Properties p = new Properties();
+
+		p.setProperty(ZIELORDNER, spZielOrdner.getText());
+		p.setProperty(HINTERGRUND, spHintergrund.getText());
+
+		p.setProperty(FRONT_BEIBEDARF_RUESTUNGEN,
+				Boolean.toString(fbRuestungen.isSelected()));
+		p.setProperty(FRONT_BEIBEDARF_FERNKAMPF,
+				Boolean.toString(fbFernkampf.isSelected()));
+		p.setProperty(FRONT_BEIBEDARF_PARRIERWAFFEN,
+				Boolean.toString(fbParrierw.isSelected()));
+		p.setProperty(FRONT_ANFANGSEIGENSCHAFTEN,
+				Boolean.toString(fAnfangsEigenschaften.isSelected()));
+		p.setProperty(FRONT_MEHRSF, Boolean.toString(fMehrSF.isSelected()));
+
+		p.setProperty(TALENT_BEIBEDARF_LEERESPALTEN,
+				Boolean.toString(tbLeereSpalten.isSelected()));
+		p.setProperty(TALENT_BASISTALENTE,
+				Boolean.toString(tBasisTalente.isSelected()));
+
+		p.setProperty(ZAUBER_BEIBEDARF_REPRAESENTATION,
+				Boolean.toString(zbRepraesentation.isSelected()));
+		p.setProperty(ZAUBER_NOTIZEN_KEINE,
+				Boolean.toString(znKeine.isSelected()));
+		p.setProperty(ZAUBER_NOTIZEN_WERTE,
+				Boolean.toString(znWerte.isSelected()));
+		p.setProperty(ZAUBER_NOTIZEN_ANMERKUNGEN,
+				Boolean.toString(znAnmerkungen.isSelected()));
+		p.setProperty(ZAUBER_HAUSZAUBEROBEN,
+				Boolean.toString(zHauszauberOben.isSelected()));
+
+		FileOutputStream fos = new FileOutputStream(f);
+		p.store(fos, "CompactPDFExportPlugin v1.0");
 	}
 
 	private void erzeugeFilePanel() {
@@ -113,7 +177,6 @@ public class KonfigurationsPanel extends JPanel {
 		fBeiBedarfPanel.add(fbFernkampf);
 
 		fbParrierw = new JCheckBox("Parrierwaffen");
-		fbParrierw.setSelected(true);
 		fbParrierw.setAlignmentX(JComponent.LEFT_ALIGNMENT);
 		fBeiBedarfPanel.add(fbParrierw);
 
@@ -145,7 +208,6 @@ public class KonfigurationsPanel extends JPanel {
 
 		tBasisTalente = new JCheckBox("Markiere Basistalente");
 		tBasisTalente.setAlignmentX(JComponent.LEFT_ALIGNMENT);
-		tBasisTalente.setSelected(true);
 		talentPanel.add(tBasisTalente);
 	}
 
@@ -164,7 +226,6 @@ public class KonfigurationsPanel extends JPanel {
 
 		zbRepraesentation = new JCheckBox("Repräsentation");
 		zbRepraesentation.setAlignmentX(JComponent.LEFT_ALIGNMENT);
-		zbRepraesentation.setSelected(true);
 		zBeiBedarfPanel.add(zbRepraesentation);
 
 		zNotizenPanel = new JPanel();
@@ -177,7 +238,6 @@ public class KonfigurationsPanel extends JPanel {
 
 		znKeine = new JRadioButton("Keine");
 		znKeine.setAlignmentX(JComponent.LEFT_ALIGNMENT);
-		znKeine.setSelected(true);
 		znGroup.add(znKeine);
 		zNotizenPanel.add(znKeine);
 
@@ -193,7 +253,38 @@ public class KonfigurationsPanel extends JPanel {
 
 		zHauszauberOben = new JCheckBox("Hauszauber oben");
 		zHauszauberOben.setAlignmentX(JComponent.LEFT_ALIGNMENT);
-		zHauszauberOben.setSelected(true);
 		zauberPanel.add(zHauszauberOben);
+	}
+
+	private void konfiguriere(Properties p) {
+		spZielOrdner.setText(p.getProperty(ZIELORDNER, "."));
+		spHintergrund.setText(p.getProperty(HINTERGRUND, ""));
+
+		fbRuestungen.setSelected(Boolean.parseBoolean(p.getProperty(
+				FRONT_BEIBEDARF_RUESTUNGEN, Boolean.toString(false))));
+		fbFernkampf.setSelected(Boolean.parseBoolean(p.getProperty(
+				FRONT_BEIBEDARF_FERNKAMPF, Boolean.toString(false))));
+		fbParrierw.setSelected(Boolean.parseBoolean(p.getProperty(
+				FRONT_BEIBEDARF_PARRIERWAFFEN, Boolean.toString(true))));
+		fAnfangsEigenschaften.setSelected(Boolean.parseBoolean(p.getProperty(
+				FRONT_ANFANGSEIGENSCHAFTEN, Boolean.toString(false))));
+		fMehrSF.setSelected(Boolean.parseBoolean(p.getProperty(FRONT_MEHRSF,
+				Boolean.toString(false))));
+
+		tbLeereSpalten.setSelected(Boolean.parseBoolean(p.getProperty(
+				TALENT_BEIBEDARF_LEERESPALTEN, Boolean.toString(false))));
+		tBasisTalente.setSelected(Boolean.parseBoolean(p.getProperty(
+				TALENT_BASISTALENTE, Boolean.toString(false))));
+
+		zbRepraesentation.setSelected(Boolean.parseBoolean(p.getProperty(
+				ZAUBER_BEIBEDARF_REPRAESENTATION, Boolean.toString(false))));
+		znKeine.setSelected(Boolean.parseBoolean(p.getProperty(
+				ZAUBER_NOTIZEN_KEINE, Boolean.toString(true))));
+		znWerte.setSelected(Boolean.parseBoolean(p.getProperty(
+				ZAUBER_NOTIZEN_WERTE, Boolean.toString(false))));
+		znAnmerkungen.setSelected(Boolean.parseBoolean(p.getProperty(
+				ZAUBER_NOTIZEN_ANMERKUNGEN, Boolean.toString(false))));
+		zHauszauberOben.setSelected(Boolean.parseBoolean(p.getProperty(
+				ZAUBER_HAUSZAUBEROBEN, Boolean.toString(true))));
 	}
 }
