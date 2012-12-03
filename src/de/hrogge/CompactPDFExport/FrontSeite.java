@@ -243,13 +243,9 @@ public class FrontSeite extends PDFSeite {
 		y = drawTabelle(0, kampfBreite, y,
 				fernkampf.toArray(new Fernkampfwaffe[fernkampf.size()]),
 				new FernkampfTabelle(kampfBreite));
-		if (tzm) {
-			y = drawTabelle(0, kampfBreite, y, ruestung.toArray(),
-					new RuestungsTabelle(kampfBreite));
-		} else {
-			y = drawTabelle(0, kampfBreite, y, ruestung.toArray(),
-					new RuestungsTabelleOhneTZM(kampfBreite));
-		}
+		y = drawTabelle(0, kampfBreite, y, ruestung.toArray(),
+					new RuestungsTabelle(kampfBreite, tzm));
+
 		if (zeigeSchilde) {
 			y = drawTabelle(0, kampfBreite, y, schilde.toArray(),
 					new ParierwaffenTabelle(kampfBreite));
@@ -851,10 +847,13 @@ public class FrontSeite extends PDFSeite {
 	}
 
 	private class RuestungsTabelle extends AbstractTabellenZugriff {
-		public RuestungsTabelle(int breite) {
+		private boolean tzm;
+		
+		public RuestungsTabelle(int breite, boolean tzm) {
 			super(new String[] { "#", null, "RS", "BE", "Ko", "Br", "Rü", "Ba",
 					"LA", "RA", "LB", "RB" }, new int[] { 2, 0, 3, 3, 2, 2, 2,
-					2, 2, 2, 2, 2 }, 0, "Rüstung", breite);
+					2, 2, 2, 2, 2 }, tzm ? 0 : 4, "Rüstung", breite);
+			this.tzm = tzm;
 		}
 
 		public RuestungsTabelle(String[] col, int[] colwidth, int colcount,
@@ -888,8 +887,14 @@ public class FrontSeite extends PDFSeite {
 				}
 				return name;
 			case 2:
+				if (!tzm) {
+					return filter(set.getRuestungeinfach().getGesamt());
+				}
 				return filter(set.getRuestungzonen().getGesamtzonenschutz());
 			case 3:
+				if (!tzm) {
+					return set.getRuestungeinfach().getBehinderung();
+				}
 				return set.getRuestungzonen().getBehinderung();
 			case 4:
 				return filter(set.getRuestungzonen().getKopf());
@@ -923,26 +928,6 @@ public class FrontSeite extends PDFSeite {
 				return "";
 			}
 			return input.toString();
-		}
-	}
-
-	private class RuestungsTabelleOhneTZM extends RuestungsTabelle {
-		public RuestungsTabelleOhneTZM(int breite) {
-			super(new String[] { "#", null, "RS", "BE" }, new int[] { 2, 0, 3,
-					3 }, 0, "Rüstung", breite);
-		}
-
-		@Override
-		public String get(Object obj, int x) {
-			Kampfset set = (Kampfset) obj;
-
-			switch (x) {
-			case 2:
-				return filter(set.getRuestungeinfach().getGesamt());
-			case 3:
-				return set.getRuestungeinfach().getBehinderung().trim();
-			}
-			return super.get(obj, x);
 		}
 	}
 
