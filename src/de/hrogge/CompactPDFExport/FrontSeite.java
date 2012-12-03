@@ -914,7 +914,7 @@ public class FrontSeite extends PDFSeite {
 				String mod = l.get(i-1).replace("links", "rechts");
 				
 				if (mod.equals(l.get(i))) {
-					l.set(i-1, l.get(i).replace("rechts", "L/R"));
+					l.set(i-1, mod.replace("rechts", "L/R"));
 					l.remove(i);
 				}
 			}
