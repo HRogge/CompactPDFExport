@@ -901,106 +901,28 @@ public class FrontSeite extends PDFSeite {
 		}
 
 		private String erzeugeName(Kampfset set) {
-			String text1, text2;
-			
 			List<String> l = new ArrayList<String>();
-			List<Integer> prefix = new ArrayList<Integer>();
-			List<Integer> suffix = new ArrayList<Integer>();
-
-			Collections.sort(l);
+			String text;
 			
 			for (Ruestung r : set.getRuestungen().getRuestung()) {
-				String txt = r.getName();
-				
-				txt = txt.replace("(", "");
-				txt = txt.replace(")", "");
-				txt = txt.replace(",", "");
-				txt = txt.replace("links", "L");
-				txt = txt.replace("rechts", "R");
-				l.add(txt);
+				l.add(r.getName());
 			}
 			
+			Collections.sort(l);
+
 			for (int i=1; i<l.size(); i++) {
-				prefix.add(gemeinsamerPraefix(l.get(i-1), l.get(i)));
-				suffix.add(gemeinsamerSuffix(l.get(i-1), l.get(i)));
+				String mod = l.get(i-1).replace("links", "rechts");
+				
+				if (mod.equals(l.get(i))) {
+					l.set(i-1, l.get(i).replace("rechts", "L/R"));
+					l.remove(i);
+				}
 			}
-			
-			while (true) {
-				int left = 0, max = 0;
-				int pr, su;
-				
-				for (int i=0; i<prefix.size(); i++) {
-					int gleich = prefix.get(i) + suffix.get(i);
-					
-					if (gleich > max) {
-						left = i;
-						max = gleich;
-					}
-				}
-				
-				if (max < 6) {
-					break;
-				}
-				
-				pr = prefix.get(left);
-				su = suffix.get(left);
-					
-				text1 = l.get(left);
-				text2 = l.get(left+1);
-				
-				/* entferne überflüssige Daten */
-				l.remove(left+1);
-				prefix.remove(left+1);
-				suffix.remove(left+1);
-
-				prefix.set(left, 0);
-				suffix.set(left, 0);
-				if (left > 0) {
-					prefix.set(left-1, 0);
-					suffix.set(left-1, 0);
-				}
-				
-				/* schreibe neuer Text */
-				l.set(left, text1.substring(0, text1.length()-su) + "/" + text2.substring(pr));
-			}
-			
-			text1 = "";
+			text = "";
 			for (String t : l) {
-				text1 = text1 + ";" + t;
+				text = text + ";" + t;
 			}
-			return text1.substring(1);
-		}
-
-		private int gemeinsamerPraefix(String a, String b) {
-			String[] aArray, bArray;
-			int len;
-			
-			aArray = a.split(" ");
-			bArray = b.split(" ");
-			len = 0;
-			for (int i=0; i<aArray.length && i<bArray.length; i++) {
-				if (!aArray[i].equals(bArray[i])) {
-					break;
-				}
-				len += aArray[i].length() + 1;
-			}
-			return len;
-		}
-		
-		private int gemeinsamerSuffix(String a, String b) {
-			String[] aArray, bArray;
-			int len;
-			
-			aArray = a.split(" ");
-			bArray = b.split(" ");
-			len = 0;
-			for (int i=0; i<aArray.length && i<bArray.length; i++) {
-				if (!aArray[aArray.length-1-i].equals(bArray[bArray.length-1-i])) {
-					break;
-				}
-				len += aArray[aArray.length-1-i].length() + 1;
-			}
-			return len;
+			return text.substring(1);
 		}
 		
 		@Override
