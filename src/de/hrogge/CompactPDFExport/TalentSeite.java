@@ -30,6 +30,24 @@ import de.hrogge.CompactPDFExport.PDFSonderfertigkeiten.Kategorie;
 import de.hrogge.CompactPDFExport.gui.Konfiguration;
 
 public class TalentSeite extends PDFSeite {
+	static public String getStern(Talent t) {
+		String stern = "";
+		
+		if (t.isLeittalent()) {
+			stern += "L";
+		}
+		if (t.isMeisterhandwerk()) {
+			stern += "M";
+		}
+		if (t.isMirakelminus()) {
+			stern += "+";
+		}
+		if (t.isMirakelminus()) {
+			stern += "-";
+		}
+		return stern;
+	}
+
 	public TalentSeite(PDDocument d, float marginX, float marginY,
 			float textMargin) throws IOException {
 		super(d, marginX, marginY, textMargin);
@@ -299,6 +317,7 @@ public class TalentSeite extends PDFSeite {
 		kampfBreite = new int[] { 0, 2, 2, 2, 2, 0, 2, 2, 3, 3, 2 };
 
 		if (!ko.getOptionsDaten(Konfiguration.TALENT_IMMER_LEERESPALTEN)) {
+			/* Teste ob Behinderung oder die Sternspalte leer sind */
 			boolean behinderungLeer = true;
 			boolean sternLeer = true;
 			
@@ -449,24 +468,6 @@ public class TalentSeite extends PDFSeite {
 		}
 	}
 
-	static public String getStern(Talent t) {
-		String stern = "";
-		
-		if (t.isLeittalent()) {
-			stern += "L";
-		}
-		if (t.isMeisterhandwerk()) {
-			stern += "M";
-		}
-		if (t.isMirakelminus()) {
-			stern += "+";
-		}
-		if (t.isMirakelminus()) {
-			stern += "-";
-		}
-		return stern;
-	}
-
 	private class TalentTabelle extends AbstractTabellenZugriff {
 		boolean markiereBasis;
 
@@ -535,6 +536,36 @@ public class TalentSeite extends PDFSeite {
 		}
 
 		
+		@Override
+		public int getColumnSpan(int x) {
+			if (x == 1 || x == 3 || x == 6) {
+				return 2;
+			}
+			return 1;
+		}
+
+		@Override
+		public PDFont getFont(Object o, int x) {
+			Talent t;
+
+			if (o instanceof TalentSpezialisierung) {
+				TalentSpezialisierung ts = (TalentSpezialisierung) o;
+				t = ts.getSpezReferenz();
+			} else {
+				t = (Talent) o;
+			}
+
+			if (this.markiereBasis && t.isBasis() && x == 0) {
+				return PDType1Font.HELVETICA_BOLD;
+			}
+			return PDType1Font.HELVETICA;
+		}
+
+		@Override
+		public int getIndent(Object o, int x) {
+			return (o instanceof TalentSpezialisierung) && x == 0 ? 2 : 0;
+		}
+
 		private String getSpez(int x, Talent t) {
 			TalentSpezialisierung ts = (TalentSpezialisierung) t;
 
@@ -564,36 +595,6 @@ public class TalentSeite extends PDFSeite {
 				return Integer.toString(ts.getSpezValue());
 			}
 			return "";
-		}
-
-		@Override
-		public PDFont getFont(Object o, int x) {
-			Talent t;
-
-			if (o instanceof TalentSpezialisierung) {
-				TalentSpezialisierung ts = (TalentSpezialisierung) o;
-				t = ts.getSpezReferenz();
-			} else {
-				t = (Talent) o;
-			}
-
-			if (this.markiereBasis && t.isBasis() && x == 0) {
-				return PDType1Font.HELVETICA_BOLD;
-			}
-			return PDType1Font.HELVETICA;
-		}
-
-		@Override
-		public int getColumnSpan(int x) {
-			if (x == 1 || x == 3 || x == 6) {
-				return 2;
-			}
-			return 1;
-		}
-
-		@Override
-		public int getIndent(Object o, int x) {
-			return (o instanceof TalentSpezialisierung) && x == 0 ? 2 : 0;
 		}
 
 	}

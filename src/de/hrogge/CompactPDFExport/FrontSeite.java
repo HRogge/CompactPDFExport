@@ -28,6 +28,7 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
 
 import de.hrogge.CompactPDFExport.PDFSonderfertigkeiten.Kategorie;
+import de.hrogge.CompactPDFExport.gui.Konfiguration;
 
 public class FrontSeite extends PDFSeite {
 	public FrontSeite(PDDocument d, float marginX, float marginY,
@@ -37,10 +38,10 @@ public class FrontSeite extends PDFSeite {
 
 	public void erzeugeSeite(Daten daten, PDJpeg bild,
 			String[] guteEigenschaften, List<PDFSonderfertigkeiten> alleSF,
-			boolean tzm) throws IOException {
+			boolean tzm, Konfiguration k) throws IOException {
 		int patzerHoehe, patzerBreite, festerHeaderHoehe;
 		int notizen, kampfBreite, blockBreite, vorNachTeileLaenge;
-		int leer, y, bloecke, hoehe;
+		int leer, y, bloecke, hoehe, charakterDatenHoehe;
 		List<Kampfset> kampfsets;
 		List<Nahkampfwaffe> nahkampf;
 		List<Fernkampfwaffe> fernkampf;
@@ -82,7 +83,15 @@ public class FrontSeite extends PDFSeite {
 
 		extrahiereVorNachteile(daten, vorteile, nachteile);
 
-		vorNachTeileLaenge = (Math.max(vorteile.size(), nachteile.size()) + 1) / 2;
+		if (!k.getOptionsDaten(Konfiguration.FRONT_MEHRSF)) {
+			vorNachTeileLaenge = (Math.max(vorteile.size(), nachteile.size()) + 1) / 2;
+		}
+		else if (vorteile.size() > nachteile.size()) {
+			vorNachTeileLaenge = Math.max((vorteile.size()+1)/2, nachteile.size());
+		}
+		else {
+			vorNachTeileLaenge = Math.max(vorteile.size(), (nachteile.size()+1)/2);
+		}
 
 		/* Sonderfertigkeiten extrahieren */
 		PDFSonderfertigkeiten.Kategorie kat[] = { Kategorie.KAMPF,
@@ -183,12 +192,13 @@ public class FrontSeite extends PDFSeite {
 		stream.setStrokingColor(Color.BLACK);
 		stream.setLineWidth(1f);
 
-		y = charakterDaten(daten);
+		y = charakterDatenHoehe = charakterDaten(daten);
 		if (y == 4) {
 			/* korrigieren für kurzen Header */
 			leer++;
 		}
-		festerHeaderHoehe = basisWerte(y, daten, bild, guteEigenschaften);
+
+		festerHeaderHoehe = basisWerte(y, daten, bild, guteEigenschaften, k);
 
 		/* Padding für Kampfblöcke und Vor/Nachteile */
 		while (leer > 0) {
@@ -214,10 +224,16 @@ public class FrontSeite extends PDFSeite {
 
 		/* Flexiblen Teil der PDF Seite erzeugen */
 		y = vorteileNachteile(festerHeaderHoehe, vorteile, nachteile,
-				vorNachTeileLaenge);
+				vorNachTeileLaenge, k);
 
-		PDFSonderfertigkeiten.zeichneTabelle(this, kampfBreite + 1, y,
-				cellCountX, hoehe, "Sonderfertigkeiten", sfListe);
+		if (!k.getOptionsDaten(Konfiguration.FRONT_MEHRSF)) {
+			PDFSonderfertigkeiten.zeichneTabelle(this, kampfBreite + 1, y,
+					cellCountX, hoehe, "Sonderfertigkeiten", sfListe);
+		} else {
+			PDFSonderfertigkeiten.zeichneTabelle(this, kampfBreite + 1,
+					charakterDatenHoehe, cellCountX, hoehe,
+					"Sonderfertigkeiten", sfListe);
+		}
 
 		if (notizen > 0) {
 			drawLabeledBox(0, y, kampfBreite, y + notizen - 1, "Notizen");
@@ -244,7 +260,7 @@ public class FrontSeite extends PDFSeite {
 				fernkampf.toArray(new Fernkampfwaffe[fernkampf.size()]),
 				new FernkampfTabelle(kampfBreite));
 		y = drawTabelle(0, kampfBreite, y, ruestung.toArray(),
-					new RuestungsTabelle(kampfBreite, tzm));
+				new RuestungsTabelle(kampfBreite, tzm));
 
 		if (zeigeSchilde) {
 			y = drawTabelle(0, kampfBreite, y, schilde.toArray(),
@@ -285,7 +301,7 @@ public class FrontSeite extends PDFSeite {
 	}
 
 	private int basisWerte(int offsetY, Daten daten, PDJpeg bild,
-			String[] guteEigW) throws IOException {
+			String[] guteEigW, Konfiguration k) throws IOException {
 		int boxW;
 		int offset2, offset3, offset4;
 		int height;
@@ -305,6 +321,17 @@ public class FrontSeite extends PDFSeite {
 		Angaben angaben = daten.getAngaben();
 		Eigenschaften eigenschaften = daten.getEigenschaften();
 
+		if (k.getOptionsDaten(Konfiguration.FRONT_ANFANGSEIGENSCHAFTEN)) {
+			guteEig[0] += " (" + eigenschaften.getMut().getStart().toString() + ")";
+			guteEig[1] += " (" + eigenschaften.getKlugheit().getStart().toString() + ")";
+			guteEig[2] += " (" + eigenschaften.getIntuition().getStart().toString() + ")";
+			guteEig[3] += " (" + eigenschaften.getCharisma().getStart().toString() + ")";
+			guteEig[4] += " (" + eigenschaften.getFingerfertigkeit().getStart().toString() + ")";
+			guteEig[5] += " (" + eigenschaften.getGewandtheit().getStart().toString() + ")";
+			guteEig[6] += " (" + eigenschaften.getKonstitution().getStart().toString() + ")";
+			guteEig[7] += " (" + eigenschaften.getKoerperkraft().getStart().toString() + ")";
+		}
+		
 		basisW = new String[basis.length];
 		basisW[0] = eigenschaften.getLebensenergie().getAkt().toString();
 		basisW[1] = eigenschaften.getAusdauer().getAkt().toString();
@@ -343,19 +370,22 @@ public class FrontSeite extends PDFSeite {
 		offset3 = offset2 + viertelBreite + 1;
 		offset4 = offset3 + viertelBreite + 1;
 
-		if (bild != null) {
-			drawImage(offset4, offsetY + 1, cellCountX, offsetY + height + 1,
-					bild);
-		}
-
 		drawLabeledBox(0, offsetY, viertelBreite, offsetY + height + 1,
 				"Gute Eigenschaften");
 		drawLabeledBox(offset2, offsetY, offset2 + viertelBreite, offsetY
 				+ height + 1, "Grundwerte");
 		drawLabeledBox(offset3, offsetY, offset3 + viertelBreite, offsetY
 				+ height + 1, "Sonstige Werte");
-		drawLabeledBox(offset4, offsetY, cellCountX, offsetY + height + 1,
-				"Bild");
+
+		if (!k.getOptionsDaten(Konfiguration.FRONT_MEHRSF)) {
+			if (bild != null) {
+				drawImage(offset4, offsetY + 1, cellCountX, offsetY + height
+						+ 1, bild);
+			}
+
+			drawLabeledBox(offset4, offsetY, cellCountX, offsetY + height + 1,
+					"Bild");
+		}
 
 		stream.setLineWidth(0.1f);
 
@@ -582,47 +612,85 @@ public class FrontSeite extends PDFSeite {
 	}
 
 	private int vorteileNachteile(int offset, List<Vorteil> vorteile,
-			List<Vorteil> nachteile, int count) throws IOException {
-		int breite, y;
-		List<Vorteil> vorteile1, vorteile2, nachteile1, nachteile2;
+			List<Vorteil> nachteile, int count, Konfiguration k)
+			throws IOException {
+		List<Vorteil> box1, box2, box3, box4;
+		boolean vierBoxen;
+		int breite, x, y;
+
 		breite = 15;
 
 		/* aufspalten */
-		vorteile1 = new ArrayList<Vorteil>();
-		vorteile2 = new ArrayList<Vorteil>();
-		nachteile1 = new ArrayList<Vorteil>();
-		nachteile2 = new ArrayList<Vorteil>();
+		box1 = new ArrayList<Vorteil>();
+		box2 = new ArrayList<Vorteil>();
+		box3 = new ArrayList<Vorteil>();
+		box4 = new ArrayList<Vorteil>();
 
-		y = (vorteile.size() + 1) / 2;
-		vorteile1.addAll(vorteile.subList(0, y));
-		vorteile2.addAll(vorteile.subList(y, vorteile.size()));
+		vierBoxen = !k.getOptionsDaten(Konfiguration.FRONT_MEHRSF);
+		if (vierBoxen) {
+			y = (vorteile.size() + 1) / 2;
+			box1.addAll(vorteile.subList(0, y));
+			box2.addAll(vorteile.subList(y, vorteile.size()));
 
-		y = (nachteile.size() + 1) / 2;
-		nachteile1.addAll(nachteile.subList(0, y));
-		nachteile2.addAll(nachteile.subList(y, nachteile.size()));
+			y = (nachteile.size() + 1) / 2;
+			box3.addAll(nachteile.subList(0, y));
+			box4.addAll(nachteile.subList(y, nachteile.size()));
+		} else {
+			if (vorteile.size() > nachteile.size()) {
+				y = (vorteile.size() + 1) / 2;
+				box1.addAll(vorteile.subList(0, y));
+				box2.addAll(vorteile.subList(y, vorteile.size()));
+
+				box3.addAll(nachteile);
+				y = Math.max(y, nachteile.size());
+			} else {
+				y = (nachteile.size() + 1) / 2;
+				box3.addAll(nachteile.subList(0, y));
+				box4.addAll(nachteile.subList(y, nachteile.size()));
+
+				box1.addAll(vorteile);
+				y = Math.max(y, vorteile.size());
+			}
+		}
 
 		/* add padding */
-		for (y = vorteile1.size(); y < count; y++) {
-			vorteile1.add(null);
+		for (y = box1.size(); y < count; y++) {
+			box1.add(null);
 		}
-		for (y = vorteile2.size(); y < count; y++) {
-			vorteile2.add(null);
+		if (vierBoxen || vorteile.size() > nachteile.size()) {
+			for (y = box2.size(); y < count; y++) {
+				box2.add(null);
+			}
 		}
-		for (y = nachteile1.size(); y < count; y++) {
-			nachteile1.add(null);
+		for (y = box3.size(); y < count; y++) {
+			box3.add(null);
 		}
-		for (y = nachteile2.size(); y < count; y++) {
-			nachteile2.add(null);
+		if (vierBoxen || nachteile.size() > vorteile.size()) {
+			for (y = box4.size(); y < count; y++) {
+				box4.add(null);
+			}
 		}
 
-		drawTabelle(0, breite, offset, vorteile1.toArray(), new VorteilTabelle(
-				breite));
-		drawTabelle(breite + 1, 2 * breite + 1, offset, vorteile2.toArray(),
+		x = 0;
+
+		drawTabelle(x, x + viertelBreite, offset, box1.toArray(),
 				new VorteilTabelle(breite));
-		drawTabelle(2 * breite + 2, 3 * breite + 2, offset,
-				nachteile1.toArray(), new VorteilTabelle("Nachteile", breite));
-		drawTabelle(3 * breite + 3, cellCountX, offset, nachteile2.toArray(),
+		x += viertelBreite + 1;
+
+		if (box2.size() > 0) {
+			drawTabelle(x, x + viertelBreite, offset, box2.toArray(),
+					new VorteilTabelle(breite));
+			x += viertelBreite + 1;
+		}
+
+		drawTabelle(x, x + viertelBreite, offset, box3.toArray(),
 				new VorteilTabelle("Nachteile", breite));
+		x += viertelBreite + 1;
+
+		if (box4.size() > 0) {
+			drawTabelle(x, x + viertelBreite, offset, box4.toArray(),
+					new VorteilTabelle("Nachteile", breite));
+		}
 
 		return offset + count + 2;
 	}
@@ -848,7 +916,7 @@ public class FrontSeite extends PDFSeite {
 
 	private class RuestungsTabelle extends AbstractTabellenZugriff {
 		private boolean tzm;
-		
+
 		public RuestungsTabelle(int breite, boolean tzm) {
 			super(new String[] { "#", null, "RS", "BE", "Ko", "Br", "Rü", "Ba",
 					"LA", "RA", "LB", "RB" }, new int[] { 2, 0, 3, 3, 2, 2, 2,
@@ -903,18 +971,18 @@ public class FrontSeite extends PDFSeite {
 		private String erzeugeName(Kampfset set) {
 			List<String> l = new ArrayList<String>();
 			String text;
-			
+
 			for (Ruestung r : set.getRuestungen().getRuestung()) {
 				l.add(r.getName());
 			}
-			
+
 			Collections.sort(l);
 
-			for (int i=1; i<l.size(); i++) {
-				String mod = l.get(i-1).replace("links", "rechts");
-				
+			for (int i = 1; i < l.size(); i++) {
+				String mod = l.get(i - 1).replace("links", "rechts");
+
 				if (mod.equals(l.get(i))) {
-					l.set(i-1, mod.replace("rechts", "L/R"));
+					l.set(i - 1, mod.replace("rechts", "L/R"));
 					l.remove(i);
 				}
 			}
@@ -924,7 +992,7 @@ public class FrontSeite extends PDFSeite {
 			}
 			return text.substring(1);
 		}
-		
+
 		@Override
 		public Color getBackgroundColor(Object o, int x) {
 			Kampfset waffe = (Kampfset) o;

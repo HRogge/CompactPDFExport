@@ -113,7 +113,7 @@ public class PDFGenerator {
 
 			FrontSeite page1 = new FrontSeite(doc, marginX, marginY, textMargin);
 			page1.erzeugeSeite(daten, bild, guteEigenschaften,
-					sflist, tzm);
+					sflist, tzm, k);
 
 			TalentSeite page2 = new TalentSeite(doc, marginX, marginY,
 					textMargin);
