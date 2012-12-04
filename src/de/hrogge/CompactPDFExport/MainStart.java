@@ -20,7 +20,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -30,13 +29,12 @@ import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import de.hrogge.CompactPDFExport.gui.KonfigurationsPanel;
+import de.hrogge.CompactPDFExport.gui.Konfiguration;
 
 public class MainStart {
 	public static void main(String[] args) throws ParserConfigurationException,
 			SAXException, IOException {
 		File input, output;
-		boolean notizen;
 		
 		if (args.length != 3) {
 			System.err
@@ -47,7 +45,6 @@ public class MainStart {
 		/* Steuerung über Kommandozeilenparameter */
 		input = new File(args[0]);
 		output = new File(args[1]);
-		notizen = Boolean.parseBoolean(args[2]);
 		
 		/* XML-Dokument des Eingabefiles erzeugen */
 		DocumentBuilderFactory documentFactory = DocumentBuilderFactory
@@ -57,11 +54,12 @@ public class MainStart {
 		FileReader reader = new FileReader(input);
 		Document doc = documentBuilder.parse(new InputSource(reader));
 
-		JOptionPane.showOptionDialog(null, new KonfigurationsPanel(), "Einstellungen für kompakten Heldenbogen", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, 0);
+		Konfiguration k = new Konfiguration();
+		JOptionPane.showOptionDialog(null, k.getPanel(), "Einstellungen für kompakten Heldenbogen", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, 0);
 		
 		try {
 			PDFGenerator creator = new PDFGenerator();
-			creator.erzeugePDF(null, output, doc, 5f, 10f, 0.5f, notizen);
+			creator.erzeugePDF(null, output, doc, 5f, 10f, 0.5f, k);
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(1);

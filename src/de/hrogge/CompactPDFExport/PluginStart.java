@@ -33,6 +33,8 @@ import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import de.hrogge.CompactPDFExport.gui.Konfiguration;
+
 public class PluginStart implements HeldenXMLDatenPlugin {
 	public PluginStart() {
 	}
@@ -80,8 +82,8 @@ public class PluginStart implements HeldenXMLDatenPlugin {
 	public ArrayList<String> getUntermenus() {
 		ArrayList<String> l = new ArrayList<String>();
 
-		l.add("Keine Notizen für Zauber");
-		l.add("Notizen für Zauber");
+		// l.add("Keine Notizen für Zauber");
+		// l.add("Notizen für Zauber");
 		return l;
 	}
 
@@ -122,8 +124,14 @@ public class PluginStart implements HeldenXMLDatenPlugin {
 		 * zeigeXML(frame, doc);
 		 */
 
+		Konfiguration k = new Konfiguration();
+		JOptionPane.showOptionDialog(frame, k.getPanel(),
+				"Einstellungen für kompakten Heldenbogen",
+				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null,
+				null, 0);
+
 		PDFGenerator creator = new PDFGenerator();
-		creator.erzeugePDF(frame, null, doc, 5f, 10f, 0.5f, menuIdx == 1);
+		creator.erzeugePDF(frame, null, doc, 5f, 10f, 0.5f, k);
 	}
 
 	protected void zeigeXML(JFrame frame, Document doc)

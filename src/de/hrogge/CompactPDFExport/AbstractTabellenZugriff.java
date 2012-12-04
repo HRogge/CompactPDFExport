@@ -17,6 +17,7 @@
 package de.hrogge.CompactPDFExport;
 
 import java.awt.Color;
+import java.util.Arrays;
 
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
@@ -33,8 +34,8 @@ public abstract class AbstractTabellenZugriff implements ITabellenZugriff {
 		if (colcount == 0) {
 			colcount = col.length;
 		}
-		this.columns = col;
-		this.columnWidth = colwidth;
+		this.columns = Arrays.copyOf(col, col.length);
+		this.columnWidth = Arrays.copyOf(colwidth, colwidth.length);
 		this.colCount = colcount;
 
 		variabel = -1;

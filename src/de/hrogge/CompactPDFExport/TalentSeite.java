@@ -27,6 +27,7 @@ import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
 import de.hrogge.CompactPDFExport.PDFSonderfertigkeiten.Kategorie;
+import de.hrogge.CompactPDFExport.gui.Konfiguration;
 
 public class TalentSeite extends PDFSeite {
 	public TalentSeite(PDDocument d, float marginX, float marginY,
@@ -35,7 +36,8 @@ public class TalentSeite extends PDFSeite {
 	}
 
 	public void erzeugeSeite(Daten daten, String[] guteEigenschaften,
-			List<PDFSonderfertigkeiten> alleSF) throws IOException {
+			List<PDFSonderfertigkeiten> alleSF, Konfiguration k)
+			throws IOException {
 		List<TalentGruppe> gruppen;
 		List<PDFSonderfertigkeiten> sfListe;
 		int sfLaenge, linksFrei, rechtsFrei;
@@ -141,11 +143,11 @@ public class TalentSeite extends PDFSeite {
 		titelzeile(guteEigenschaften);
 
 		/* linke spalte */
-		talentSpalte(gruppen, 0, links, 0, halbeBreite, true);
+		talentSpalte(gruppen, 0, links, 0, halbeBreite, true, k);
 
 		/* rechte spalte */
 		talentSpalte(gruppen, links, gruppen.size(), halbeBreite + 1,
-				cellCountX, false);
+				cellCountX, false, k);
 
 		/* Sonderfertigkeiten */
 		if (sfLaenge > 0) {
@@ -285,93 +287,60 @@ public class TalentSeite extends PDFSeite {
 	}
 
 	private void talentSpalte(List<TalentGruppe> gruppen, int from, int to,
-			int x1, int x2, boolean links) throws IOException {
+			int x1, int x2, boolean links, Konfiguration ko) throws IOException {
+		boolean basis;
+		int talentBreite[], kampfBreite[];
 		int y;
 
-		/* talentgruppen zeichnen */
-		y = 2;
-		for (int k = from; k < to; k++) {
-			TalentGruppe g = gruppen.get(k);
+		basis = ko.getOptionsDaten(Konfiguration.TALENT_BASISTALENTE);
 
-			if (links && k == 0) {
-				drawTabelle(x1, x2, y, g.toArray(), new KampfTalentTabelle(x2
-						- x1));
+		/* talentgruppen zeichnen */
+		talentBreite = new int[] { 0, 0, 0, 0, 0, 6, 2, 2, 3, 3, 2 };
+		kampfBreite = new int[] { 0, 2, 2, 2, 2, 0, 2, 2, 3, 3, 2 };
+
+		if (!ko.getOptionsDaten(Konfiguration.TALENT_IMMER_LEERESPALTEN)) {
+			boolean behinderungLeer = true;
+			boolean sternLeer = true;
+			
+			for (int gIndex = from; gIndex < to; gIndex++) {
+				TalentGruppe g = gruppen.get(gIndex);
+				for (Talent t : g) {
+					if (t == null) {
+						continue;
+					}
+					
+					if (t.getBehinderung().length() > 0) {
+						behinderungLeer = false;
+					}
+					if (TalentSeite.getStern(t).length() > 0) {
+						sternLeer = false;
+					}
+				}
+			}
+			
+			if (behinderungLeer) {
+				talentBreite[8] = 0;
+				kampfBreite[8] = 0;
+			}
+			if (sternLeer) {
+				talentBreite[9] = 0;
+				kampfBreite[9] = 0;
+			}
+		}
+		
+		y = 2;
+		for (int gIndex = from; gIndex < to; gIndex++) {
+			TalentGruppe g = gruppen.get(gIndex);
+
+			if (links && gIndex == 0) {
+				drawTabelle(x1, x2, y, g.toArray(), new TalentTabelle(g.titel,
+						kampfBreite, x2 - x1, basis));
 			} else {
 				drawTabelle(x1, x2, y, g.toArray(), new TalentTabelle(g.titel,
-						x2 - x1));
+						talentBreite, x2 - x1, basis));
 			}
 
 			y += g.size() + 2;
-		}
-	}
-
-	private class KampfTalentTabelle extends TalentTabelle {
-		public KampfTalentTabelle(int width) {
-			super(new String[] { null, "AT", "", "PA", "", "TaW", "", "BE",
-					"*", "SKT" }, new int[] { 0, 2, 2, 2, 2, 2, 2, 3, 3, 2 },
-					0, "Kampftalente", width);
-		}
-
-		@Override
-		public String get(Object obj, int x) {
-			Talent t = (Talent) obj;
-
-			if (t instanceof TalentSpezialisierung) {
-				TalentSpezialisierung ts = (TalentSpezialisierung) t;
-				switch (x) {
-				case 0:
-					return ts.getSpezName();
-				case 1:
-					if (ts.getSpezReferenz().getAt().length() > 0) {
-						int at = Integer.parseInt(ts.getSpezReferenz().getAt());
-
-						at++;
-
-						if (ts.getSpezReferenz().getPa().length() == 0) {
-							/* Fernkampf/Lanzenreiten hat keinen PA-Wert */
-							at++;
-						}
-						return Integer.toString(at);
-					}
-					return "";
-				case 3:
-					if (ts.getSpezReferenz().getPa().length() > 0) {
-						return Integer.toString(Integer.parseInt(ts
-								.getSpezReferenz().getPa()) + 1);
-					}
-					return "";
-				case 5:
-					return Integer.toString(ts.getSpezValue());
-				}
-				return "";
-			}
-
-			if (x == 0) {
-				return super.get(obj, x);
-			} else if (x >= 5) {
-				return super.get(obj, x - 3);
-			}
-
-			switch (x) {
-			case 1:
-				return t.getAt();
-			case 3:
-				return t.getPa();
-			}
-			return "";
-		}
-
-		@Override
-		public int getColumnSpan(int x) {
-			if (x == 1 || x == 3 || x == 5) {
-				return 2;
-			}
-			return 1;
-		}
-
-		@Override
-		public int getIndent(Object o, int x) {
-			return (o instanceof TalentSpezialisierung) && x == 0 ? 2 : 0;
 		}
 	}
 
@@ -480,31 +449,41 @@ public class TalentSeite extends PDFSeite {
 		}
 	}
 
-	private class TalentTabelle extends AbstractTabellenZugriff {
-		public TalentTabelle(String titel, int width) {
-			super(new String[] { null, "Probe", "TaW", "", "BE", "*", "SKT" },
-					new int[] { 0, 6, 2, 2, 3, 3, 2 }, 0, titel, width);
+	static public String getStern(Talent t) {
+		String stern = "";
+		
+		if (t.isLeittalent()) {
+			stern += "L";
 		}
+		if (t.isMeisterhandwerk()) {
+			stern += "M";
+		}
+		if (t.isMirakelminus()) {
+			stern += "+";
+		}
+		if (t.isMirakelminus()) {
+			stern += "-";
+		}
+		return stern;
+	}
 
-		public TalentTabelle(String[] col, int[] colwidth, int colcount,
-				String titel, int width) {
-			super(col, colwidth, colcount, titel, width);
+	private class TalentTabelle extends AbstractTabellenZugriff {
+		boolean markiereBasis;
+
+		public TalentTabelle(String titel, int[] columns, int width,
+				boolean markiereBasis) {
+			super(new String[] { null, "AT", "", "PA", "", "Probe", "TaW", "",
+					"BE", "*", "SKT" }, columns, 0, titel, width);
+			this.markiereBasis = markiereBasis;
 		}
 
 		@Override
 		public String get(Object obj, int x) {
 			Talent t = (Talent) obj;
-			String name, stern;
+			String name;
 
 			if (t instanceof TalentSpezialisierung) {
-				TalentSpezialisierung ts = (TalentSpezialisierung) t;
-				if (x == 0) {
-					return "      " + ts.getSpezName();
-				} else if (x == 2) {
-					return Integer.toString(ts.getSpezValue());
-				} else {
-					return "";
-				}
+				return getSpez(x, t);
 			}
 			switch (x) {
 			case 0:
@@ -528,44 +507,63 @@ public class TalentSeite extends PDFSeite {
 				}
 				return name;
 			case 1:
+				return t.getAt();
+			case 3:
+				return t.getPa();
+			case 5:
 				return t.getProbe();
-			case 2:
+			case 6:
 				if (t.getWert() != null) {
 					return t.getWert().toString();
 				}
 				return "";
-			case 4:
+			case 8:
 				if (t.getBehinderung() != null) {
 					return t.getBehinderung();
 				}
 				return "";
-			case 5:
-				stern = "";
-				if (t.isLeittalent()) {
-					stern += "L";
-				}
-				if (t.isMeisterhandwerk()) {
-					stern += "M";
-				}
-				if (t.isMirakelminus()) {
-					stern += "+";
-				}
-				if (t.isMirakelminus()) {
-					stern += "-";
-				}
-				return stern;
-			case 6:
+			case 9:
+				return TalentSeite.getStern(t);
+			case 10:
 				if (t.getLernkomplexität() != null && !t.isMetatalent()) {
 					return t.getLernkomplexität();
 				}
 				return "";
+			default:
+				return "";
 			}
-			return "";
 		}
 
-		@Override
-		public int getColumnSpan(int x) {
-			return x == 2 ? 2 : 1;
+		
+		private String getSpez(int x, Talent t) {
+			TalentSpezialisierung ts = (TalentSpezialisierung) t;
+
+			switch (x) {
+			case 0:
+				return ts.getSpezName();
+			case 1:
+				if (ts.getSpezReferenz().getAt().length() > 0) {
+					int at = Integer.parseInt(ts.getSpezReferenz().getAt());
+
+					at++;
+
+					if (ts.getSpezReferenz().getPa().length() == 0) {
+						/* Fernkampf/Lanzenreiten hat keinen PA-Wert */
+						at++;
+					}
+					return Integer.toString(at);
+				}
+				return "";
+			case 3:
+				if (ts.getSpezReferenz().getPa().length() > 0) {
+					return Integer.toString(Integer.parseInt(ts
+							.getSpezReferenz().getPa()) + 1);
+				}
+				return "";
+			case 6:
+				return Integer.toString(ts.getSpezValue());
+			}
+			return "";
 		}
 
 		@Override
@@ -579,10 +577,24 @@ public class TalentSeite extends PDFSeite {
 				t = (Talent) o;
 			}
 
-			if (t.isBasis() && x == 0) {
+			if (this.markiereBasis && t.isBasis() && x == 0) {
 				return PDType1Font.HELVETICA_BOLD;
 			}
 			return PDType1Font.HELVETICA;
 		}
+
+		@Override
+		public int getColumnSpan(int x) {
+			if (x == 1 || x == 3 || x == 6) {
+				return 2;
+			}
+			return 1;
+		}
+
+		@Override
+		public int getIndent(Object o, int x) {
+			return (o instanceof TalentSpezialisierung) && x == 0 ? 2 : 0;
+		}
+
 	}
 }

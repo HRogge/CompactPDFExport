@@ -35,9 +35,11 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
 import org.w3c.dom.Document;
 
+import de.hrogge.CompactPDFExport.gui.Konfiguration;
+
 public class PDFGenerator {
 	public void erzeugePDF(JFrame frame, File output, Document input,
-			float marginX, float marginY, float textMargin, boolean notizen)
+			float marginX, float marginY, float textMargin, Konfiguration k)
 			throws IOException, COSVisitorException, JAXBException {
 		String[] guteEigenschaften;
 		List<PDFSonderfertigkeiten> sflist;
@@ -115,13 +117,13 @@ public class PDFGenerator {
 
 			TalentSeite page2 = new TalentSeite(doc, marginX, marginY,
 					textMargin);
-			page2.erzeugeSeite(daten, guteEigenschaften, sflist);
+			page2.erzeugeSeite(daten, guteEigenschaften, sflist, k);
 
 			if (daten.getAngaben().isMagisch()) {
 				ZauberSeite page3 = new ZauberSeite(doc, marginX, marginY,
 						textMargin);
 				page3.erzeugeSeite(daten, guteEigenschaften,
-							sflist, notizen);
+							sflist, k);
 			}
 
 			for (PDFSonderfertigkeiten sf : sflist) {
