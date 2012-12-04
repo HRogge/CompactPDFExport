@@ -61,27 +61,29 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 		for (int y = y1 + 1; !sflist.isEmpty() && y < y2; y++) {
 			s = sflist.get(0);
 
-			if (s != null && s.getTyp().length() == 0) {
-				typ = null;
+			if (s != null) {
+				s.gedruckt();
+				if (s.getTyp().length() == 0) {
+					typ = null;
 
-				seite.drawText(PDType1Font.HELVETICA, x1, x2, y, s.getName(),
-						false);
-			} else if (s != null) {
-				if (!s.getTyp().equals(typ)) {
-					if (y == y2 - 1) {
-						break;
+					seite.drawText(PDType1Font.HELVETICA, x1, x2, y,
+							s.getName(), false);
+				} else  {
+					if (!s.getTyp().equals(typ)) {
+						if (y == y2 - 1) {
+							break;
+						}
+						typ = s.getTyp();
+
+						seite.drawText(PDType1Font.HELVETICA_BOLD, x1, x2, y,
+								s.getTyp(), false);
+						y++;
 					}
-					typ = s.getTyp();
 
-					seite.drawText(PDType1Font.HELVETICA_BOLD, x1, x2, y,
-							s.getTyp(), false);
-					y++;
+					seite.drawText(PDType1Font.HELVETICA, x1 + 2, x2, y,
+							s.getName(), false);
 				}
-
-				seite.drawText(PDType1Font.HELVETICA, x1 + 2, x2, y,
-						s.getName(), false);
 			}
-
 			sflist.remove(0);
 		}
 	}

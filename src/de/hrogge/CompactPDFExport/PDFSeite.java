@@ -300,8 +300,8 @@ public class PDFSeite {
 	}
 
 	protected void titelzeile(String[] guteEigenschaften) throws IOException {
-		String[] titel = { "MU:", "KL:", "IN:", "CH:", "FF:", "GE:", "KK:",
-				"KO:" };
+		String[] titel = { "MU:", "KL:", "IN:", "CH:", "FF:", "GE:", "KO:",
+				"KK:" };
 
 		for (int i = 0; i < titel.length; i++) {
 			int x = i * 8 + 1;
