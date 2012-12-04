@@ -101,19 +101,19 @@ public class ZauberSeite extends PDFSeite {
 			zauberBreite = cellCountX;
 			
 			if (mehrereRepr) {
-				zauberSpalten = new int[] { 0, 6, 3, 2, 2, 3, 4, 4, 4, 4, 2, 9, 4 };
+				zauberSpalten = new int[] { 0, 6, 2, 2, 3, 4, 4, 4, 4, 2, 9, 4 };
 			}
 			else {
-				zauberSpalten = new int[] { 0, 6, 3, 2, 2, 3, 5, 5, 5, 5, 2, 9, 0 };
+				zauberSpalten = new int[] { 0, 6, 2, 2, 3, 5, 5, 5, 5, 2, 9, 0 };
 			}
 		} else {
 			zauberBreite = cellCountX - sfBreite - 1;
 			
 			if (mehrereRepr) {
-				zauberSpalten = new int[] { 0, 6, 3, 2, 2, 3, 0, 0, 0, 0, 2, 9, 4 };
+				zauberSpalten = new int[] { 0, 6, 2, 2, 3, 0, 0, 0, 0, 2, 9, 4 };
 			}
 			else {
-				zauberSpalten = new int[] { 0, 6, 4, 2, 2, 3, 0, 0, 0, 0, 2, 10, 0 };
+				zauberSpalten = new int[] { 0, 6, 2, 2, 3, 0, 0, 0, 0, 2, 10, 0 };
 			}
 		}
 		
@@ -235,7 +235,7 @@ public class ZauberSeite extends PDFSeite {
 
 	private class ZauberTabelle extends AbstractTabellenZugriff {
 		public ZauberTabelle(int[] spaltenBreite, int breite) {
-			super(new String[] { null, "Probe", "MR", "ZfW", "", "Seite", "ZD",
+			super(new String[] { null, "Probe", "ZfW", "", "Seite", "ZD",
 					"RW", "AsP", "WD", "SKT", "Merkmal", "Repräs.", }, spaltenBreite,
 					0, "Zaubername", breite);
 		}
@@ -248,7 +248,7 @@ public class ZauberSeite extends PDFSeite {
 				ZauberSpezialisierung zs = (ZauberSpezialisierung) obj;
 				if (x == 0) {
 					return zs.getSpezName();
-				} else if (x == 3) {
+				} else if (x == 2) {
 					return Integer.toString(zs.getSpezValue());
 				}
 				return "";
@@ -258,28 +258,29 @@ public class ZauberSeite extends PDFSeite {
 
 			switch (x) {
 			case 0:
+				if (z.getMr().length() > 0) {
+					return z.getNamemitvariante() + " (" + z.getMr() + ")";
+				}
 				return z.getNamemitvariante();
 			case 1:
 				return z.getProbe();
 			case 2:
-				return z.getMr();
-			case 3:
 				return z.getWert().toString();
-			case 5:
+			case 4:
 				return z.getQuelle().getSeite().toString();
-			case 6:
+			case 5:
 				return z.getZauberdauer();
-			case 7:
+			case 6:
 				return z.getReichweite();
-			case 8:
+			case 7:
 				return z.getKosten();
-			case 9:
+			case 8:
 				return z.getWirkungsdauer();
-			case 10:
+			case 9:
 				return z.getLernkomplexität();
-			case 11:
+			case 10:
 				return z.getMerkmale();
-			case 12:
+			case 11:
 				return z.getRepräsentation();
 
 			}
@@ -288,7 +289,7 @@ public class ZauberSeite extends PDFSeite {
 
 		@Override
 		public int getColumnSpan(int x) {
-			return x == 3 ? 2 : 1;
+			return x == 2 ? 2 : 1;
 		}
 
 		@Override
