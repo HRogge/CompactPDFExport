@@ -213,8 +213,8 @@ public class TalentSeite extends PDFSeite {
 			/* lieber immer von links nach rechts arbeiten */
 			besteVerteilung++;
 
-			l1 = gesammtLaenge(gruppen, 0, linkeBloecke);
-			l2 = gesammtLaenge(gruppen, linkeBloecke, gruppen.size());
+			l1 = gesammtLaenge(gruppen, 0, besteVerteilung);
+			l2 = gesammtLaenge(gruppen, besteVerteilung, gruppen.size());
 		}
 
 		/* Gruppe splitten */
