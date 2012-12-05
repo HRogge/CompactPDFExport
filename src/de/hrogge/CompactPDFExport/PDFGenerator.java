@@ -39,7 +39,7 @@ import de.hrogge.CompactPDFExport.gui.Konfiguration;
 
 public class PDFGenerator {
 	public void erzeugePDF(JFrame frame, File output, Document input,
-			float marginX, float marginY, float textMargin, Konfiguration k)
+			float marginX, float marginY, float textMargin, Konfiguration k, boolean speichernDialog)
 			throws IOException, COSVisitorException, JAXBException {
 		String[] guteEigenschaften;
 		List<PDFSonderfertigkeiten> sflist;
@@ -111,7 +111,7 @@ public class PDFGenerator {
 				}
 			}
 
-			pfad = k.getTextDaten(Konfiguration.HINTERGRUND);
+			pfad = k.getTextDaten(Konfiguration.SPEICHERN_HINTERGRUND);
 			if (pfad != null && pfad.length() > 0) {
 				try {
 					BufferedImage img = ImageIO.read(new File(pfad));
@@ -146,9 +146,15 @@ public class PDFGenerator {
 			}
 
 			if (output == null) {
-				output = waehlePDFFile(frame, daten, k.getTextDaten(Konfiguration.ZIELORDNER));
+				String ordner = k.getTextDaten(Konfiguration.SPEICHERN_ZIELORDNER);
+				if (speichernDialog) {
+					output = waehlePDFFile(frame, daten, ordner);
+				}
+				else {
+					output = new File(ordner, daten.getAngaben().getName() + ".pdf");
+				}
 			}
-
+			
 			if (output == null) {
 				return;
 			}

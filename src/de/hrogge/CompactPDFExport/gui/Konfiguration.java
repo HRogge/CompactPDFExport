@@ -2,12 +2,15 @@ package de.hrogge.CompactPDFExport.gui;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
 
 public class Konfiguration {
 	public static final String ZAUBER_SEITENZAHLEN = "zauber.seitenzahlen";
@@ -23,8 +26,8 @@ public class Konfiguration {
 	public static final String FRONT_IMMER_FERNKAMPF = "front.immer.fernkampf";
 	public static final String FRONT_IMMER_RUESTUNGEN = "front.immer.ruestungen";
 	public static final String FRONT_IMMER_SCHILDE = "front.immer.schilde";
-	public static final String HINTERGRUND = "hintergrund";
-	public static final String ZIELORDNER = "zielordner";
+	public static final String SPEICHERN_HINTERGRUND = "speichern.hintergrund";
+	public static final String SPEICHERN_ZIELORDNER = "speichern.zielordner";
 
 	private JPanel panel;
 	
@@ -75,8 +78,8 @@ public class Konfiguration {
 		optionenMap = new HashMap<String, JToggleButton>();
 
 		textStandardMap = new HashMap<String, String>();
-		textStandardMap.put(ZIELORDNER, ".");
-		textStandardMap.put(HINTERGRUND, "");
+		textStandardMap.put(SPEICHERN_ZIELORDNER, ".");
+		textStandardMap.put(SPEICHERN_HINTERGRUND, "");
 		
 		optionenStandardMap = new HashMap<String, Boolean>();
 		optionenStandardMap.put(FRONT_IMMER_FERNKAMPF, false);
@@ -168,20 +171,91 @@ public class Konfiguration {
 
 		spZielOrdner = new JTextField();
 		sPfadPanel.add(spZielOrdner);
-		textMap.put(ZIELORDNER, spZielOrdner);
+		textMap.put(SPEICHERN_ZIELORDNER, spZielOrdner);
 		spHintergrund = new JTextField();
 		sPfadPanel.add(spHintergrund);
-		textMap.put(HINTERGRUND, spHintergrund);
+		textMap.put(SPEICHERN_HINTERGRUND, spHintergrund);
 
 		sDialogPanel = new JPanel(new GridLayout(0, 1));
 		speichernPanel.add(sDialogPanel, BorderLayout.EAST);
 
 		sdZielOrdner = new JButton("...");
+		sdZielOrdner.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				zielOrdnerDialog();
+			}
+		});
 		sDialogPanel.add(sdZielOrdner);
 		sdHintergrund = new JButton("...");
+		sdHintergrund.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				hintergrundDialog();
+			}
+		});
 		sDialogPanel.add(sdHintergrund);
 	}
 
+	protected void zielOrdnerDialog() {
+		JFileChooser chooser = new JFileChooser();
+		chooser.setApproveButtonText("Auswählen");
+		chooser.setApproveButtonToolTipText("Dieses Verzeichnis als Standard für PDF-Export festlegen");
+		FileFilter filter = new FileFilter() {
+			@Override
+			public boolean accept(File f) {
+				return f.isDirectory();
+			}
+
+			@Override
+			public String getDescription() {
+				return "Verzeichnis für PDF-Export";
+			}
+		};
+		chooser.setFileFilter(filter);
+
+		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		chooser.setMultiSelectionEnabled(false);
+		chooser.setDialogType(JFileChooser.SAVE_DIALOG);
+		chooser.setDialogTitle("PDF Export speichern...");
+		chooser.setSelectedFile(new File(spZielOrdner.getText()));
+		if (chooser.showSaveDialog(panel) != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+
+		spZielOrdner.setText(chooser.getSelectedFile().getAbsolutePath());
+	}
+	
+	protected void hintergrundDialog() {
+		JFileChooser chooser = new JFileChooser();
+		chooser.setApproveButtonText("Auswählen");
+		chooser.setApproveButtonToolTipText("Dieses Bild als Hintergrundbild festlegen");
+		FileFilter filter = new FileFilter() {
+			@Override
+			public boolean accept(File f) {
+				return f.isDirectory() || f.getName().endsWith(".jpg")
+						|| f.getName().endsWith(".jpeg");
+			}
+
+			@Override
+			public String getDescription() {
+				return "JPEG Hintergrundbild für PDF-Export";
+			}
+		};
+		chooser.setFileFilter(filter);
+
+		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		chooser.setMultiSelectionEnabled(false);
+		chooser.setDialogType(JFileChooser.OPEN_DIALOG);
+		chooser.setDialogTitle("PDF Export speichern...");
+		chooser.setSelectedFile(new File(spHintergrund.getText()));
+		if (chooser.showOpenDialog(panel) != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+
+		spHintergrund.setText(chooser.getSelectedFile().getAbsolutePath());
+	}
+	
 	private void erzeugeFrontPanel() {
 		frontPanel = new JPanel();
 		frontPanel.setLayout(new BoxLayout(frontPanel, BoxLayout.PAGE_AXIS));

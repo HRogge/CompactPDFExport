@@ -20,7 +20,11 @@ import helden.plugin.HeldenXMLDatenPlugin;
 import helden.plugin.datenxmlplugin.DatenAustauschImpl;
 
 import java.awt.Dialog.ModalityType;
+import java.io.File;
+import java.io.IOException;
 import java.io.StringWriter;
+import java.net.URISyntaxException;
+import java.security.CodeSource;
 import java.util.ArrayList;
 
 import javax.swing.*;
@@ -36,7 +40,22 @@ import org.w3c.dom.Element;
 import de.hrogge.CompactPDFExport.gui.Konfiguration;
 
 public class PluginStart implements HeldenXMLDatenPlugin {
-	public PluginStart() {
+	private Konfiguration konfig;
+	private File propertiesFile;
+	
+	public PluginStart() throws URISyntaxException {
+		konfig = new Konfiguration();
+
+		CodeSource codeSource = PluginStart.class.getProtectionDomain().getCodeSource();
+		File jarFile = new File(codeSource.getLocation().toURI().getPath());
+
+		propertiesFile = new File(jarFile.getParentFile(), "CompactPDFExport.properties");
+		
+		try {
+			konfig.ladeKonfiguration(propertiesFile);
+		} catch (IOException e) {
+			// Fehler beim laden ignorieren
+		}
 	}
 
 	@Override
@@ -82,8 +101,9 @@ public class PluginStart implements HeldenXMLDatenPlugin {
 	public ArrayList<String> getUntermenus() {
 		ArrayList<String> l = new ArrayList<String>();
 
-		// l.add("Keine Notizen für Zauber");
-		// l.add("Notizen für Zauber");
+		l.add("Held in PDF umwandeln");
+		l.add("Held in PDF umwandeln...");
+		l.add("Einstellungen");
 		return l;
 	}
 
@@ -124,14 +144,20 @@ public class PluginStart implements HeldenXMLDatenPlugin {
 		 * zeigeXML(frame, doc);
 		 */
 
-		Konfiguration k = new Konfiguration();
-		JOptionPane.showOptionDialog(frame, k.getPanel(),
-				"Einstellungen für kompakten Heldenbogen",
-				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null,
-				null, 0);
+		if (menuIdx == 2) {
+			int result = JOptionPane.showOptionDialog(frame, konfig.getPanel(),
+					"Einstellungen für kompakten Heldenbogen",
+					JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null,
+					null, 0);
+			
+			if (result == JOptionPane.OK_OPTION) {
+				konfig.schreibeKonfig(propertiesFile);
+			}
+			return;
+		}
 
 		PDFGenerator creator = new PDFGenerator();
-		creator.erzeugePDF(frame, null, doc, 5f, 10f, 0.5f, k);
+		creator.erzeugePDF(frame, null, doc, 5f, 10f, 0.5f, konfig, menuIdx == 1);
 	}
 
 	protected void zeigeXML(JFrame frame, Document doc)
