@@ -19,10 +19,10 @@ public class Konfiguration {
 	public static final String TALENT_BASISTALENTE = "talent.basistalente";
 	public static final String TALENT_IMMER_LEERESPALTEN = "talent.immer.leerespalten";
 	public static final String FRONT_MEHRSF = "front.mehrsf";
-	public static final String FRONT_ANFANGSEIGENSCHAFTEN = "front.anfangseigenschaften";
-	public static final String FRONT_IMMER_PARRIERWAFFEN = "front.immer.parrierwaffen";
+	public static final String FRONT_KAUFBAREEIGENSCHAFTEN = "front.kaufbareeigenschaften";
 	public static final String FRONT_IMMER_FERNKAMPF = "front.immer.fernkampf";
 	public static final String FRONT_IMMER_RUESTUNGEN = "front.immer.ruestungen";
+	public static final String FRONT_IMMER_SCHILDE = "front.immer.schilde";
 	public static final String HINTERGRUND = "hintergrund";
 	public static final String ZIELORDNER = "zielordner";
 
@@ -43,10 +43,10 @@ public class Konfiguration {
 
 	private JPanel frontPanel;
 	private JPanel fImmerPanel;
-	private JCheckBox fiRuestungen;
 	private JCheckBox fiFernkampf;
-	private JCheckBox fiParrierw;
-	private JCheckBox fAnfangsEigenschaften;
+	private JCheckBox fiRuestungen;
+	private JCheckBox fiSchilde;
+	private JCheckBox fKaufbareEigenschaften;
 	private JCheckBox fMehrSF;
 
 	private JPanel talentPanel;
@@ -79,10 +79,10 @@ public class Konfiguration {
 		textStandardMap.put(HINTERGRUND, "");
 		
 		optionenStandardMap = new HashMap<String, Boolean>();
-		optionenStandardMap.put(FRONT_IMMER_RUESTUNGEN, true);
 		optionenStandardMap.put(FRONT_IMMER_FERNKAMPF, false);
-		optionenStandardMap.put(FRONT_IMMER_PARRIERWAFFEN, false);
-		optionenStandardMap.put(FRONT_ANFANGSEIGENSCHAFTEN, false);
+		optionenStandardMap.put(FRONT_IMMER_RUESTUNGEN, true);
+		optionenStandardMap.put(FRONT_IMMER_SCHILDE, false);
+		optionenStandardMap.put(FRONT_KAUFBAREEIGENSCHAFTEN, false);
 		optionenStandardMap.put(FRONT_MEHRSF, false);
 
 		optionenStandardMap.put(TALENT_IMMER_LEERESPALTEN, true);
@@ -195,25 +195,25 @@ public class Konfiguration {
 				.createTitledBorder("Immer"));
 		frontPanel.add(fImmerPanel);
 
-		fiRuestungen = new JCheckBox("Rüstungen");
-		fiRuestungen.setAlignmentX(JComponent.LEFT_ALIGNMENT);
-		fImmerPanel.add(fiRuestungen);
-		optionenMap.put(FRONT_IMMER_RUESTUNGEN, fiRuestungen);
-		
 		fiFernkampf = new JCheckBox("Fernkampf");
 		fiFernkampf.setAlignmentX(JComponent.LEFT_ALIGNMENT);
 		fImmerPanel.add(fiFernkampf);
 		optionenMap.put(FRONT_IMMER_FERNKAMPF, fiFernkampf);
 		
-		fiParrierw = new JCheckBox("Parrierwaffen");
-		fiParrierw.setAlignmentX(JComponent.LEFT_ALIGNMENT);
-		fImmerPanel.add(fiParrierw);
-		optionenMap.put(FRONT_IMMER_PARRIERWAFFEN, fiParrierw);
+		fiRuestungen = new JCheckBox("Rüstungen");
+		fiRuestungen.setAlignmentX(JComponent.LEFT_ALIGNMENT);
+		fImmerPanel.add(fiRuestungen);
+		optionenMap.put(FRONT_IMMER_RUESTUNGEN, fiRuestungen);
 		
-		fAnfangsEigenschaften = new JCheckBox("Anfangs-Eigenschaften");
-		fAnfangsEigenschaften.setAlignmentX(JComponent.LEFT_ALIGNMENT);
-		frontPanel.add(fAnfangsEigenschaften);
-		optionenMap.put(FRONT_ANFANGSEIGENSCHAFTEN, fAnfangsEigenschaften);
+		fiSchilde = new JCheckBox("Schilde");
+		fiSchilde.setAlignmentX(JComponent.LEFT_ALIGNMENT);
+		fImmerPanel.add(fiSchilde);
+		optionenMap.put(FRONT_IMMER_SCHILDE, fiSchilde);
+		
+		fKaufbareEigenschaften = new JCheckBox("Kaufbare Eigenschaften");
+		fKaufbareEigenschaften.setAlignmentX(JComponent.LEFT_ALIGNMENT);
+		frontPanel.add(fKaufbareEigenschaften);
+		optionenMap.put(FRONT_KAUFBAREEIGENSCHAFTEN, fKaufbareEigenschaften);
 		
 		fMehrSF = new JCheckBox("Mehr Sonderfertigkeiten");
 		fMehrSF.setAlignmentX(JComponent.LEFT_ALIGNMENT);

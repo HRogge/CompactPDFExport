@@ -36,7 +36,7 @@ public class FrontSeite extends PDFSeite {
 		super(d, marginX, marginY, textMargin);
 	}
 
-	public void erzeugeSeite(Daten daten, PDJpeg bild,
+	public void erzeugeSeite(Daten daten, PDJpeg bild, PDJpeg hintergrund,
 			String[] guteEigenschaften, List<PDFSonderfertigkeiten> alleSF,
 			boolean tzm, Konfiguration k) throws IOException {
 		int patzerHoehe, patzerBreite, festerHeaderHoehe;
@@ -50,7 +50,7 @@ public class FrontSeite extends PDFSeite {
 		List<Schild> schilde;
 		List<PDFSonderfertigkeiten> sfListe;
 
-		boolean zeigeSchilde;
+		boolean zeigeFernkampf, zeigeRuestung, zeigeSchilde;
 
 		kampfsets = new ArrayList<Kampfset>();
 
@@ -115,8 +115,10 @@ public class FrontSeite extends PDFSeite {
 			ruestung = new ArrayList<Kampfset>();
 			schilde = new ArrayList<Schild>();
 
-			zeigeSchilde = false;
-
+			zeigeFernkampf = k.getOptionsDaten(Konfiguration.FRONT_IMMER_FERNKAMPF);
+			zeigeRuestung = k.getOptionsDaten(Konfiguration.FRONT_IMMER_RUESTUNGEN);
+			zeigeSchilde = k.getOptionsDaten(Konfiguration.FRONT_IMMER_SCHILDE);
+			
 			for (Kampfset set : kampfsets) {
 				for (Nahkampfwaffe w : set.getNahkampfwaffen()
 						.getNahkampfwaffe()) {
@@ -128,6 +130,7 @@ public class FrontSeite extends PDFSeite {
 						.getFernkampfwaffe()) {
 					w.setNummer(set.getNr());
 					fernkampf.add(w);
+					zeigeFernkampf = true;
 				}
 
 				for (Schild s : set.getSchilder().getSchild()) {
@@ -137,6 +140,7 @@ public class FrontSeite extends PDFSeite {
 				}
 				if (set.getRuestungen().getRuestung().size() > 0) {
 					ruestung.add(set);
+					zeigeRuestung = true;
 				}
 			}
 
@@ -147,17 +151,26 @@ public class FrontSeite extends PDFSeite {
 				patzerBreite = (kampfBreite - 1) * 2 / 5;
 			}
 			/* variabler Kampfteil */
-			bloecke = 3;
+			bloecke = 1;
+			if (zeigeFernkampf) {
+				bloecke++;
+			}
+			if (zeigeRuestung) {
+				bloecke++;
+			}
 			if (zeigeSchilde) {
-				/* 4 variabel große Blöcke zusammen mit Schilden/Parierwaffen */
 				bloecke++;
 			}
 
 			leer = hoehe - (5 + 1 + 9 + 1 + vorNachTeileLaenge + 1)
 					- patzerHoehe;
 			leer -= 2 + nahkampf.size();
-			leer -= 2 + fernkampf.size();
-			leer -= 2 + ruestung.size();
+			if (zeigeFernkampf) {
+				leer -= 2 + fernkampf.size();
+			}
+			if (zeigeRuestung) {
+				leer -= 2 + ruestung.size();
+			}
 			if (zeigeSchilde) {
 				leer -= 2 + schilde.size();
 			}
@@ -187,7 +200,7 @@ public class FrontSeite extends PDFSeite {
 		}
 
 		/* Fixen Teil der PDF Seite erzeugen */
-		initPDFStream(hoehe);
+		initPDFStream(hoehe, hintergrund);
 
 		stream.setStrokingColor(Color.BLACK);
 		stream.setLineWidth(1f);
@@ -207,12 +220,12 @@ public class FrontSeite extends PDFSeite {
 				leer--;
 			}
 
-			if (leer > 0) {
+			if (zeigeFernkampf && leer > 0) {
 				fernkampf.add(null);
 				leer--;
 			}
 
-			if (leer > 0) {
+			if (zeigeRuestung && leer > 0) {
 				ruestung.add(null);
 				leer--;
 			}
@@ -256,12 +269,15 @@ public class FrontSeite extends PDFSeite {
 		y = drawTabelle(0, kampfBreite, y,
 				nahkampf.toArray(new Nahkampfwaffe[nahkampf.size()]),
 				new NahkampfTable(kampfBreite));
-		y = drawTabelle(0, kampfBreite, y,
-				fernkampf.toArray(new Fernkampfwaffe[fernkampf.size()]),
-				new FernkampfTabelle(kampfBreite));
-		y = drawTabelle(0, kampfBreite, y, ruestung.toArray(),
-				new RuestungsTabelle(kampfBreite, tzm));
-
+		if (zeigeFernkampf) {
+			y = drawTabelle(0, kampfBreite, y,
+					fernkampf.toArray(new Fernkampfwaffe[fernkampf.size()]),
+					new FernkampfTabelle(kampfBreite));
+		}
+		if (zeigeRuestung) {
+			y = drawTabelle(0, kampfBreite, y, ruestung.toArray(),
+					new RuestungsTabelle(kampfBreite, tzm));
+		}
 		if (zeigeSchilde) {
 			y = drawTabelle(0, kampfBreite, y, schilde.toArray(),
 					new ParierwaffenTabelle(kampfBreite));
@@ -300,6 +316,16 @@ public class FrontSeite extends PDFSeite {
 		return y + werte.length + 2;
 	}
 
+	private String kaufbar(Eigenschaftswerte e) {
+		int akt, mod, start; 
+		
+		akt = e.getAkt().intValue();
+		mod = e.getModi().intValue();
+		start = e.getStart().intValue();
+		
+		return Integer.toString(((start-mod)*3+1)/2 - (akt-mod));
+	}
+	
 	private int basisWerte(int offsetY, Daten daten, PDJpeg bild,
 			String[] guteEigW, Konfiguration k) throws IOException {
 		int boxW;
@@ -321,15 +347,15 @@ public class FrontSeite extends PDFSeite {
 		Angaben angaben = daten.getAngaben();
 		Eigenschaften eigenschaften = daten.getEigenschaften();
 
-		if (k.getOptionsDaten(Konfiguration.FRONT_ANFANGSEIGENSCHAFTEN)) {
-			guteEig[0] += " (" + eigenschaften.getMut().getStart().toString() + ")";
-			guteEig[1] += " (" + eigenschaften.getKlugheit().getStart().toString() + ")";
-			guteEig[2] += " (" + eigenschaften.getIntuition().getStart().toString() + ")";
-			guteEig[3] += " (" + eigenschaften.getCharisma().getStart().toString() + ")";
-			guteEig[4] += " (" + eigenschaften.getFingerfertigkeit().getStart().toString() + ")";
-			guteEig[5] += " (" + eigenschaften.getGewandtheit().getStart().toString() + ")";
-			guteEig[6] += " (" + eigenschaften.getKonstitution().getStart().toString() + ")";
-			guteEig[7] += " (" + eigenschaften.getKoerperkraft().getStart().toString() + ")";
+		if (k.getOptionsDaten(Konfiguration.FRONT_KAUFBAREEIGENSCHAFTEN)) {
+			guteEig[0] += " (" + kaufbar(eigenschaften.getMut()) + ")";
+			guteEig[1] += " (" + kaufbar(eigenschaften.getKlugheit()) + ")";
+			guteEig[2] += " (" + kaufbar(eigenschaften.getIntuition()) + ")";
+			guteEig[3] += " (" + kaufbar(eigenschaften.getCharisma()) + ")";
+			guteEig[4] += " (" + kaufbar(eigenschaften.getFingerfertigkeit()) + ")";
+			guteEig[5] += " (" + kaufbar(eigenschaften.getGewandtheit()) + ")";
+			guteEig[6] += " (" + kaufbar(eigenschaften.getKonstitution()) + ")";
+			guteEig[7] += " (" + kaufbar(eigenschaften.getKoerperkraft()) + ")";
 		}
 		
 		basisW = new String[basis.length];

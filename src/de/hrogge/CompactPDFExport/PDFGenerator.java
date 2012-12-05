@@ -91,7 +91,7 @@ public class PDFGenerator {
 
 		try {
 			String pfad;
-			PDJpeg bild = null;
+			PDJpeg bild = null, hintergrund = null;
 
 			/* PDF erzeugen */
 			doc = new PDDocument();
@@ -111,31 +111,42 @@ public class PDFGenerator {
 				}
 			}
 
+			pfad = k.getTextDaten(Konfiguration.HINTERGRUND);
+			if (pfad != null && pfad.length() > 0) {
+				try {
+					BufferedImage img = ImageIO.read(new File(pfad));
+					hintergrund = new PDJpeg(doc, img);
+				} catch (Exception e) {
+					System.err.println("Konnte das Bild '" + pfad
+							+ "' nicht laden.");
+				}
+			}
+			
 			FrontSeite page1 = new FrontSeite(doc, marginX, marginY, textMargin);
-			page1.erzeugeSeite(daten, bild, guteEigenschaften,
+			page1.erzeugeSeite(daten, bild, hintergrund, guteEigenschaften,
 					sflist, tzm, k);
 
 			TalentSeite page2 = new TalentSeite(doc, marginX, marginY,
 					textMargin);
-			page2.erzeugeSeite(daten, guteEigenschaften, sflist, k);
+			page2.erzeugeSeite(daten, hintergrund, guteEigenschaften, sflist, k);
 
 			if (daten.getAngaben().isMagisch()) {
 				ZauberSeite page3 = new ZauberSeite(doc, marginX, marginY,
 						textMargin);
-				page3.erzeugeSeite(daten, guteEigenschaften,
+				page3.erzeugeSeite(daten, hintergrund, guteEigenschaften,
 							sflist, k);
 			}
 
 			for (PDFSonderfertigkeiten sf : sflist) {
 				if (!sf.istGedruckt()) {
 					SFSeite page4 = new SFSeite(doc, marginX, marginY, textMargin);
-					page4.erzeugeSeite(guteEigenschaften, sflist);
+					page4.erzeugeSeite(hintergrund, guteEigenschaften, sflist);
 					break;
 				}
 			}
 
 			if (output == null) {
-				output = waehlePDFFile(frame, daten);
+				output = waehlePDFFile(frame, daten, k.getTextDaten(Konfiguration.ZIELORDNER));
 			}
 
 			if (output == null) {
@@ -150,13 +161,13 @@ public class PDFGenerator {
 		}
 	}
 
-	private File waehlePDFFile(JFrame frame, Daten daten) {
+	private File waehlePDFFile(JFrame frame, Daten daten, String zielverzeichnis) {
 		File output;
 
 		JFileChooser chooser = new JFileChooser();
 		chooser.setApproveButtonText("PDF Export");
 		chooser.setApproveButtonToolTipText("Aktuellen Helden als PDF exportieren");
-
+		chooser.setCurrentDirectory(new File(zielverzeichnis));
 		FileFilter filter = new FileFilter() {
 			@Override
 			public boolean accept(File f) {

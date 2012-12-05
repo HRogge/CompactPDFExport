@@ -71,13 +71,17 @@ public class PDFSeite {
 		this.topEdge = this.bottomEdge + this.pageHeight;
 	}
 
-	public void initPDFStream(int cy) throws IOException {
+	public void initPDFStream(int cy, PDJpeg hintergrund) throws IOException {
 		this.cellCountY = cy;
 
 		this.cellWidth = this.pageWidth / this.cellCountX;
 		this.cellHeight = this.pageHeight / this.cellCountY;
 		
 		this.stream = new PDPageContentStream(doc, page);
+		
+		if (hintergrund != null) {
+			drawImage(0, 0, cellCountX, cellCountY, hintergrund);
+		}
 	}
 	
 	public void addLine(int x1, int y1, int x2, int y2) throws IOException {

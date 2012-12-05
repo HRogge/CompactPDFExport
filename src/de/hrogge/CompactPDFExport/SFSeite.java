@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.*;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
 
 public class SFSeite extends PDFSeite {
 	public SFSeite(PDDocument d, float marginX, float marginY, float textMargin)
@@ -11,7 +12,7 @@ public class SFSeite extends PDFSeite {
 		super(d, marginX, marginY, textMargin);
 	}
 
-	public void erzeugeSeite(String[] guteEigenschaften,
+	public void erzeugeSeite(PDJpeg hintergrund, String[] guteEigenschaften,
 			List<PDFSonderfertigkeiten> alleSF) throws IOException {
 		List<PDFSonderfertigkeiten> sfListe;
 
@@ -27,9 +28,9 @@ public class SFSeite extends PDFSeite {
 		}
 
 		if (sfListe.size() / 3 > 55) {
-			initPDFStream(72);
+			initPDFStream(72, hintergrund);
 		} else {
-			initPDFStream(60);
+			initPDFStream(60, hintergrund);
 		}
 
 		titelzeile(guteEigenschaften);

@@ -25,6 +25,7 @@ import jaxbGenerated.datenxml.Zauber;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
 
 import de.hrogge.CompactPDFExport.PDFSonderfertigkeiten.Kategorie;
 import de.hrogge.CompactPDFExport.gui.Konfiguration;
@@ -35,7 +36,7 @@ public class ZauberSeite extends PDFSeite {
 		super(d, marginX, marginY, textMargin);
 	}
 
-	public void erzeugeSeite(Daten daten, String[] guteEigenschaften,
+	public void erzeugeSeite(Daten daten, PDJpeg hintergrund, String[] guteEigenschaften,
 			List<PDFSonderfertigkeiten> alleSF, Konfiguration k)
 			throws IOException {
 		List<PDFSonderfertigkeiten> sfListe;
@@ -157,7 +158,7 @@ public class ZauberSeite extends PDFSeite {
 		}
 
 		while (zauberListe.size() > 0) {
-			initPDFStream(hoehe);
+			initPDFStream(hoehe, hintergrund);
 
 			titelzeile(guteEigenschaften);
 			zeichneZauber(zauberListe, zauberBreite, zauberSpalten);

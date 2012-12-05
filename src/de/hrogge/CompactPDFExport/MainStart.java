@@ -35,7 +35,7 @@ public class MainStart {
 	public static void main(String[] args) throws ParserConfigurationException,
 			SAXException, IOException {
 		File input, output;
-		
+
 		if (args.length != 3) {
 			System.err
 					.println("Bitte Ein-, Ausgabedatei, und Zauber-Notizen (true/false) als Parameter angeben.");
@@ -45,7 +45,7 @@ public class MainStart {
 		/* Steuerung über Kommandozeilenparameter */
 		input = new File(args[0]);
 		output = new File(args[1]);
-		
+
 		/* XML-Dokument des Eingabefiles erzeugen */
 		DocumentBuilderFactory documentFactory = DocumentBuilderFactory
 				.newInstance();
@@ -55,8 +55,13 @@ public class MainStart {
 		Document doc = documentBuilder.parse(new InputSource(reader));
 
 		Konfiguration k = new Konfiguration();
-		JOptionPane.showOptionDialog(null, k.getPanel(), "Einstellungen für kompakten Heldenbogen", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, 0);
-		
+		if ( JOptionPane.OK_OPTION != JOptionPane.showOptionDialog(null, k.getPanel(),
+				"Einstellungen für kompakten Heldenbogen",
+				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null,
+				null, 0)) {
+			return;
+		}
+
 		try {
 			PDFGenerator creator = new PDFGenerator();
 			creator.erzeugePDF(null, output, doc, 5f, 10f, 0.5f, k);
