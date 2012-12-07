@@ -105,26 +105,26 @@ public class ZauberSeite extends PDFSeite {
 		bonus = 0;
 		zauberSpalten = new int[] { 0, 6, 2, 2, 3, 5, 5, 5, 5, 2, 2, 9, 0 };
 		/*
-		 * 0: Name 
-		 * 1: Probe 
-		 * 2: Wert 
-		 * 3: Wert 2 
-		 * 4: Seitenzahl 
-		 * 5: Zauberdauer 
-		 * 6: Reichweite 
-		 * 7: Kosten 
-		 * 8: Wirkungsdauer 
-		 * 9: Lernkomplexität 
-		 * 10: Merkmale
-		 * 11: Anmerkung
-		 * 12: Repräsentation 
+		 * 0: Name
+		 * 1: Probe
+		 * 2: Wert
+		 * 3: Wert 2
+		 * 4: Seitenzahl
+		 * 5: Zauberdauer
+		 * 6: Reichweite
+		 * 7: Kosten
+		 * 8: Wirkungsdauer
+		 * 9: Lernkomplexität
+		 * 10: Repräsentation
+		 * 11: Merkmal
+		 * 12: Anmerkung
 		 */
 
 		if (!mehrereRepr
 				&& !k.getOptionsDaten(Konfiguration.ZAUBER_IMMER_REPRAESENTATION)) {
 			// Keine Repräsentations-Spalte
-			bonus += zauberSpalten[12];
-			zauberSpalten[12] = 0;
+			bonus += zauberSpalten[10];
+			zauberSpalten[10] = 0;
 		}
 
 		if (!k.getOptionsDaten(Konfiguration.ZAUBER_SEITENZAHLEN)) {
