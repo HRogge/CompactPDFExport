@@ -2,6 +2,7 @@ package de.hrogge.CompactPDFExport;
 
 import java.awt.Color;
 import java.io.IOException;
+import java.text.Collator;
 import java.util.*;
 
 import jaxbGenerated.datenxml.Sonderfertigkeit;
@@ -9,6 +10,8 @@ import jaxbGenerated.datenxml.Sonderfertigkeit;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
 public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> {
+	private static final Collator col = Collator.getInstance();
+	
 	static public int anzeigeGroesse(List<PDFSonderfertigkeiten> sflist) {
 		String typ = null;
 		int count = 0;
@@ -125,12 +128,12 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 		if (typ2.length() == 0) {
 			typ2 = o2.getName();
 		}
-		result = typ1.compareTo(typ2);
+		result = col.compare(typ1, typ2);
 		if (result != 0) {
 			return result;
 		}
 
-		return this.getName().compareTo(o2.getName());
+		return col.compare(this.getName(), o2.getName());
 	}
 
 	public void gedruckt() {

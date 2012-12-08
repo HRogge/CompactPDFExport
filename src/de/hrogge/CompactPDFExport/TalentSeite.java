@@ -17,6 +17,7 @@
 package de.hrogge.CompactPDFExport;
 
 import java.io.IOException;
+import java.text.Collator;
 import java.util.*;
 
 import jaxbGenerated.datenxml.Daten;
@@ -366,6 +367,8 @@ public class TalentSeite extends PDFSeite {
 	}
 
 	private class TalentComparator implements Comparator<Talent> {
+		Collator col = Collator.getInstance();
+		
 		@Override
 		public int compare(Talent o1, Talent o2) {
 			TalentSpezialisierung s1 = null, s2 = null;
@@ -385,7 +388,7 @@ public class TalentSeite extends PDFSeite {
 			if (!o1.getName().startsWith("L/S")
 					&& o2.getName().startsWith("L/S"))
 				return -1;
-			result = o1.getName().compareTo(o2.getName());
+			result = col.compare(o1.getName(), o2.getName());
 			if (result != 0) {
 				return result;
 			}
@@ -397,7 +400,7 @@ public class TalentSeite extends PDFSeite {
 				return 1;
 			}
 			if (s1 != null && s2 != null) {
-				return s1.getSpezName().compareTo(s2.getSpezName());
+				return col.compare(s1.getSpezName(), s2.getSpezName());
 			}
 			return 0;
 		}

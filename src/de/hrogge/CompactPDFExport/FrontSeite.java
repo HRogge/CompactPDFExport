@@ -19,6 +19,7 @@ package de.hrogge.CompactPDFExport;
 import java.awt.Color;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.text.Collator;
 import java.util.*;
 
 import jaxbGenerated.datenxml.*;
@@ -1005,7 +1006,7 @@ public class FrontSeite extends PDFSeite {
 				l.add(r.getName());
 			}
 
-			Collections.sort(l);
+			Collections.sort(l, Collator.getInstance());
 
 			for (int i = 1; i < l.size(); i++) {
 				String mod = l.get(i - 1).replace("links", "rechts");

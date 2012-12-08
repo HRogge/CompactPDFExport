@@ -17,6 +17,7 @@
 package de.hrogge.CompactPDFExport;
 
 import java.io.IOException;
+import java.text.Collator;
 import java.util.*;
 
 import jaxbGenerated.datenxml.Daten;
@@ -205,10 +206,12 @@ public class ZauberSeite extends PDFSeite {
 	}
 
 	private class ZauberComparator implements Comparator<Zauber> {
+		private Collator col;
 		boolean hauszauberOben;
 
 		public ZauberComparator(boolean hauszauberOben) {
 			this.hauszauberOben = hauszauberOben;
+			this.col = Collator.getInstance();
 		}
 
 		@Override
@@ -232,12 +235,12 @@ public class ZauberSeite extends PDFSeite {
 					return 1;
 				}
 			}
-			comp = o1.getName().compareTo(o2.getName());
+			comp = col.compare(o1.getName(), o2.getName());
 			if (comp != 0) {
 				return comp;
 			}
 
-			comp = o1.getRepräsentation().compareTo(o2.getRepräsentation());
+			comp = col.compare(o1.getRepräsentation(), o2.getRepräsentation());
 			if (comp != 0) {
 				return comp;
 			}
@@ -249,7 +252,7 @@ public class ZauberSeite extends PDFSeite {
 				return 1;
 			}
 			if (s1 != null && s2 != null) {
-				return s1.getSpezName().compareTo(s2.getSpezName());
+				return col.compare(s1.getSpezName(), s2.getSpezName());
 			}
 			return 0;
 		}
