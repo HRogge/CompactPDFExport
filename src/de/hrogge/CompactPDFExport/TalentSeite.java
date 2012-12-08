@@ -108,7 +108,8 @@ public class TalentSeite extends PDFSeite {
 		/* Extrahiere Sonderfertigkeiten */
 		PDFSonderfertigkeiten.Kategorie kat1[] = { Kategorie.TALENT };
 		sfListe = PDFSonderfertigkeiten.extrahiereKategorien(alleSF, kat1);
-
+		Collections.sort(sfListe);
+		
 		/* diese Spezialisierungen werden direkt in der Talentliste angezeigt */
 		PDFSonderfertigkeiten.Kategorie kat2[] = { Kategorie.TALENTSPEZ };
 		for (PDFSonderfertigkeiten sf : PDFSonderfertigkeiten
@@ -329,7 +330,7 @@ public class TalentSeite extends PDFSeite {
 						continue;
 					}
 					
-					if (t.getBehinderung().length() > 0) {
+					if (t.getBehinderung() != null && t.getBehinderung().length() > 0) {
 						behinderungLeer = false;
 					}
 					if (TalentSeite.getStern(t).length() > 0) {

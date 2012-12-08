@@ -41,7 +41,7 @@ public class FrontSeite extends PDFSeite {
 			boolean tzm, Konfiguration k) throws IOException {
 		int patzerHoehe, patzerBreite, festerHeaderHoehe;
 		int notizen, kampfBreite, blockBreite, vorNachTeileLaenge;
-		int leer, y, bloecke, hoehe, charakterDatenHoehe;
+		int leer, y, bloecke, hoehe, charakterDatenHoehe, sfY;
 		List<Kampfset> kampfsets;
 		List<Nahkampfwaffe> nahkampf;
 		List<Fernkampfwaffe> fernkampf;
@@ -97,10 +97,6 @@ public class FrontSeite extends PDFSeite {
 		PDFSonderfertigkeiten.Kategorie kat[] = { Kategorie.KAMPF,
 				Kategorie.GEWEIHT, Kategorie.LITURGIE };
 		sfListe = PDFSonderfertigkeiten.extrahiereKategorien(alleSF, kat);
-		if (sfListe.size() == 0) {
-			sfListe.addAll(alleSF);
-		}
-		Collections.sort(sfListe);
 
 		/* Layout für den Rest errechnen */
 		hoehe = 72;
@@ -240,13 +236,20 @@ public class FrontSeite extends PDFSeite {
 				vorNachTeileLaenge, k);
 
 		if (!k.getOptionsDaten(Konfiguration.FRONT_MEHRSF)) {
-			PDFSonderfertigkeiten.zeichneTabelle(this, kampfBreite + 1, y,
-					cellCountX, hoehe, "Sonderfertigkeiten", sfListe);
-		} else {
-			PDFSonderfertigkeiten.zeichneTabelle(this, kampfBreite + 1,
-					charakterDatenHoehe, cellCountX, hoehe,
-					"Sonderfertigkeiten", sfListe);
+			sfY = y;
 		}
+		else {
+			sfY = charakterDatenHoehe;
+		}
+		
+		if (sfListe.size() < (hoehe-sfY)/2) {
+			sfListe.clear();
+			sfListe.addAll(alleSF);
+		}
+		Collections.sort(sfListe);
+
+		PDFSonderfertigkeiten.zeichneTabelle(this, kampfBreite + 1, y,
+				cellCountX, hoehe, "Sonderfertigkeiten", sfListe);
 
 		if (notizen > 0) {
 			drawLabeledBox(0, y, kampfBreite, y + notizen - 1, "Notizen");
