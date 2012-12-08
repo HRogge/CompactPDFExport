@@ -50,7 +50,7 @@ public class TalentSeite extends PDFSeite {
 		if (t.isMuttersprache() != null && t.isMuttersprache().booleanValue()) {
 			stern += "m";
 		}
-		else if (t.isZweitlehrsprache() != null && t.isZweitlehrsprache().booleanValue()) {
+		if (t.isZweitlehrsprache() != null && t.isZweitlehrsprache().booleanValue()) {
 			stern += "z";
 		}
 		if (t.isSchriftmuttersprache() != null && t.isSchriftmuttersprache().booleanValue()) {
