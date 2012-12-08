@@ -55,7 +55,9 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 		for (int y = y1 + 2; y < y2; y++) {
 			seite.addLine(x1, y, x2, y);
 		}
-		seite.getStream().closeAndStroke();
+		if (y1+2<y2) {
+			seite.getStream().closeAndStroke();
+		}
 
 		typ = null;
 		for (int y = y1 + 1; !sflist.isEmpty() && y < y2; y++) {
