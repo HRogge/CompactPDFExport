@@ -205,7 +205,7 @@ public class PDFSeite {
 		for (x = 0; x < objects.length - 1; x++) {
 			addLine(x1, y1 + 2 + x, x2, y1 + 2 + x);
 		}
-		if (objects.length > 0) {
+		if (objects.length-1 > 0) {
 			stream.closeAndStroke();
 		}
 

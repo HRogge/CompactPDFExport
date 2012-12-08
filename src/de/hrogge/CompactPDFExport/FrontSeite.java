@@ -251,7 +251,6 @@ public class FrontSeite extends PDFSeite {
 
 		PDFSonderfertigkeiten.zeichneTabelle(this, kampfBreite + 1, y,
 				cellCountX, hoehe, "Sonderfertigkeiten", sfListe);
-
 		if (notizen > 0) {
 			drawLabeledBox(0, y, kampfBreite, y + notizen - 1, "Notizen");
 
@@ -556,9 +555,10 @@ public class FrontSeite extends PDFSeite {
 
 		/* Linien für Charakter-Daten */
 		for (int y = 1; y <= zeile; y++) {
-			stream.drawLine(leftEdge, getY(y), rightEdge, getY(y));
+			addLine(0, y, cellCountY, y);
 		}
-
+		stream.closeAndStroke();
+		
 		return zeile + 1;
 	}
 
