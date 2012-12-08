@@ -47,6 +47,15 @@ public class TalentSeite extends PDFSeite {
 		if (t.isMirakelminus()) {
 			stern += "-";
 		}
+		if (t.isMuttersprache() != null && t.isMuttersprache().booleanValue()) {
+			stern += "m";
+		}
+		else if (t.isZweitlehrsprache() != null && t.isZweitlehrsprache().booleanValue()) {
+			stern += "z";
+		}
+		if (t.isSchriftmuttersprache() != null && t.isSchriftmuttersprache().booleanValue()) {
+			stern += "m";
+		}
 		return stern;
 	}
 
@@ -495,15 +504,7 @@ public class TalentSeite extends PDFSeite {
 			case 0:
 				name = t.getName();
 				if (t.getSprachkomplexität() != null) {
-					name += " (" + t.getSprachkomplexität();
-					if (Boolean.TRUE.equals(t.isMuttersprache())) {
-						name += ",M";
-					} else if (Boolean.TRUE.equals(t.isZweitlehrsprache())) {
-						name += ",Z";
-					} else if (Boolean.TRUE.equals(t.isSchriftmuttersprache())) {
-						name += ",M";
-					}
-					name += ")";
+					name += " (" + t.getSprachkomplexität() + ")";
 				}
 				if (t.getBereich().contains("Liturgiekenntnis")) {
 					name = "Liturgiekenntnis: " + name;
