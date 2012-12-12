@@ -155,8 +155,15 @@ public class PDFGenerator {
 				}
 			}
 			
-			if (output == null) {
-				return;
+			if (output.exists()) {
+				int result = JOptionPane.showConfirmDialog(frame, "Die Datei "
+						+ output.getAbsolutePath()
+						+ " existiert schon.\nSoll sie überschrieben werden?",
+						"Datei überschreiben?", JOptionPane.YES_NO_OPTION);
+
+				if (result != JOptionPane.YES_OPTION) {
+					return;
+				}
 			}
 
 			doc.save(new FileOutputStream(output));
@@ -168,8 +175,6 @@ public class PDFGenerator {
 	}
 
 	private File waehlePDFFile(JFrame frame, Daten daten, String zielverzeichnis) {
-		File output;
-
 		JFileChooser chooser = new JFileChooser();
 		chooser.setApproveButtonText("PDF Export");
 		chooser.setApproveButtonToolTipText("Aktuellen Helden als PDF exportieren");
@@ -196,18 +201,6 @@ public class PDFGenerator {
 			return null;
 		}
 
-		output = chooser.getSelectedFile();
-
-		if (output.exists()) {
-			int result = JOptionPane.showConfirmDialog(frame, "Die Datei "
-					+ output.getAbsolutePath()
-					+ " existiert schon.\nSoll sie überschrieben werden?",
-					"Datei überschreiben?", JOptionPane.YES_NO_OPTION);
-
-			if (result != JOptionPane.YES_OPTION) {
-				return null;
-			}
-		}
-		return output;
+		return chooser.getSelectedFile();
 	}
 }

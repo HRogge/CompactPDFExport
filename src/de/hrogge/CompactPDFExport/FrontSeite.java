@@ -555,7 +555,7 @@ public class FrontSeite extends PDFSeite {
 
 		/* Linien für Charakter-Daten */
 		for (int y = 1; y <= zeile; y++) {
-			addLine(0, y, cellCountY, y);
+			addLine(0, y, cellCountX, y);
 		}
 		stream.closeAndStroke();
 		
