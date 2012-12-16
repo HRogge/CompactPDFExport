@@ -67,6 +67,7 @@ public class TalentSeite extends PDFSeite {
 	public void erzeugeSeite(Daten daten, PDJpeg hintergrund, String[] guteEigenschaften,
 			List<PDFSonderfertigkeiten> alleSF, Konfiguration k)
 			throws IOException {
+		TalentGruppe metatalente;
 		List<TalentGruppe> gruppen;
 		List<PDFSonderfertigkeiten> sfListe;
 		int sfLaenge, linksFrei, rechtsFrei;
@@ -82,9 +83,10 @@ public class TalentSeite extends PDFSeite {
 		gruppen.add(new TalentGruppe("Gesellschaftliche Talente",
 				"Gesellschaft", false));
 		gruppen.add(new TalentGruppe("Naturtalente", "Natur", false));
-		if (daten.getConfig().isMetatalente()) {
-			gruppen.add(new TalentGruppe("Metatalente", "Natur", true));
-		}
+		
+		metatalente = new TalentGruppe("Metatalente", "Natur", true);
+		gruppen.add(metatalente);
+		
 		gruppen.add(new TalentGruppe("Wissenstalente", "Wissen", false));
 		gruppen.add(new TalentGruppe("Sprachen/Schriften", "Sprachen",
 				"Schriften", false));
@@ -113,6 +115,10 @@ public class TalentSeite extends PDFSeite {
 					gruppe.add(new TalentSpezialisierung(t, s));
 				}
 			}
+		}
+
+		if (!daten.getConfig().isMetatalente()) {
+			gruppen.remove(metatalente);
 		}
 
 		/* Extrahiere Sonderfertigkeiten */
