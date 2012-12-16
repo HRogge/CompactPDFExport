@@ -28,20 +28,24 @@ public class Konfiguration {
 	public static final String FRONT_IMMER_SCHILDE = "front.immer.schilde";
 	public static final String GLOBAL_HINTERGRUND = "global.hintergrund";
 	public static final String GLOBAL_HINTERGRUND_VERZERREN = "global.hintergrundverzerren";
+	public static final String GLOBAL_PROBENWERTE = "global.probenwerte";
 	public static final String GLOBAL_ZIELORDNER = "global.zielordner";
 
 	private JPanel panel;
 	
-	private JPanel speichernPanel;
-	private JPanel sNamePanel;
-	private JLabel snZielOrdner;
-	private JLabel snHintergrund;
-	private JPanel sPfadPanel;
-	private JTextField spZielOrdner;
-	private JTextField spHintergrund;
-	private JPanel sDialogPanel;
-	private JButton sdZielOrdner;
-	private JButton sdHintergrund;
+	private JPanel globalesPanel;
+	private JPanel gNamePanel;
+	private JLabel gnZielOrdner;
+	private JLabel gnHintergrund;
+	private JPanel gPfadPanel;
+	private JTextField gpZielOrdner;
+	private JTextField gpHintergrund;
+	private JCheckBox gpVerzerren;
+	private JCheckBox gpProbenwerte;
+	
+	private JPanel gDialogPanel;
+	private JButton gdZielOrdner;
+	private JButton gdHintergrund;
 
 	private JPanel einstellungenPanel;
 
@@ -84,6 +88,7 @@ public class Konfiguration {
 		
 		optionenStandardMap = new HashMap<String, Boolean>();
 		optionenStandardMap.put(GLOBAL_HINTERGRUND_VERZERREN, false);
+		optionenStandardMap.put(GLOBAL_PROBENWERTE, false);
 		
 		optionenStandardMap.put(FRONT_IMMER_FERNKAMPF, false);
 		optionenStandardMap.put(FRONT_IMMER_RUESTUNGEN, true);
@@ -158,51 +163,56 @@ public class Konfiguration {
 	}
 	
 	private void erzeugeGlobalesPanel() {
-		speichernPanel = new JPanel(new BorderLayout());
-		panel.add(speichernPanel, BorderLayout.NORTH);
+		globalesPanel = new JPanel(new BorderLayout());
+		panel.add(globalesPanel, BorderLayout.NORTH);
 
-		sNamePanel = new JPanel(new GridLayout(0, 1));
-		speichernPanel.add(sNamePanel, BorderLayout.WEST);
+		gNamePanel = new JPanel(new GridLayout(0, 1));
+		globalesPanel.add(gNamePanel, BorderLayout.WEST);
 
-		snZielOrdner = new JLabel("Zielordner:");
-		sNamePanel.add(snZielOrdner);
-		snHintergrund = new JLabel("Hintergrund:");
-		sNamePanel.add(snHintergrund);
-		sNamePanel.add(new JLabel());
+		gnZielOrdner = new JLabel("Zielordner:");
+		gNamePanel.add(gnZielOrdner);
+		gnHintergrund = new JLabel("Hintergrund:");
+		gNamePanel.add(gnHintergrund);
+		gNamePanel.add(new JLabel());
+		gNamePanel.add(new JLabel());
 		
-		sPfadPanel = new JPanel(new GridLayout(0, 1));
-		speichernPanel.add(sPfadPanel, BorderLayout.CENTER);
+		gPfadPanel = new JPanel(new GridLayout(0, 1));
+		globalesPanel.add(gPfadPanel, BorderLayout.CENTER);
 
-		spZielOrdner = new JTextField();
-		sPfadPanel.add(spZielOrdner);
-		textMap.put(GLOBAL_ZIELORDNER, spZielOrdner);
-		spHintergrund = new JTextField();
-		sPfadPanel.add(spHintergrund);
-		textMap.put(GLOBAL_HINTERGRUND, spHintergrund);
-		JCheckBox spVerzerren = new JCheckBox("Hintergrund verzerren");
-		optionenMap.put(GLOBAL_HINTERGRUND_VERZERREN, spVerzerren);
-		sPfadPanel.add(spVerzerren);
+		gpZielOrdner = new JTextField();
+		gPfadPanel.add(gpZielOrdner);
+		textMap.put(GLOBAL_ZIELORDNER, gpZielOrdner);
+		gpHintergrund = new JTextField();
+		gPfadPanel.add(gpHintergrund);
+		textMap.put(GLOBAL_HINTERGRUND, gpHintergrund);
+		gpVerzerren = new JCheckBox("Hintergrund verzerren");
+		optionenMap.put(GLOBAL_HINTERGRUND_VERZERREN, gpVerzerren);
+		gPfadPanel.add(gpVerzerren);
+		gpProbenwerte = new JCheckBox("Probenwerte");
+		optionenMap.put(GLOBAL_PROBENWERTE, gpProbenwerte);
+		gPfadPanel.add(gpProbenwerte);
 		
-		sDialogPanel = new JPanel(new GridLayout(0, 1));
-		speichernPanel.add(sDialogPanel, BorderLayout.EAST);
+		gDialogPanel = new JPanel(new GridLayout(0, 1));
+		globalesPanel.add(gDialogPanel, BorderLayout.EAST);
 
-		sdZielOrdner = new JButton("...");
-		sdZielOrdner.addActionListener(new ActionListener() {
+		gdZielOrdner = new JButton("...");
+		gdZielOrdner.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				zielOrdnerDialog();
 			}
 		});
-		sDialogPanel.add(sdZielOrdner);
-		sdHintergrund = new JButton("...");
-		sdHintergrund.addActionListener(new ActionListener() {
+		gDialogPanel.add(gdZielOrdner);
+		gdHintergrund = new JButton("...");
+		gdHintergrund.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				hintergrundDialog();
 			}
 		});
-		sDialogPanel.add(sdHintergrund);
-		sDialogPanel.add(new JLabel());
+		gDialogPanel.add(gdHintergrund);
+		gDialogPanel.add(new JLabel());
+		gDialogPanel.add(new JLabel());
 	}
 
 	protected void zielOrdnerDialog() {
@@ -226,12 +236,12 @@ public class Konfiguration {
 		chooser.setMultiSelectionEnabled(false);
 		chooser.setDialogType(JFileChooser.SAVE_DIALOG);
 		chooser.setDialogTitle("PDF Export speichern...");
-		chooser.setSelectedFile(new File(spZielOrdner.getText()));
+		chooser.setSelectedFile(new File(gpZielOrdner.getText()));
 		if (chooser.showSaveDialog(panel) != JFileChooser.APPROVE_OPTION) {
 			return;
 		}
 
-		spZielOrdner.setText(chooser.getSelectedFile().getAbsolutePath());
+		gpZielOrdner.setText(chooser.getSelectedFile().getAbsolutePath());
 	}
 	
 	protected void hintergrundDialog() {
@@ -256,12 +266,12 @@ public class Konfiguration {
 		chooser.setMultiSelectionEnabled(false);
 		chooser.setDialogType(JFileChooser.OPEN_DIALOG);
 		chooser.setDialogTitle("PDF Export speichern...");
-		chooser.setSelectedFile(new File(spHintergrund.getText()));
+		chooser.setSelectedFile(new File(gpHintergrund.getText()));
 		if (chooser.showOpenDialog(panel) != JFileChooser.APPROVE_OPTION) {
 			return;
 		}
 
-		spHintergrund.setText(chooser.getSelectedFile().getAbsolutePath());
+		gpHintergrund.setText(chooser.getSelectedFile().getAbsolutePath());
 	}
 	
 	private void erzeugeFrontPanel() {

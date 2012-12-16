@@ -325,12 +325,13 @@ public class TalentSeite extends PDFSeite {
 
 	private void talentSpalte(List<TalentGruppe> gruppen, int from, int to,
 			int x1, int x2, boolean links, Konfiguration ko) throws IOException {
-		boolean basis;
+		boolean basis, probenwerte;
 		int talentBreite[], kampfBreite[];
 		int y;
 
 		basis = ko.getOptionsDaten(Konfiguration.TALENT_BASISTALENTE);
-
+		probenwerte= ko.getOptionsDaten(Konfiguration.GLOBAL_PROBENWERTE);
+		
 		/* talentgruppen zeichnen */
 		talentBreite = new int[] { 0, 0, 0, 0, 0, 6, 2, 2, 3, 3, 2 };
 		kampfBreite = new int[] { 0, 2, 2, 2, 2, 0, 2, 2, 3, 3, 2 };
@@ -373,10 +374,10 @@ public class TalentSeite extends PDFSeite {
 
 			if (links && gIndex == 0) {
 				drawTabelle(x1, x2, y, g.toArray(), new TalentTabelle(g.titel,
-						kampfBreite, x2 - x1, basis));
+						kampfBreite, x2 - x1, basis, probenwerte));
 			} else {
 				drawTabelle(x1, x2, y, g.toArray(), new TalentTabelle(g.titel,
-						talentBreite, x2 - x1, basis));
+						talentBreite, x2 - x1, basis, probenwerte));
 			}
 
 			y += g.size() + 2;
@@ -492,12 +493,14 @@ public class TalentSeite extends PDFSeite {
 
 	private class TalentTabelle extends AbstractTabellenZugriff {
 		boolean markiereBasis;
-
+		boolean probenWerte;
+		
 		public TalentTabelle(String titel, int[] columns, int width,
-				boolean markiereBasis) {
+				boolean markiereBasis, boolean probenWerte) {
 			super(new String[] { null, "AT", "", "PA", "", "Probe", "TaW", "",
 					"BE", "*", "SKT" }, columns, 0, titel, width);
 			this.markiereBasis = markiereBasis;
+			this.probenWerte = probenWerte;
 		}
 
 		@Override
@@ -526,7 +529,12 @@ public class TalentSeite extends PDFSeite {
 			case 3:
 				return t.getPa();
 			case 5:
-				return t.getProbe();
+				if (probenWerte && !t.getProbe().equals("--/--/--")) {
+					return t.getProbenwerte();
+				}
+				else {
+					return t.getProbe();
+				}
 			case 6:
 				if (t.getWert() != null) {
 					return t.getWert().toString();

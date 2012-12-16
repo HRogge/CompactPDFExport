@@ -151,7 +151,7 @@ public class ZauberSeite extends PDFSeite {
 			initPDFStream(hoehe);
 
 			titelzeile(guteEigenschaften);
-			zeichneZauber(zauberListe, zauberBreite, zauberSpalten);
+			zeichneZauber(zauberListe, zauberBreite, zauberSpalten, k);
 
 			if (k.getOptionsDaten(Konfiguration.ZAUBER_NOTIZEN_KEINE)) {
 				PDFSonderfertigkeiten.zeichneTabelle(this, cellCountX
@@ -164,9 +164,12 @@ public class ZauberSeite extends PDFSeite {
 	}
 
 	private void zeichneZauber(List<Zauber> zauberListe, int breite,
-			int[] spaltenBreite) throws IOException {
+			int[] spaltenBreite, Konfiguration ko) throws IOException {
+		boolean probenwerte;
 		List<Zauber> seitenListe;
 		int count;
+
+		probenwerte= ko.getOptionsDaten(Konfiguration.GLOBAL_PROBENWERTE);
 
 		seitenListe = new ArrayList<Zauber>();
 
@@ -189,7 +192,7 @@ public class ZauberSeite extends PDFSeite {
 		}
 
 		drawTabelle(0, breite, 2, seitenListe.toArray(), new ZauberTabelle(
-				spaltenBreite, breite));
+				spaltenBreite, breite, probenwerte));
 
 		stream.closeAndStroke();
 	}
@@ -273,10 +276,13 @@ public class ZauberSeite extends PDFSeite {
 	}
 
 	private class ZauberTabelle extends AbstractTabellenZugriff {
-		public ZauberTabelle(int[] spaltenBreite, int breite) {
+		boolean probenWerte;
+		
+		public ZauberTabelle(int[] spaltenBreite, int breite, boolean probenWerte) {
 			super(new String[] { null, "Probe", "ZfW", "", "Seite", "ZD", "RW",
 					"AsP", "WD", "SKT", "Rep", "Merkmal", "Anmerkung" },
 					spaltenBreite, 0, "Zaubername", breite);
+			this.probenWerte = probenWerte;
 		}
 
 		@Override
@@ -302,7 +308,12 @@ public class ZauberSeite extends PDFSeite {
 				}
 				return z.getNamemitvariante();
 			case 1:
-				return z.getProbe();
+				if (probenWerte && !z.getProbe().equals("--/--/--")) {
+					return z.getProbenwerte();
+				}
+				else {
+					return z.getProbe();
+				}
 			case 2:
 				return z.getWert().toString();
 			case 4:
