@@ -39,7 +39,7 @@ public class FrontSeite extends PDFSeite {
 	public void erzeugeSeite(Daten daten, PDJpeg bild, PDJpeg hintergrund,
 			String[] guteEigenschaften, List<PDFSonderfertigkeiten> alleSF,
 			boolean tzm, Konfiguration k) throws IOException {
-		int patzerHoehe, patzerBreite, festerHeaderHoehe;
+		int patzerHoehe, patzerBreite, festerHeaderHoehe, professionsZeilen;
 		int notizen, kampfBreite, blockBreite, vorNachTeileLaenge;
 		int leer, y, bloecke, hoehe, charakterDatenHoehe, sfY;
 		List<Kampfset> kampfsets;
@@ -85,12 +85,12 @@ public class FrontSeite extends PDFSeite {
 
 		if (!k.getOptionsDaten(Konfiguration.FRONT_MEHRSF)) {
 			vorNachTeileLaenge = (Math.max(vorteile.size(), nachteile.size()) + 1) / 2;
-		}
-		else if (vorteile.size() > nachteile.size()) {
-			vorNachTeileLaenge = Math.max((vorteile.size()+1)/2, nachteile.size());
-		}
-		else {
-			vorNachTeileLaenge = Math.max(vorteile.size(), (nachteile.size()+1)/2);
+		} else if (vorteile.size() > nachteile.size()) {
+			vorNachTeileLaenge = Math.max((vorteile.size() + 1) / 2,
+					nachteile.size());
+		} else {
+			vorNachTeileLaenge = Math.max(vorteile.size(),
+					(nachteile.size() + 1) / 2);
 		}
 
 		/* Sonderfertigkeiten extrahieren */
@@ -104,6 +104,9 @@ public class FrontSeite extends PDFSeite {
 		blockBreite = (cellCountX - 3) / 4;
 		kampfBreite = blockBreite * 3 + 2;
 
+		/* Wieviele Zeilen werden fuer die Profession gebraucht ? */
+		professionsZeilen = berechneProfessionsZeilen(daten);
+
 		do {
 			/* Variable Daten für Frontseite erfassen */
 			nahkampf = new ArrayList<Nahkampfwaffe>();
@@ -111,10 +114,12 @@ public class FrontSeite extends PDFSeite {
 			ruestung = new ArrayList<Kampfset>();
 			schilde = new ArrayList<Schild>();
 
-			zeigeFernkampf = k.getOptionsDaten(Konfiguration.FRONT_IMMER_FERNKAMPF);
-			zeigeRuestung = k.getOptionsDaten(Konfiguration.FRONT_IMMER_RUESTUNGEN);
+			zeigeFernkampf = k
+					.getOptionsDaten(Konfiguration.FRONT_IMMER_FERNKAMPF);
+			zeigeRuestung = k
+					.getOptionsDaten(Konfiguration.FRONT_IMMER_RUESTUNGEN);
 			zeigeSchilde = k.getOptionsDaten(Konfiguration.FRONT_IMMER_SCHILDE);
-			
+
 			for (Kampfset set : kampfsets) {
 				for (Nahkampfwaffe w : set.getNahkampfwaffen()
 						.getNahkampfwaffe()) {
@@ -158,7 +163,7 @@ public class FrontSeite extends PDFSeite {
 				bloecke++;
 			}
 
-			leer = hoehe - (5 + 1 + 9 + 1 + vorNachTeileLaenge + 1)
+			leer = hoehe - (4 + professionsZeilen + 1 + 9 + 1 + vorNachTeileLaenge + 1)
 					- patzerHoehe;
 			leer -= 2 + nahkampf.size();
 			if (zeigeFernkampf) {
@@ -201,11 +206,7 @@ public class FrontSeite extends PDFSeite {
 		stream.setStrokingColor(Color.BLACK);
 		stream.setLineWidth(1f);
 
-		y = charakterDatenHoehe = charakterDaten(daten);
-		if (y == 4) {
-			/* korrigieren für kurzen Header */
-			leer++;
-		}
+		y = charakterDatenHoehe = charakterDaten(daten, professionsZeilen);
 
 		festerHeaderHoehe = basisWerte(y, daten, bild, guteEigenschaften, k);
 
@@ -237,12 +238,11 @@ public class FrontSeite extends PDFSeite {
 
 		if (!k.getOptionsDaten(Konfiguration.FRONT_MEHRSF)) {
 			sfY = y;
-		}
-		else {
+		} else {
 			sfY = charakterDatenHoehe;
 		}
-		
-		if (sfListe.size() < (hoehe-sfY)/2) {
+
+		if (sfListe.size() < (hoehe - sfY) / 2) {
 			sfListe.clear();
 			sfListe.addAll(alleSF);
 		}
@@ -300,6 +300,21 @@ public class FrontSeite extends PDFSeite {
 		stream.close();
 	}
 
+	private int berechneProfessionsZeilen(Daten daten) throws IOException {
+		Angaben angaben = daten.getAngaben();
+		float breite;
+		
+		if (angaben.getRasse().length() < 20
+				&& angaben.getKultur().length() < 40
+				&& angaben.getProfession().getText().length() < 60) {
+			return 0;
+		}
+		
+		/* Maximaler Stauchungsfaktor 1.5 */
+		breite = berechneTextUeberlauf(PDType1Font.HELVETICA, 6, cellCountX, 1, angaben.getProfession().getText());
+		return (int)Math.ceil(breite / 1.5f);
+	}
+
 	private int basisKampfBlock(Eigenschaften eigen, int x1, int x2, int y)
 			throws IOException {
 		String[][] werte;
@@ -319,15 +334,15 @@ public class FrontSeite extends PDFSeite {
 	}
 
 	private String kaufbar(Eigenschaftswerte e) {
-		int akt, mod, start; 
-		
+		int akt, mod, start;
+
 		akt = e.getAkt().intValue();
 		mod = e.getModi().intValue();
 		start = e.getStart().intValue();
-		
-		return Integer.toString(((start-mod)*3+1)/2 - (akt-mod));
+
+		return Integer.toString(((start - mod) * 3 + 1) / 2 - (akt - mod));
 	}
-	
+
 	private int basisWerte(int offsetY, Daten daten, PDJpeg bild,
 			String[] guteEigW, Konfiguration k) throws IOException {
 		int boxW;
@@ -354,12 +369,13 @@ public class FrontSeite extends PDFSeite {
 			guteEig[1] += " (" + kaufbar(eigenschaften.getKlugheit()) + ")";
 			guteEig[2] += " (" + kaufbar(eigenschaften.getIntuition()) + ")";
 			guteEig[3] += " (" + kaufbar(eigenschaften.getCharisma()) + ")";
-			guteEig[4] += " (" + kaufbar(eigenschaften.getFingerfertigkeit()) + ")";
+			guteEig[4] += " (" + kaufbar(eigenschaften.getFingerfertigkeit())
+					+ ")";
 			guteEig[5] += " (" + kaufbar(eigenschaften.getGewandtheit()) + ")";
 			guteEig[6] += " (" + kaufbar(eigenschaften.getKonstitution()) + ")";
 			guteEig[7] += " (" + kaufbar(eigenschaften.getKoerperkraft()) + ")";
 		}
-		
+
 		basisW = new String[basis.length];
 		basisW[0] = eigenschaften.getLebensenergie().getAkt().toString();
 		basisW[1] = eigenschaften.getAusdauer().getAkt().toString();
@@ -471,10 +487,11 @@ public class FrontSeite extends PDFSeite {
 		return offsetY + 2 + height;
 	}
 
-	private int charakterDaten(Daten daten) throws IOException {
+	private int charakterDaten(Daten daten, int professionsZeilen) throws IOException {
 		Angaben angaben = daten.getAngaben();
 		int zeile = 0;
-
+		String profession;
+		
 		/* erste Zeile */
 		drawText(PDType1Font.HELVETICA_BOLD, 0, 4, zeile, "Name:", false);
 		drawText(PDType1Font.HELVETICA, 4, 31, zeile, angaben.getName(), true);
@@ -493,10 +510,24 @@ public class FrontSeite extends PDFSeite {
 				angaben.getGeburtstag(), true);
 		zeile++;
 
-		/* zweite Zeile (evt. doppelt) */
-		if (angaben.getRasse().length() > 20
-				|| angaben.getKultur().length() > 40
-				|| angaben.getProfession().getText().length() > 60) {
+		/* zweite Zeile (evt. mehrfach) */
+		profession = angaben.getProfession().getText().trim();
+		if (professionsZeilen == 0) {
+			drawText(PDType1Font.HELVETICA_BOLD, 0, 4, zeile, "Rasse:", false);
+			drawText(PDType1Font.HELVETICA, 4, 11, zeile, angaben.getRasse(),
+					true);
+
+			drawText(PDType1Font.HELVETICA_BOLD, 11, 15, zeile, "Kultur:",
+					false);
+			drawText(PDType1Font.HELVETICA, 15, 30, zeile, angaben.getKultur(),
+					true);
+
+			drawText(PDType1Font.HELVETICA_BOLD, 30, 36, zeile, "Profession:",
+					false);
+			drawText(PDType1Font.HELVETICA, 36, cellCountX, zeile, profession, true);
+
+			zeile++;
+		} else {
 			drawText(PDType1Font.HELVETICA_BOLD, 0, 4, zeile, "Rasse:", false);
 			drawText(PDType1Font.HELVETICA, 4, 30, zeile, angaben.getRasse(),
 					true);
@@ -509,24 +540,31 @@ public class FrontSeite extends PDFSeite {
 
 			drawText(PDType1Font.HELVETICA_BOLD, 0, 6, zeile, "Profession:",
 					false);
-			drawText(PDType1Font.HELVETICA, 6, cellCountX, zeile, angaben
-					.getProfession().getText(), true);
-			zeile++;
-		} else {
-			drawText(PDType1Font.HELVETICA_BOLD, 0, 4, zeile, "Rasse:", false);
-			drawText(PDType1Font.HELVETICA, 4, 11, zeile, angaben.getRasse(),
-					true);
-
-			drawText(PDType1Font.HELVETICA_BOLD, 11, 15, zeile, "Kultur:",
-					false);
-			drawText(PDType1Font.HELVETICA, 15, 30, zeile, angaben.getKultur(),
-					true);
-
-			drawText(PDType1Font.HELVETICA_BOLD, 30, 36, zeile, "Profession:",
-					false);
-			drawText(PDType1Font.HELVETICA, 36, cellCountX, zeile, angaben
-					.getProfession().getText(), true);
-			zeile++;
+			for (int i=0; i<professionsZeilen; i++) {
+				int pos, l, r;
+				String teil;
+				
+				pos = profession.length() / (professionsZeilen - i);
+				if (professionsZeilen - i == 1) {
+					teil = profession;
+				}
+				else {
+					l = profession.lastIndexOf(' ', pos);
+					r = profession.indexOf(' ', pos);
+					if ((pos - l) < (r - pos)) {
+						pos = l;
+					}
+					else {
+						pos = r;
+					}
+					
+					teil = profession.substring(0, pos);
+					profession = profession.substring(pos+1);
+				}
+				
+				drawText(PDType1Font.HELVETICA, 6, cellCountX, zeile, teil, true);
+				zeile++;
+			}
 		}
 
 		/* dritte Zeile */
@@ -557,7 +595,7 @@ public class FrontSeite extends PDFSeite {
 			addLine(0, y, cellCountX, y);
 		}
 		stream.closeAndStroke();
-		
+
 		return zeile + 1;
 	}
 

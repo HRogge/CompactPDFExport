@@ -33,33 +33,33 @@ public class PDFSeite {
 	private static final float MM_TO_UNITS = 1 / (10 * 2.54f)
 			* DEFAULT_USER_SPACE_UNIT_DPI;
 
-	protected static float lrPageMargin, tbPageMargin, textMargin;
+	protected static float randHorizontal, randVertikal, randText;
 	protected static PDJpeg hintergrundBild;
 	protected static boolean hintergrundVerzerren;
 
-	protected final int cellCountX = 63;
-	protected final int halbeBreite, viertelBreite;
-
-	protected final float pageWidth, pageHeight;
-
-	protected final float leftEdge, topEdge;
-	protected final float rightEdge, bottomEdge;
-
-	protected int cellCountY;
-	protected float cellWidth, cellHeight;
-
-	protected PDPage page;
-	protected final PDDocument doc;
-	protected PDPageContentStream stream;
-
 	public static void init(float randHorizontal, float randVertikal,
 			float randText, PDJpeg hintergrund, boolean hintergrundVerzerren) {
-		PDFSeite.lrPageMargin = randHorizontal;
-		PDFSeite.tbPageMargin = randVertikal;
-		PDFSeite.textMargin = randText;
+		PDFSeite.randHorizontal = randHorizontal;
+		PDFSeite.randVertikal = randVertikal;
+		PDFSeite.randText = randText;
 		PDFSeite.hintergrundBild = hintergrund;
 		PDFSeite.hintergrundVerzerren = hintergrundVerzerren;
 	}
+	protected final int cellCountX = 63;
+
+	protected final int halbeBreite, viertelBreite;
+
+	protected final float pageWidth, pageHeight;
+	protected final float leftEdge, topEdge;
+
+	protected final float rightEdge, bottomEdge;
+	protected int cellCountY;
+
+	protected float cellWidth, cellHeight;
+	protected PDPage page;
+	protected final PDDocument doc;
+
+	protected PDPageContentStream stream;
 
 	public PDFSeite(PDDocument d) {
 		this.doc = d;
@@ -70,8 +70,8 @@ public class PDFSeite {
 		this.halbeBreite = 31;
 		this.viertelBreite = 15;
 
-		this.leftEdge = lrPageMargin * MM_TO_UNITS;
-		this.bottomEdge = tbPageMargin * MM_TO_UNITS;
+		this.leftEdge = randHorizontal * MM_TO_UNITS;
+		this.bottomEdge = randVertikal * MM_TO_UNITS;
 
 		this.pageWidth = page.findMediaBox().getWidth() - this.leftEdge * 2;
 		this.pageHeight = page.findMediaBox().getHeight() - this.bottomEdge * 2;
@@ -87,6 +87,27 @@ public class PDFSeite {
 	public void addRect(int x1, int y1, int x2, int y2) throws IOException {
 		stream.addRect(getX(x1), getY(y1), getX(x2) - getX(x1), getY(y2)
 				- getY(y1));
+	}
+
+	public float berechneTextUeberlauf(PDFont font, int x1, int x2, int height,
+			String text) throws IOException {
+		PDFontDescriptor descr = font.getFontDescriptor();
+		float boxProp, textProp;
+		float boxWidth, boxHeight;
+		float textWidth, textHeight;
+		
+		boxHeight = (pageHeight / 60.0f * height) - 2 * randText;
+		boxWidth = (getX(x2) - getX(x1)) - 2 * randText;
+		boxProp = boxWidth / boxHeight;
+
+		textHeight = (descr.getFontBoundingBox().getHeight()) / 1000f;
+		textWidth = font.getStringWidth(text) / 1000f;
+		textProp = textWidth / textHeight;
+
+		if (textProp > boxProp) {
+			return textProp / boxProp;
+		}
+		return 1.0f;
 	}
 
 	public void drawImage(int x1, int y1, int x2, int y2, PDJpeg bild)
@@ -120,7 +141,7 @@ public class PDFSeite {
 			drawText(PDType1Font.HELVETICA_BOLD, x1, x2, y1, label, true);
 		}
 	}
-
+	
 	public int drawTabelle(int x1, int x2, int y1, Object[] objects,
 			ITabellenZugriff table) throws IOException {
 		int i, x, span;
@@ -216,7 +237,7 @@ public class PDFSeite {
 		}
 		return y1 + objects.length + 2;
 	}
-
+	
 	public void drawText(PDFont font, int x1, int x2, int y1, int y2,
 			String text, boolean center) throws IOException {
 		PDFontDescriptor descr = font.getFontDescriptor();
@@ -225,8 +246,8 @@ public class PDFSeite {
 		float textWidth, textHeight;
 		float shiftX, shiftY;
 
-		boxHeight = (getY(y1) - getY(y2)) - 2 * textMargin;
-		boxWidth = (getX(x2) - getX(x1)) - 2 * textMargin;
+		boxHeight = (getY(y1) - getY(y2)) - 2 * randText;
+		boxWidth = (getX(x2) - getX(x1)) - 2 * randText;
 		boxProp = boxWidth / boxHeight;
 
 		textHeight = (descr.getFontBoundingBox().getHeight()) / 1000f;
@@ -262,8 +283,8 @@ public class PDFSeite {
 			shiftY = -descr.getDescent() / 1000 * (boxHeight / textHeight);
 		}
 
-		stream.moveTextPositionByAmount(getX(x1) + textMargin + shiftX,
-				getY(y2) + textMargin + shiftY);
+		stream.moveTextPositionByAmount(getX(x1) + randText + shiftX,
+				getY(y2) + randText + shiftY);
 		stream.drawString(text);
 		stream.endText();
 	}
