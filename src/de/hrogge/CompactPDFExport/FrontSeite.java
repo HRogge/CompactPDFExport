@@ -32,9 +32,8 @@ import de.hrogge.CompactPDFExport.PDFSonderfertigkeiten.Kategorie;
 import de.hrogge.CompactPDFExport.gui.Konfiguration;
 
 public class FrontSeite extends PDFSeite {
-	public FrontSeite(PDDocument d, float marginX, float marginY,
-			float textMargin) throws IOException {
-		super(d, marginX, marginY, textMargin);
+	public FrontSeite(PDDocument d) throws IOException {
+		super(d);
 	}
 
 	public void erzeugeSeite(Daten daten, PDJpeg bild, PDJpeg hintergrund,
@@ -197,7 +196,7 @@ public class FrontSeite extends PDFSeite {
 		}
 
 		/* Fixen Teil der PDF Seite erzeugen */
-		initPDFStream(hoehe, hintergrund);
+		initPDFStream(hoehe);
 
 		stream.setStrokingColor(Color.BLACK);
 		stream.setLineWidth(1f);

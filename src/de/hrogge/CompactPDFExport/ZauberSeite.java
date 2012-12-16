@@ -32,9 +32,8 @@ import de.hrogge.CompactPDFExport.PDFSonderfertigkeiten.Kategorie;
 import de.hrogge.CompactPDFExport.gui.Konfiguration;
 
 public class ZauberSeite extends PDFSeite {
-	public ZauberSeite(PDDocument d, float marginX, float marginY,
-			float textMargin) throws IOException {
-		super(d, marginX, marginY, textMargin);
+	public ZauberSeite(PDDocument d) throws IOException {
+		super(d);
 	}
 
 	public void erzeugeSeite(Daten daten, PDJpeg hintergrund, String[] guteEigenschaften,
@@ -159,7 +158,7 @@ public class ZauberSeite extends PDFSeite {
 		}
 
 		while (zauberListe.size() > 0) {
-			initPDFStream(hoehe, hintergrund);
+			initPDFStream(hoehe);
 
 			titelzeile(guteEigenschaften);
 			zeichneZauber(zauberListe, zauberBreite, zauberSpalten);

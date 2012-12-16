@@ -33,6 +33,10 @@ public class PDFSeite {
 	private static final float MM_TO_UNITS = 1 / (10 * 2.54f)
 			* DEFAULT_USER_SPACE_UNIT_DPI;
 
+	protected static float lrPageMargin, tbPageMargin, textMargin;
+	protected static PDJpeg hintergrundBild;
+	protected static boolean hintergrundVerzerren;
+
 	protected final int cellCountX = 63;
 	protected final int halbeBreite, viertelBreite;
 
@@ -41,8 +45,6 @@ public class PDFSeite {
 	protected final float leftEdge, topEdge;
 	protected final float rightEdge, bottomEdge;
 
-	protected final float textMargin;
-
 	protected int cellCountY;
 	protected float cellWidth, cellHeight;
 
@@ -50,8 +52,16 @@ public class PDFSeite {
 	protected final PDDocument doc;
 	protected PDPageContentStream stream;
 
-	public PDFSeite(PDDocument d, float lrPageMargin, float tbPageMargin,
-			float tMargin) {
+	public static void init(float randHorizontal, float randVertikal,
+			float randText, PDJpeg hintergrund, boolean hintergrundVerzerren) {
+		PDFSeite.lrPageMargin = randHorizontal;
+		PDFSeite.tbPageMargin = randVertikal;
+		PDFSeite.textMargin = randText;
+		PDFSeite.hintergrundBild = hintergrund;
+		PDFSeite.hintergrundVerzerren = hintergrundVerzerren;
+	}
+
+	public PDFSeite(PDDocument d) {
 		this.doc = d;
 		this.stream = null;
 
@@ -63,7 +73,6 @@ public class PDFSeite {
 		this.leftEdge = lrPageMargin * MM_TO_UNITS;
 		this.bottomEdge = tbPageMargin * MM_TO_UNITS;
 
-		this.textMargin = tMargin;
 		this.pageWidth = page.findMediaBox().getWidth() - this.leftEdge * 2;
 		this.pageHeight = page.findMediaBox().getHeight() - this.bottomEdge * 2;
 
@@ -71,19 +80,6 @@ public class PDFSeite {
 		this.topEdge = this.bottomEdge + this.pageHeight;
 	}
 
-	public void initPDFStream(int cy, PDJpeg hintergrund) throws IOException {
-		this.cellCountY = cy;
-
-		this.cellWidth = this.pageWidth / this.cellCountX;
-		this.cellHeight = this.pageHeight / this.cellCountY;
-		
-		this.stream = new PDPageContentStream(doc, page);
-		
-		if (hintergrund != null) {
-			drawImage(0, 0, cellCountX, cellCountY, hintergrund);
-		}
-	}
-	
 	public void addLine(int x1, int y1, int x2, int y2) throws IOException {
 		stream.addLine(getX(x1), getY(y1), getX(x2), getY(y2));
 	}
@@ -95,7 +91,7 @@ public class PDFSeite {
 
 	public void drawImage(int x1, int y1, int x2, int y2, PDJpeg bild)
 			throws IOException {
-		float x, y, w, h, tmp;
+		float x, y, w, h;
 
 		x = getX(x1);
 		y = getY(y2);
@@ -103,17 +99,7 @@ public class PDFSeite {
 		w = getX(x2) - getX(x1);
 		h = getY(y1) - getY(y2);
 
-		if (w / bild.getWidth() > h / bild.getHeight()) {
-			tmp = h * bild.getWidth() / bild.getHeight();
-			x = x + (w - tmp) / 2;
-			w = tmp;
-		} else {
-			tmp = w * bild.getHeight() / bild.getWidth();
-			y = y + (h - tmp) / 2;
-			h = tmp;
-		}
-
-		stream.drawXObject(bild, x, y, w, h);
+		internalDrawImage(bild, x, y, w, h);
 	}
 
 	public void drawLabeledBox(int x1, int y1, int x2, int y2, String label)
@@ -155,7 +141,8 @@ public class PDFSeite {
 				}
 
 				for (i = 0; i < table.getColumnCount(); i++) {
-					if (table.getBackgroundColor(objects[j], i) == null || table.getWidth(i) == 0) {
+					if (table.getBackgroundColor(objects[j], i) == null
+							|| table.getWidth(i) == 0) {
 						continue;
 					}
 
@@ -205,7 +192,7 @@ public class PDFSeite {
 		for (x = 0; x < objects.length - 1; x++) {
 			addLine(x1, y1 + 2 + x, x2, y1 + 2 + x);
 		}
-		if (objects.length-1 > 0) {
+		if (objects.length - 1 > 0) {
 			stream.closeAndStroke();
 		}
 
@@ -220,8 +207,8 @@ public class PDFSeite {
 
 					if (table.getWidth(i) > 0) {
 						drawText(table.getFont(objects[j], i),
-								colX[i] + table.getIndent(objects[j], i), x, y1 + j
-								+ 1, table.get(objects[j], i),
+								colX[i] + table.getIndent(objects[j], i), x, y1
+										+ j + 1, table.get(objects[j], i),
 								table.getCentered(objects[j], i));
 					}
 				}
@@ -300,6 +287,25 @@ public class PDFSeite {
 		return topEdge - (pageHeight * y) / cellCountY;
 	}
 
+	public void initPDFStream(int cy) throws IOException {
+		this.cellCountY = cy;
+
+		this.cellWidth = this.pageWidth / this.cellCountX;
+		this.cellHeight = this.pageHeight / this.cellCountY;
+
+		this.stream = new PDPageContentStream(doc, page);
+
+		if (hintergrundBild != null) {
+			if (hintergrundVerzerren) {
+				stream.drawXObject(hintergrundBild, 0, 0, page.findMediaBox()
+						.getWidth(), page.findMediaBox().getHeight());
+			} else {
+				internalDrawImage(hintergrundBild, 0, 0, page.findMediaBox()
+						.getWidth(), page.findMediaBox().getHeight());
+			}
+		}
+	}
+
 	protected void neueSeite() {
 		this.page = new PDPage(PDPage.PAGE_SIZE_A4);
 		this.doc.addPage(page);
@@ -317,5 +323,21 @@ public class PDFSeite {
 			drawText(PDType1Font.HELVETICA_BOLD, x + 3, x + 6, 0, 2,
 					guteEigenschaften[i], true);
 		}
+	}
+
+	private void internalDrawImage(PDJpeg bild, float x, float y, float w,
+			float h) throws IOException {
+		float tmp;
+		if (w / bild.getWidth() > h / bild.getHeight()) {
+			tmp = h * bild.getWidth() / bild.getHeight();
+			x = x + (w - tmp) / 2;
+			w = tmp;
+		} else {
+			tmp = w * bild.getHeight() / bild.getWidth();
+			y = y + (h - tmp) / 2;
+			h = tmp;
+		}
+
+		stream.drawXObject(bild, x, y, w, h);
 	}
 }

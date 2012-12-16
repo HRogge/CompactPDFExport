@@ -59,9 +59,8 @@ public class TalentSeite extends PDFSeite {
 		return stern;
 	}
 
-	public TalentSeite(PDDocument d, float marginX, float marginY,
-			float textMargin) throws IOException {
-		super(d, marginX, marginY, textMargin);
+	public TalentSeite(PDDocument d) throws IOException {
+		super(d);
 	}
 
 	public void erzeugeSeite(Daten daten, PDJpeg hintergrund, String[] guteEigenschaften,
@@ -173,7 +172,7 @@ public class TalentSeite extends PDFSeite {
 		leerzeilenVerteilen(gruppen, links, gruppen.size(), rechtsFrei);
 
 		/* Seite erzeugen */
-		initPDFStream(hoehe, hintergrund);
+		initPDFStream(hoehe);
 
 		/* Titelzeile */
 		titelzeile(guteEigenschaften);

@@ -26,8 +26,9 @@ public class Konfiguration {
 	public static final String FRONT_IMMER_FERNKAMPF = "front.immer.fernkampf";
 	public static final String FRONT_IMMER_RUESTUNGEN = "front.immer.ruestungen";
 	public static final String FRONT_IMMER_SCHILDE = "front.immer.schilde";
-	public static final String SPEICHERN_HINTERGRUND = "speichern.hintergrund";
-	public static final String SPEICHERN_ZIELORDNER = "speichern.zielordner";
+	public static final String GLOBAL_HINTERGRUND = "global.hintergrund";
+	public static final String GLOBAL_HINTERGRUND_VERZERREN = "global.hintergrundverzerren";
+	public static final String GLOBAL_ZIELORDNER = "global.zielordner";
 
 	private JPanel panel;
 	
@@ -78,10 +79,12 @@ public class Konfiguration {
 		optionenMap = new HashMap<String, JToggleButton>();
 
 		textStandardMap = new HashMap<String, String>();
-		textStandardMap.put(SPEICHERN_ZIELORDNER, ".");
-		textStandardMap.put(SPEICHERN_HINTERGRUND, "");
+		textStandardMap.put(GLOBAL_ZIELORDNER, ".");
+		textStandardMap.put(GLOBAL_HINTERGRUND, "");
 		
 		optionenStandardMap = new HashMap<String, Boolean>();
+		optionenStandardMap.put(GLOBAL_HINTERGRUND_VERZERREN, false);
+		
 		optionenStandardMap.put(FRONT_IMMER_FERNKAMPF, false);
 		optionenStandardMap.put(FRONT_IMMER_RUESTUNGEN, true);
 		optionenStandardMap.put(FRONT_IMMER_SCHILDE, false);
@@ -101,7 +104,7 @@ public class Konfiguration {
 		panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-		erzeugeFilePanel();
+		erzeugeGlobalesPanel();
 
 		einstellungenPanel = new JPanel(new GridLayout(0, 3));
 		panel.add(einstellungenPanel, BorderLayout.CENTER);
@@ -154,7 +157,7 @@ public class Konfiguration {
 		p.store(fos, "CompactPDFExportPlugin v1.0");
 	}
 	
-	private void erzeugeFilePanel() {
+	private void erzeugeGlobalesPanel() {
 		speichernPanel = new JPanel(new BorderLayout());
 		panel.add(speichernPanel, BorderLayout.NORTH);
 
@@ -165,17 +168,21 @@ public class Konfiguration {
 		sNamePanel.add(snZielOrdner);
 		snHintergrund = new JLabel("Hintergrund:");
 		sNamePanel.add(snHintergrund);
-
+		sNamePanel.add(new JLabel());
+		
 		sPfadPanel = new JPanel(new GridLayout(0, 1));
 		speichernPanel.add(sPfadPanel, BorderLayout.CENTER);
 
 		spZielOrdner = new JTextField();
 		sPfadPanel.add(spZielOrdner);
-		textMap.put(SPEICHERN_ZIELORDNER, spZielOrdner);
+		textMap.put(GLOBAL_ZIELORDNER, spZielOrdner);
 		spHintergrund = new JTextField();
 		sPfadPanel.add(spHintergrund);
-		textMap.put(SPEICHERN_HINTERGRUND, spHintergrund);
-
+		textMap.put(GLOBAL_HINTERGRUND, spHintergrund);
+		JCheckBox spVerzerren = new JCheckBox("Hintergrund verzerren");
+		optionenMap.put(GLOBAL_HINTERGRUND_VERZERREN, spVerzerren);
+		sPfadPanel.add(spVerzerren);
+		
 		sDialogPanel = new JPanel(new GridLayout(0, 1));
 		speichernPanel.add(sDialogPanel, BorderLayout.EAST);
 
@@ -195,6 +202,7 @@ public class Konfiguration {
 			}
 		});
 		sDialogPanel.add(sdHintergrund);
+		sDialogPanel.add(new JLabel());
 	}
 
 	protected void zielOrdnerDialog() {

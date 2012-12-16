@@ -7,9 +7,9 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
 
 public class SFSeite extends PDFSeite {
-	public SFSeite(PDDocument d, float marginX, float marginY, float textMargin)
+	public SFSeite(PDDocument d)
 			throws IOException {
-		super(d, marginX, marginY, textMargin);
+		super(d);
 	}
 
 	public void erzeugeSeite(PDJpeg hintergrund, String[] guteEigenschaften,
@@ -28,9 +28,9 @@ public class SFSeite extends PDFSeite {
 		}
 
 		if (sfListe.size() / 3 > 55) {
-			initPDFStream(72, hintergrund);
+			initPDFStream(72);
 		} else {
-			initPDFStream(60, hintergrund);
+			initPDFStream(60);
 		}
 
 		titelzeile(guteEigenschaften);

@@ -39,8 +39,9 @@ import de.hrogge.CompactPDFExport.gui.Konfiguration;
 
 public class PDFGenerator {
 	public void erzeugePDF(JFrame frame, File output, Document input,
-			float marginX, float marginY, float textMargin, Konfiguration k, boolean speichernDialog)
-			throws IOException, COSVisitorException, JAXBException {
+			float marginX, float marginY, float textMargin, Konfiguration k,
+			boolean speichernDialog) throws IOException, COSVisitorException,
+			JAXBException {
 		String[] guteEigenschaften;
 		List<PDFSonderfertigkeiten> sflist;
 		boolean tzm;
@@ -55,7 +56,7 @@ public class PDFGenerator {
 				.getDocumentElement());
 
 		tzm = daten.getConfig().getRsmodell().equals("zone");
-		
+
 		/*
 		 * Gute Eigenschaften auslesen, da sie seitenübergreifend gebraucht
 		 * werden
@@ -111,7 +112,7 @@ public class PDFGenerator {
 				}
 			}
 
-			pfad = k.getTextDaten(Konfiguration.SPEICHERN_HINTERGRUND);
+			pfad = k.getTextDaten(Konfiguration.GLOBAL_HINTERGRUND);
 			if (pfad != null && pfad.length() > 0) {
 				try {
 					BufferedImage img = ImageIO.read(new File(pfad));
@@ -121,40 +122,47 @@ public class PDFGenerator {
 							+ "' nicht laden.");
 				}
 			}
-			
-			FrontSeite page1 = new FrontSeite(doc, marginX, marginY, textMargin);
+
+			/* globale Settings für Seite festlegen */
+			PDFSeite.init(
+					marginX,
+					marginY,
+					textMargin,
+					hintergrund,
+					k.getOptionsDaten(Konfiguration.GLOBAL_HINTERGRUND_VERZERREN));
+
+			/* Seiten erzeugen */
+			FrontSeite page1 = new FrontSeite(doc);
 			page1.erzeugeSeite(daten, bild, hintergrund, guteEigenschaften,
 					sflist, tzm, k);
 
-			TalentSeite page2 = new TalentSeite(doc, marginX, marginY,
-					textMargin);
+			TalentSeite page2 = new TalentSeite(doc);
 			page2.erzeugeSeite(daten, hintergrund, guteEigenschaften, sflist, k);
 
 			if (daten.getAngaben().isMagisch()) {
-				ZauberSeite page3 = new ZauberSeite(doc, marginX, marginY,
-						textMargin);
+				ZauberSeite page3 = new ZauberSeite(doc);
 				page3.erzeugeSeite(daten, hintergrund, guteEigenschaften,
-							sflist, k);
+						sflist, k);
 			}
 
 			for (PDFSonderfertigkeiten sf : sflist) {
 				if (!sf.istGedruckt()) {
-					SFSeite page4 = new SFSeite(doc, marginX, marginY, textMargin);
+					SFSeite page4 = new SFSeite(doc);
 					page4.erzeugeSeite(hintergrund, guteEigenschaften, sflist);
 					break;
 				}
 			}
 
 			if (output == null) {
-				String ordner = k.getTextDaten(Konfiguration.SPEICHERN_ZIELORDNER);
+				String ordner = k.getTextDaten(Konfiguration.GLOBAL_ZIELORDNER);
 				if (speichernDialog) {
 					output = waehlePDFFile(frame, daten, ordner);
-				}
-				else {
-					output = new File(ordner, daten.getAngaben().getName() + ".pdf");
+				} else {
+					output = new File(ordner, daten.getAngaben().getName()
+							+ ".pdf");
 				}
 			}
-			
+
 			if (output.exists()) {
 				int result = JOptionPane.showConfirmDialog(frame, "Die Datei "
 						+ output.getAbsolutePath()
