@@ -11,7 +11,7 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
 public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> {
 	private static final Collator col = Collator.getInstance();
-	
+
 	static public int anzeigeGroesse(List<PDFSonderfertigkeiten> sflist) {
 		String typ = null;
 		int count = 0;
@@ -58,7 +58,7 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 		for (int y = y1 + 2; y < y2; y++) {
 			seite.addLine(x1, y, x2, y);
 		}
-		if (y1+2<y2) {
+		if (y1 + 2 < y2) {
 			seite.getStream().closeAndStroke();
 		}
 
@@ -73,7 +73,7 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 
 					seite.drawText(PDType1Font.HELVETICA, x1, x2, y,
 							s.getName(), false);
-				} else  {
+				} else {
 					if (!s.getTyp().equals(typ)) {
 						if (y == y2 - 1) {
 							break;

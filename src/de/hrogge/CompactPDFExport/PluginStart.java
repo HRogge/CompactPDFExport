@@ -42,15 +42,17 @@ import de.hrogge.CompactPDFExport.gui.Konfiguration;
 public class PluginStart implements HeldenXMLDatenPlugin {
 	private Konfiguration konfig;
 	private File propertiesFile;
-	
+
 	public PluginStart() throws URISyntaxException {
 		konfig = new Konfiguration();
 
-		CodeSource codeSource = PluginStart.class.getProtectionDomain().getCodeSource();
+		CodeSource codeSource = PluginStart.class.getProtectionDomain()
+				.getCodeSource();
 		File jarFile = new File(codeSource.getLocation().toURI().getPath());
 
-		propertiesFile = new File(jarFile.getParentFile(), "CompactPDFExport.properties");
-		
+		propertiesFile = new File(jarFile.getParentFile(),
+				"CompactPDFExport.properties");
+
 		try {
 			konfig.ladeKonfiguration(propertiesFile);
 		} catch (IOException e) {
@@ -147,9 +149,9 @@ public class PluginStart implements HeldenXMLDatenPlugin {
 		if (menuIdx == 2) {
 			int result = JOptionPane.showOptionDialog(frame, konfig.getPanel(),
 					"Einstellungen für kompakten Heldenbogen",
-					JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null,
-					null, 0);
-			
+					JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE,
+					null, null, 0);
+
 			if (result == JOptionPane.OK_OPTION) {
 				konfig.schreibeKonfig(propertiesFile);
 			}
@@ -157,7 +159,8 @@ public class PluginStart implements HeldenXMLDatenPlugin {
 		}
 
 		PDFGenerator creator = new PDFGenerator();
-		creator.erzeugePDF(frame, null, doc, 5f, 10f, 0.5f, konfig, menuIdx == 1);
+		creator.erzeugePDF(frame, null, doc, 5f, 10f, 0.5f, konfig,
+				menuIdx == 1);
 	}
 
 	protected void zeigeXML(JFrame frame, Document doc)

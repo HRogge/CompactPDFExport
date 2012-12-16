@@ -163,7 +163,8 @@ public class FrontSeite extends PDFSeite {
 				bloecke++;
 			}
 
-			leer = hoehe - (4 + professionsZeilen + 1 + 9 + 1 + vorNachTeileLaenge + 1)
+			leer = hoehe
+					- (4 + professionsZeilen + 1 + 9 + 1 + vorNachTeileLaenge + 1)
 					- patzerHoehe;
 			leer -= 2 + nahkampf.size();
 			if (zeigeFernkampf) {
@@ -300,21 +301,6 @@ public class FrontSeite extends PDFSeite {
 		stream.close();
 	}
 
-	private int berechneProfessionsZeilen(Daten daten) throws IOException {
-		Angaben angaben = daten.getAngaben();
-		float breite;
-		
-		if (angaben.getRasse().length() < 20
-				&& angaben.getKultur().length() < 40
-				&& angaben.getProfession().getText().length() < 60) {
-			return 0;
-		}
-		
-		/* Maximaler Stauchungsfaktor 1.5 */
-		breite = berechneTextUeberlauf(PDType1Font.HELVETICA, 6, cellCountX, 1, angaben.getProfession().getText());
-		return (int)Math.ceil(breite / 1.5f);
-	}
-
 	private int basisKampfBlock(Eigenschaften eigen, int x1, int x2, int y)
 			throws IOException {
 		String[][] werte;
@@ -331,16 +317,6 @@ public class FrontSeite extends PDFSeite {
 
 		drawTabelle(x1, x2, y, werte, new BasisKampfTabelle(x2 - x1));
 		return y + werte.length + 2;
-	}
-
-	private String kaufbar(Eigenschaftswerte e) {
-		int akt, mod, start;
-
-		akt = e.getAkt().intValue();
-		mod = e.getModi().intValue();
-		start = e.getStart().intValue();
-
-		return Integer.toString(((start - mod) * 3 + 1) / 2 - (akt - mod));
 	}
 
 	private int basisWerte(int offsetY, Daten daten, PDJpeg bild,
@@ -487,11 +463,28 @@ public class FrontSeite extends PDFSeite {
 		return offsetY + 2 + height;
 	}
 
-	private int charakterDaten(Daten daten, int professionsZeilen) throws IOException {
+	private int berechneProfessionsZeilen(Daten daten) throws IOException {
+		Angaben angaben = daten.getAngaben();
+		float breite;
+
+		if (angaben.getRasse().length() < 20
+				&& angaben.getKultur().length() < 40
+				&& angaben.getProfession().getText().length() < 60) {
+			return 0;
+		}
+
+		/* Maximaler Stauchungsfaktor 1.5 */
+		breite = berechneTextUeberlauf(PDType1Font.HELVETICA, 6, cellCountX, 1,
+				angaben.getProfession().getText());
+		return (int) Math.ceil(breite / 1.5f);
+	}
+
+	private int charakterDaten(Daten daten, int professionsZeilen)
+			throws IOException {
 		Angaben angaben = daten.getAngaben();
 		int zeile = 0;
 		String profession;
-		
+
 		/* erste Zeile */
 		drawText(PDType1Font.HELVETICA_BOLD, 0, 4, zeile, "Name:", false);
 		drawText(PDType1Font.HELVETICA, 4, 31, zeile, angaben.getName(), true);
@@ -524,7 +517,8 @@ public class FrontSeite extends PDFSeite {
 
 			drawText(PDType1Font.HELVETICA_BOLD, 30, 36, zeile, "Profession:",
 					false);
-			drawText(PDType1Font.HELVETICA, 36, cellCountX, zeile, profession, true);
+			drawText(PDType1Font.HELVETICA, 36, cellCountX, zeile, profession,
+					true);
 
 			zeile++;
 		} else {
@@ -540,29 +534,28 @@ public class FrontSeite extends PDFSeite {
 
 			drawText(PDType1Font.HELVETICA_BOLD, 0, 6, zeile, "Profession:",
 					false);
-			for (int i=0; i<professionsZeilen; i++) {
+			for (int i = 0; i < professionsZeilen; i++) {
 				int pos, l, r;
 				String teil;
-				
+
 				pos = profession.length() / (professionsZeilen - i);
 				if (professionsZeilen - i == 1) {
 					teil = profession;
-				}
-				else {
+				} else {
 					l = profession.lastIndexOf(' ', pos);
 					r = profession.indexOf(' ', pos);
 					if ((pos - l) < (r - pos)) {
 						pos = l;
-					}
-					else {
+					} else {
 						pos = r;
 					}
-					
+
 					teil = profession.substring(0, pos);
-					profession = profession.substring(pos+1);
+					profession = profession.substring(pos + 1);
 				}
-				
-				drawText(PDType1Font.HELVETICA, 6, cellCountX, zeile, teil, true);
+
+				drawText(PDType1Font.HELVETICA, 6, cellCountX, zeile, teil,
+						true);
 				zeile++;
 			}
 		}
@@ -651,6 +644,16 @@ public class FrontSeite extends PDFSeite {
 		drawTabelle(x1, x2, y, data, new IniAusweichenTabelle(sets.size() + 1,
 				x2 - x1));
 		return y + 4;
+	}
+
+	private String kaufbar(Eigenschaftswerte e) {
+		int akt, mod, start;
+
+		akt = e.getAkt().intValue();
+		mod = e.getModi().intValue();
+		start = e.getStart().intValue();
+
+		return Integer.toString(((start - mod) * 3 + 1) / 2 - (akt - mod));
 	}
 
 	private void patzerBlock(int x1, int x2, int y) throws IOException {
@@ -1035,6 +1038,20 @@ public class FrontSeite extends PDFSeite {
 			return "";
 		}
 
+		@Override
+		public Color getBackgroundColor(Object o, int x) {
+			Kampfset waffe = (Kampfset) o;
+
+			return waffe.getNr().longValue() == 2 ? Color.LIGHT_GRAY : null;
+		}
+
+		protected String filter(BigInteger input) {
+			if (input.intValue() == 0) {
+				return "";
+			}
+			return input.toString();
+		}
+
 		private String erzeugeName(Kampfset set) {
 			List<String> l = new ArrayList<String>();
 			String text;
@@ -1058,20 +1075,6 @@ public class FrontSeite extends PDFSeite {
 				text = text + ";" + t;
 			}
 			return text.substring(1);
-		}
-
-		@Override
-		public Color getBackgroundColor(Object o, int x) {
-			Kampfset waffe = (Kampfset) o;
-
-			return waffe.getNr().longValue() == 2 ? Color.LIGHT_GRAY : null;
-		}
-
-		protected String filter(BigInteger input) {
-			if (input.intValue() == 0) {
-				return "";
-			}
-			return input.toString();
 		}
 	}
 

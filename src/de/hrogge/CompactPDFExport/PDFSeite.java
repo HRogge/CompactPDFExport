@@ -45,6 +45,7 @@ public class PDFSeite {
 		PDFSeite.hintergrundBild = hintergrund;
 		PDFSeite.hintergrundVerzerren = hintergrundVerzerren;
 	}
+
 	protected final int cellCountX = 63;
 
 	protected final int halbeBreite, viertelBreite;
@@ -95,7 +96,7 @@ public class PDFSeite {
 		float boxProp, textProp;
 		float boxWidth, boxHeight;
 		float textWidth, textHeight;
-		
+
 		boxHeight = (pageHeight / 60.0f * height) - 2 * randText;
 		boxWidth = (getX(x2) - getX(x1)) - 2 * randText;
 		boxProp = boxWidth / boxHeight;
@@ -141,7 +142,7 @@ public class PDFSeite {
 			drawText(PDType1Font.HELVETICA_BOLD, x1, x2, y1, label, true);
 		}
 	}
-	
+
 	public int drawTabelle(int x1, int x2, int y1, Object[] objects,
 			ITabellenZugriff table) throws IOException {
 		int i, x, span;
@@ -237,7 +238,7 @@ public class PDFSeite {
 		}
 		return y1 + objects.length + 2;
 	}
-	
+
 	public void drawText(PDFont font, int x1, int x2, int y1, int y2,
 			String text, boolean center) throws IOException {
 		PDFontDescriptor descr = font.getFontDescriptor();
@@ -283,8 +284,8 @@ public class PDFSeite {
 			shiftY = -descr.getDescent() / 1000 * (boxHeight / textHeight);
 		}
 
-		stream.moveTextPositionByAmount(getX(x1) + randText + shiftX,
-				getY(y2) + randText + shiftY);
+		stream.moveTextPositionByAmount(getX(x1) + randText + shiftX, getY(y2)
+				+ randText + shiftY);
 		stream.drawString(text);
 		stream.endText();
 	}

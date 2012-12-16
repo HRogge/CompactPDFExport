@@ -36,9 +36,9 @@ public class ZauberSeite extends PDFSeite {
 		super(d);
 	}
 
-	public void erzeugeSeite(Daten daten, PDJpeg hintergrund, String[] guteEigenschaften,
-			List<PDFSonderfertigkeiten> alleSF, Konfiguration k)
-			throws IOException {
+	public void erzeugeSeite(Daten daten, PDJpeg hintergrund,
+			String[] guteEigenschaften, List<PDFSonderfertigkeiten> alleSF,
+			Konfiguration k) throws IOException {
 		List<PDFSonderfertigkeiten> sfListe;
 		List<Zauber> zauberListe;
 		int zauberBreite, sfBreite, hoehe, bonus;
@@ -105,19 +105,9 @@ public class ZauberSeite extends PDFSeite {
 		bonus = 0;
 		zauberSpalten = new int[] { 0, 6, 2, 2, 3, 5, 5, 5, 5, 2, 2, 9, 0 };
 		/*
-		 * 0: Name
-		 * 1: Probe
-		 * 2: Wert
-		 * 3: Wert 2
-		 * 4: Seitenzahl
-		 * 5: Zauberdauer
-		 * 6: Reichweite
-		 * 7: Kosten
-		 * 8: Wirkungsdauer
-		 * 9: Lernkomplexität
-		 * 10: Repräsentation
-		 * 11: Merkmal
-		 * 12: Anmerkung
+		 * 0: Name 1: Probe 2: Wert 3: Wert 2 4: Seitenzahl 5: Zauberdauer 6:
+		 * Reichweite 7: Kosten 8: Wirkungsdauer 9: Lernkomplexität 10:
+		 * Repräsentation 11: Merkmal 12: Anmerkung
 		 */
 
 		if (!mehrereRepr
@@ -331,7 +321,7 @@ public class ZauberSeite extends PDFSeite {
 				if (z.getRepräsentation().length() < 3) {
 					return z.getRepräsentation();
 				}
-				return z.getRepräsentation().substring(0,3);
+				return z.getRepräsentation().substring(0, 3);
 			case 11:
 				return z.getMerkmale();
 			case 12:

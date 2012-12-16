@@ -34,7 +34,7 @@ import de.hrogge.CompactPDFExport.gui.Konfiguration;
 public class TalentSeite extends PDFSeite {
 	static public String getStern(Talent t) {
 		String stern = "";
-		
+
 		if (t.isLeittalent()) {
 			stern += "L";
 		}
@@ -50,10 +50,12 @@ public class TalentSeite extends PDFSeite {
 		if (t.isMuttersprache() != null && t.isMuttersprache().booleanValue()) {
 			stern += "m";
 		}
-		if (t.isZweitlehrsprache() != null && t.isZweitlehrsprache().booleanValue()) {
+		if (t.isZweitlehrsprache() != null
+				&& t.isZweitlehrsprache().booleanValue()) {
 			stern += "z";
 		}
-		if (t.isSchriftmuttersprache() != null && t.isSchriftmuttersprache().booleanValue()) {
+		if (t.isSchriftmuttersprache() != null
+				&& t.isSchriftmuttersprache().booleanValue()) {
 			stern += "m";
 		}
 		return stern;
@@ -63,9 +65,9 @@ public class TalentSeite extends PDFSeite {
 		super(d);
 	}
 
-	public void erzeugeSeite(Daten daten, PDJpeg hintergrund, String[] guteEigenschaften,
-			List<PDFSonderfertigkeiten> alleSF, Konfiguration k)
-			throws IOException {
+	public void erzeugeSeite(Daten daten, PDJpeg hintergrund,
+			String[] guteEigenschaften, List<PDFSonderfertigkeiten> alleSF,
+			Konfiguration k) throws IOException {
 		TalentGruppe metatalente;
 		List<TalentGruppe> gruppen;
 		List<PDFSonderfertigkeiten> sfListe;
@@ -82,10 +84,10 @@ public class TalentSeite extends PDFSeite {
 		gruppen.add(new TalentGruppe("Gesellschaftliche Talente",
 				"Gesellschaft", false));
 		gruppen.add(new TalentGruppe("Naturtalente", "Natur", false));
-		
+
 		metatalente = new TalentGruppe("Metatalente", "Natur", true);
 		gruppen.add(metatalente);
-		
+
 		gruppen.add(new TalentGruppe("Wissenstalente", "Wissen", false));
 		gruppen.add(new TalentGruppe("Sprachen/Schriften", "Sprachen",
 				"Schriften", false));
@@ -124,7 +126,7 @@ public class TalentSeite extends PDFSeite {
 		PDFSonderfertigkeiten.Kategorie kat1[] = { Kategorie.TALENT };
 		sfListe = PDFSonderfertigkeiten.extrahiereKategorien(alleSF, kat1);
 		Collections.sort(sfListe);
-		
+
 		/* diese Spezialisierungen werden direkt in der Talentliste angezeigt */
 		PDFSonderfertigkeiten.Kategorie kat2[] = { Kategorie.TALENTSPEZ };
 		for (PDFSonderfertigkeiten sf : PDFSonderfertigkeiten
@@ -337,15 +339,16 @@ public class TalentSeite extends PDFSeite {
 			/* Teste ob Behinderung oder die Sternspalte leer sind */
 			boolean behinderungLeer = true;
 			boolean sternLeer = true;
-			
+
 			for (int gIndex = from; gIndex < to; gIndex++) {
 				TalentGruppe g = gruppen.get(gIndex);
 				for (Talent t : g) {
 					if (t == null) {
 						continue;
 					}
-					
-					if (t.getBehinderung() != null && t.getBehinderung().length() > 0) {
+
+					if (t.getBehinderung() != null
+							&& t.getBehinderung().length() > 0) {
 						behinderungLeer = false;
 					}
 					if (TalentSeite.getStern(t).length() > 0) {
@@ -353,7 +356,7 @@ public class TalentSeite extends PDFSeite {
 					}
 				}
 			}
-			
+
 			if (behinderungLeer) {
 				talentBreite[8] = 0;
 				kampfBreite[8] = 0;
@@ -363,7 +366,7 @@ public class TalentSeite extends PDFSeite {
 				kampfBreite[9] = 0;
 			}
 		}
-		
+
 		y = 2;
 		for (int gIndex = from; gIndex < to; gIndex++) {
 			TalentGruppe g = gruppen.get(gIndex);
@@ -382,7 +385,7 @@ public class TalentSeite extends PDFSeite {
 
 	private class TalentComparator implements Comparator<Talent> {
 		Collator col = Collator.getInstance();
-		
+
 		@Override
 		public int compare(Talent o1, Talent o2) {
 			TalentSpezialisierung s1 = null, s2 = null;
@@ -546,7 +549,6 @@ public class TalentSeite extends PDFSeite {
 			}
 		}
 
-		
 		@Override
 		public int getColumnSpan(int x) {
 			if (x == 1 || x == 3 || x == 6) {

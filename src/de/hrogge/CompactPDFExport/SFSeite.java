@@ -7,8 +7,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
 
 public class SFSeite extends PDFSeite {
-	public SFSeite(PDDocument d)
-			throws IOException {
+	public SFSeite(PDDocument d) throws IOException {
 		super(d);
 	}
 
