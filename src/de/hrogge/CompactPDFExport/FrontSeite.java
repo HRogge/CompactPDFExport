@@ -249,7 +249,7 @@ public class FrontSeite extends PDFSeite {
 		}
 		Collections.sort(sfListe);
 
-		PDFSonderfertigkeiten.zeichneTabelle(this, kampfBreite + 1, y,
+		PDFSonderfertigkeiten.zeichneTabelle(this, kampfBreite + 1, sfY,
 				cellCountX, hoehe, "Sonderfertigkeiten", sfListe);
 		if (notizen > 0) {
 			drawLabeledBox(0, y, kampfBreite, y + notizen - 1, "Notizen");
