@@ -64,7 +64,7 @@ public class MainStart {
 
 		try {
 			PDFGenerator creator = new PDFGenerator();
-			creator.erzeugePDF(null, output, doc, 5f, 10f, 0.5f, k, false);
+			creator.exportierePDF(null, output, doc, k, false);
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(1);

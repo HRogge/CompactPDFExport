@@ -16,10 +16,12 @@
 
 package de.hrogge.CompactPDFExport;
 
-import helden.plugin.HeldenXMLDatenPlugin;
-import helden.plugin.datenxmlplugin.DatenAustauschImpl;
+import helden.plugin.HeldenXMLDatenPlugin3;
+import helden.plugin.datenxmlplugin.DatenAustausch3Interface;
 
 import java.awt.Dialog.ModalityType;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -28,22 +30,40 @@ import java.security.CodeSource;
 import java.util.ArrayList;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.pdfbox.pdmodel.PDDocument;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import de.hrogge.CompactPDFExport.gui.DruckAnsicht;
 import de.hrogge.CompactPDFExport.gui.Konfiguration;
 
-public class PluginStart implements HeldenXMLDatenPlugin {
+public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
+	private DatenAustausch3Interface dai;
+	private JFrame frame;
+
 	private Konfiguration konfig;
 	private File propertiesFile;
+	private JMenuItem exportMenuItem;
+	private JMenuItem exportAlsMenuItem;
+	private JMenuItem einstellungenMenuItem;
+
+	private DruckAnsicht druckAnsicht;
 
 	public PluginStart() throws URISyntaxException {
+		druckAnsicht = null;
+		tabHatFokus = false;
+		datenGeaendert = false;
+		zwangsUpdate = false;
+
 		konfig = new Konfiguration();
 
 		CodeSource codeSource = PluginStart.class.getProtectionDomain()
@@ -56,26 +76,20 @@ public class PluginStart implements HeldenXMLDatenPlugin {
 		try {
 			konfig.ladeKonfiguration(propertiesFile);
 		} catch (IOException e) {
-			// Fehler beim laden ignorieren
+			/* Fehler beim laden ignorieren */
 		}
+
+		updater = new VorschauUpdaten();
+	}
+
+	@Override
+	public void click() {
+		/* Nicht benutzt in diesem Plugin */
 	}
 
 	@Override
 	public void doWork(JFrame arg0) {
 		/* Nicht benutzt in diesem Plugin */
-	}
-
-	@Override
-	public void doWork(JFrame frame, Integer menuIdx, DatenAustauschImpl dai) {
-		try {
-			doMyWork(frame, menuIdx, dai);
-		} catch (Exception e) {
-			/*
-			 * Kann an dieser Stelle die Exception zum Hauptprogramm
-			 * weitergeworfen werden ?
-			 */
-			e.printStackTrace();
-		}
 	}
 
 	@Override
@@ -90,6 +104,14 @@ public class PluginStart implements HeldenXMLDatenPlugin {
 	}
 
 	@Override
+	public JComponent getPanel() {
+		zwangsUpdate = true;
+		new Thread(updater).start();
+
+		return druckAnsicht.getPanel();
+	}
+
+	@Override
 	public String getToolTipText() {
 		return "PDF-Export für kompakten Heldenbogen";
 	}
@@ -100,67 +122,119 @@ public class PluginStart implements HeldenXMLDatenPlugin {
 	}
 
 	@Override
-	public ArrayList<String> getUntermenus() {
-		ArrayList<String> l = new ArrayList<String>();
+	public ArrayList<JComponent> getUntermenus() {
+		ArrayList<JComponent> l = new ArrayList<JComponent>();
 
-		l.add("Held in PDF umwandeln");
-		l.add("Held in PDF umwandeln...");
-		l.add("Einstellungen");
+		exportMenuItem = new JMenuItem("Exportieren");
+		exportMenuItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				exportierenAktion(false);
+			}
+		});
+		l.add(exportMenuItem);
+
+		exportAlsMenuItem = new JMenuItem("Exportieren als ...");
+		exportAlsMenuItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				exportierenAktion(true);
+			}
+		});
+		l.add(exportAlsMenuItem);
+
+		l.add(new JSeparator());
+
+		einstellungenMenuItem = new JMenuItem("Einstellungen");
+		einstellungenMenuItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				einstellungenAction();
+			}
+		});
+		l.add(einstellungenMenuItem);
+
 		return l;
 	}
 
-	protected void doMyWork(JFrame frame, int menuIdx, DatenAustauschImpl dai)
-			throws Exception {
-		DocumentBuilder documentBuilder;
-		org.w3c.dom.Document request;
-		org.w3c.dom.Document doc;
-		Object obj;
+	@Override
+	public boolean hatMenu() {
+		return true;
+	}
 
-		/* Baue die nötigen XML-Objekte auf */
-		DocumentBuilderFactory documentFactory = DocumentBuilderFactory
-				.newInstance();
-		documentBuilder = documentFactory.newDocumentBuilder();
+	@Override
+	public boolean hatTab() {
+		return true;
+	}
 
-		/* Generiere XML-Request */
-		request = documentBuilder.newDocument();
+	@Override
+	public void init(DatenAustausch3Interface dai, JFrame frame) {
+		Runnable k, s, su;
 
-		/* Frage die Daten zum aktuellen Helden im XML Format ab */
-		Element requestElement = request.createElement("action");
-		request.appendChild(requestElement);
-		requestElement.setAttribute("action", "held");
-		requestElement.setAttribute("id", "selected");
-		requestElement.setAttribute("format", "xml");
-		requestElement.setAttribute("version", "2");
+		this.dai = dai;
+		this.frame = frame;
 
-		obj = dai.exec(request);
-		if (obj == null || !(obj instanceof org.w3c.dom.Document)) {
-			throw new Exception("Unbekannter Rückgabewert auf Request: "
-					+ obj.getClass().getCanonicalName());
-		}
+		dai.addChangeListener(this);
 
-		doc = (org.w3c.dom.Document) obj;
-
-		/*
-		 * Aktivieren für Debug-Output:
-		 * 
-		 * zeigeXML(frame, doc);
-		 */
-
-		if (menuIdx == 2) {
-			int result = JOptionPane.showOptionDialog(frame, konfig.getPanel(),
-					"Einstellungen für kompakten Heldenbogen",
-					JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE,
-					null, null, 0);
-
-			if (result == JOptionPane.OK_OPTION) {
-				konfig.schreibeKonfig(propertiesFile);
+		k = new Runnable() {
+			@Override
+			public void run() {
+				einstellungenAction();
 			}
-			return;
+		};
+
+		s = new Runnable() {
+			@Override
+			public void run() {
+				exportierenAktion(false);
+			}
+		};
+
+		su = new Runnable() {
+			@Override
+			public void run() {
+				exportierenAktion(true);
+			}
+		};
+
+		druckAnsicht = new DruckAnsicht(k, s, su);
+	}
+
+	protected void einstellungenAction() {
+		int result = JOptionPane.showOptionDialog(frame, konfig.getPanel(),
+				"Einstellungen für kompakten Heldenbogen",
+				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null,
+				null, 0);
+
+		if (result == JOptionPane.OK_OPTION) {
+			datenGeaendert = true;
+			new Thread(updater).start();
+
+			try {
+				konfig.schreibeKonfig(propertiesFile);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 
-		PDFGenerator creator = new PDFGenerator();
-		creator.erzeugePDF(frame, null, doc, 5f, 10f, 0.5f, konfig,
-				menuIdx == 1);
+		return;
+	}
+
+	protected void exportierenAktion(boolean dialog) {
+		try {
+			org.w3c.dom.Document doc = heldEinlesen();
+
+			/*
+			 * Aktivieren für Debug-Output:
+			 * 
+			 * zeigeXML(frame, doc);
+			 */
+
+			PDFGenerator creator = new PDFGenerator();
+			creator.exportierePDF(frame, null, doc, konfig, dialog);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	protected void zeigeXML(JFrame frame, Document doc)
@@ -193,5 +267,92 @@ public class PluginStart implements HeldenXMLDatenPlugin {
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		dialog.pack();
 		dialog.setVisible(true);
+	}
+
+	private org.w3c.dom.Document heldEinlesen()
+			throws ParserConfigurationException, Exception {
+		DocumentBuilder documentBuilder;
+		org.w3c.dom.Document request;
+		org.w3c.dom.Document doc;
+		Object obj;
+
+		/* Baue die nötigen XML-Objekte auf */
+		DocumentBuilderFactory documentFactory = DocumentBuilderFactory
+				.newInstance();
+		documentBuilder = documentFactory.newDocumentBuilder();
+
+		/* Generiere XML-Request */
+		request = documentBuilder.newDocument();
+
+		/* Frage die Daten zum aktuellen Helden im XML Format ab */
+		Element requestElement = request.createElement("action");
+		request.appendChild(requestElement);
+		requestElement.setAttribute("action", "held");
+		requestElement.setAttribute("id", "selected");
+		requestElement.setAttribute("format", "xml");
+		requestElement.setAttribute("version", "2");
+
+		obj = dai.exec(request);
+		if (obj == null || !(obj instanceof org.w3c.dom.Document)) {
+			throw new Exception("Unbekannter Rückgabewert auf Request: "
+					+ obj.getClass().getCanonicalName());
+		}
+
+		doc = (org.w3c.dom.Document) obj;
+		return doc;
+	}
+
+	private boolean tabHatFokus;
+	private boolean datenGeaendert;
+	private boolean zwangsUpdate;
+	private VorschauUpdaten updater;
+
+	@Override
+	public void stateChanged(ChangeEvent e) {
+		if (e.getSource().equals("neuer Held")) {
+			datenGeaendert = true;
+		} else if (e.getSource().equals("Kein Focus")) {
+			tabHatFokus = false;
+		} else if (e.getSource().equals("Focus")) {
+			tabHatFokus = true;
+		} else if (e.getSource().equals("Änderung")) {
+			datenGeaendert = true;
+		}
+		new Thread(updater).start();
+	}
+
+	private class VorschauUpdaten implements Runnable {
+		@Override
+		public void run() {
+			PDDocument pddoc = null;
+
+			synchronized (this) {
+				if (!zwangsUpdate && (!tabHatFokus || !datenGeaendert)) {
+					return;
+				}
+
+				datenGeaendert = false;
+				zwangsUpdate = false;
+
+				try {
+					org.w3c.dom.Document doc = heldEinlesen();
+					PDFGenerator creator = new PDFGenerator();
+					pddoc = creator.erzeugePDFDokument(doc, konfig);
+
+					druckAnsicht.updateAnsicht(pddoc);
+				} catch (Exception e1) {
+					System.err.println("EXCEPTION!!!");
+					e1.printStackTrace();
+				} finally {
+					if (pddoc != null) {
+						try {
+							pddoc.close();
+						} catch (IOException e) {
+							System.err.println("EXCEPTION2!!!");
+						}
+					}
+				}
+			}
+		}
 	}
 }

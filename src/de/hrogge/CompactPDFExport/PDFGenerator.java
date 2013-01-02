@@ -38,13 +38,25 @@ import org.w3c.dom.Document;
 import de.hrogge.CompactPDFExport.gui.Konfiguration;
 
 public class PDFGenerator {
-	public void erzeugePDF(JFrame frame, File output, Document input,
-			float marginX, float marginY, float textMargin, Konfiguration k,
-			boolean speichernDialog) throws IOException, COSVisitorException,
-			JAXBException {
-		String[] guteEigenschaften;
-		List<PDFSonderfertigkeiten> sflist;
-		boolean tzm;
+	private final float marginX = 5f;
+	private final float marginY = 10f;
+	private final float textMargin = 0.5f;
+	
+	public PDDocument erzeugePDFDokument(Document doc, Konfiguration k) throws IOException, COSVisitorException, JAXBException {
+		/* JAXB Repräsentation des XML-Dokuments erzeugen */
+		JAXBContext jaxbContext = JAXBContext
+				.newInstance(jaxbGenerated.datenxml.Daten.class);
+
+		Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+		Daten daten = (Daten) jaxbUnmarshaller.unmarshal(doc
+				.getDocumentElement());
+
+		return internErzeugePDFDokument(k, daten);
+	}
+	
+	public void exportierePDF(JFrame frame, File output, Document input,
+			Konfiguration k, boolean speichernDialog)
+			throws IOException, COSVisitorException, JAXBException {
 		PDDocument doc = null;
 
 		/* JAXB Repräsentation des XML-Dokuments erzeugen */
@@ -55,8 +67,56 @@ public class PDFGenerator {
 		Daten daten = (Daten) jaxbUnmarshaller.unmarshal(input
 				.getDocumentElement());
 
-		tzm = daten.getConfig().getRsmodell().equals("zone");
+		try {
+			doc = internErzeugePDFDokument(k, daten);
 
+			if (output == null) {
+				String ordner = k.getTextDaten(Konfiguration.GLOBAL_ZIELORDNER);
+				if (speichernDialog) {
+					output = waehlePDFFile(frame, daten, ordner);
+					if (output == null) {
+						return;
+					}
+				}
+				else {
+					output = new File(ordner, daten.getAngaben().getName() + ".pdf");
+				}
+			}
+			
+			if (output.exists()) {
+				int result = JOptionPane.showConfirmDialog(frame, "Die Datei "
+						+ output.getAbsolutePath()
+						+ " existiert schon.\nSoll sie überschrieben werden?",
+						"Datei überschreiben?", JOptionPane.YES_NO_OPTION);
+
+				if (result != JOptionPane.YES_OPTION) {
+					return;
+				}
+			}
+
+			doc.save(new FileOutputStream(output));
+		} finally {
+			if (doc != null) {
+				doc.close();
+			}
+		}
+	}
+
+	private PDDocument internErzeugePDFDokument(Konfiguration k, Daten daten) throws IOException {
+		String[] guteEigenschaften;
+		List<PDFSonderfertigkeiten> sflist;
+		boolean tzm;
+		PDDocument doc;
+		String pfad;
+		PDJpeg charakterBild;
+		PDJpeg hintergrundBild;
+		
+		doc = null;
+		
+		charakterBild = null;
+		hintergrundBild = null;
+		tzm = daten.getConfig().getRsmodell().equals("zone");
+		
 		/*
 		 * Gute Eigenschaften auslesen, da sie seitenübergreifend gebraucht
 		 * werden
@@ -91,9 +151,6 @@ public class PDFGenerator {
 		}
 
 		try {
-			String pfad;
-			PDJpeg bild = null, hintergrund = null;
-
 			/* PDF erzeugen */
 			doc = new PDDocument();
 
@@ -105,7 +162,7 @@ public class PDFGenerator {
 			if (pfad != null && pfad.length() > 0) {
 				try {
 					BufferedImage img = ImageIO.read(new File(pfad));
-					bild = new PDJpeg(doc, img);
+					charakterBild = new PDJpeg(doc, img);
 				} catch (Exception e) {
 					System.err.println("Konnte das Bild '" + pfad
 							+ "' nicht laden.");
@@ -116,7 +173,7 @@ public class PDFGenerator {
 			if (pfad != null && pfad.length() > 0) {
 				try {
 					BufferedImage img = ImageIO.read(new File(pfad));
-					hintergrund = new PDJpeg(doc, img);
+					hintergrundBild = new PDJpeg(doc, img);
 				} catch (Exception e) {
 					System.err.println("Konnte das Bild '" + pfad
 							+ "' nicht laden.");
@@ -128,58 +185,39 @@ public class PDFGenerator {
 					marginX,
 					marginY,
 					textMargin,
-					hintergrund,
+					hintergrundBild,
 					k.getOptionsDaten(Konfiguration.GLOBAL_HINTERGRUND_VERZERREN));
 
 			/* Seiten erzeugen */
 			FrontSeite page1 = new FrontSeite(doc);
-			page1.erzeugeSeite(daten, bild, hintergrund, guteEigenschaften,
+			page1.erzeugeSeite(daten, charakterBild, hintergrundBild, guteEigenschaften,
 					sflist, tzm, k);
 
 			TalentSeite page2 = new TalentSeite(doc);
-			page2.erzeugeSeite(daten, hintergrund, guteEigenschaften, sflist, k);
+			page2.erzeugeSeite(daten, hintergrundBild, guteEigenschaften, sflist, k);
 
 			if (daten.getAngaben().isMagisch()) {
 				ZauberSeite page3 = new ZauberSeite(doc);
-				page3.erzeugeSeite(daten, hintergrund, guteEigenschaften,
+				page3.erzeugeSeite(daten, hintergrundBild, guteEigenschaften,
 						sflist, k);
 			}
 
 			for (PDFSonderfertigkeiten sf : sflist) {
 				if (!sf.istGedruckt()) {
 					SFSeite page4 = new SFSeite(doc);
-					page4.erzeugeSeite(hintergrund, guteEigenschaften, sflist);
+					page4.erzeugeSeite(hintergrundBild, guteEigenschaften, sflist);
 					break;
 				}
 			}
 
-			if (output == null) {
-				String ordner = k.getTextDaten(Konfiguration.GLOBAL_ZIELORDNER);
-				if (speichernDialog) {
-					output = waehlePDFFile(frame, daten, ordner);
-				} else {
-					output = new File(ordner, daten.getAngaben().getName()
-							+ ".pdf");
-				}
-			}
-
-			if (output.exists()) {
-				int result = JOptionPane.showConfirmDialog(frame, "Die Datei "
-						+ output.getAbsolutePath()
-						+ " existiert schon.\nSoll sie überschrieben werden?",
-						"Datei überschreiben?", JOptionPane.YES_NO_OPTION);
-
-				if (result != JOptionPane.YES_OPTION) {
-					return;
-				}
-			}
-
-			doc.save(new FileOutputStream(output));
-		} finally {
+		} catch (IOException e) {
 			if (doc != null) {
 				doc.close();
+				doc = null;
 			}
+			throw e;
 		}
+		return doc;
 	}
 
 	private File waehlePDFFile(JFrame frame, Daten daten, String zielverzeichnis) {
