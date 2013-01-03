@@ -43,7 +43,7 @@ public class ZauberSeite extends PDFSeite {
 		List<Zauber> zauberListe;
 		int zauberBreite, sfBreite, hoehe, bonus;
 		int zauberSpalten[];
-		boolean mehrereRepr;
+		boolean mehrereRepr, first;
 		String repr;
 
 		sfBreite = 15;
@@ -147,7 +147,14 @@ public class ZauberSeite extends PDFSeite {
 			zauberBreite = cellCountX;
 		}
 
+		first = true;
 		while (zauberListe.size() > 0) {
+			if (first) {
+				first = false;
+			}
+			else {
+				neueSeite();
+			}
 			initPDFStream(hoehe);
 
 			titelzeile(guteEigenschaften);
@@ -193,8 +200,6 @@ public class ZauberSeite extends PDFSeite {
 
 		drawTabelle(0, breite, 2, seitenListe.toArray(), new ZauberTabelle(
 				spaltenBreite, breite, probenwerte));
-
-		stream.closeAndStroke();
 	}
 
 	private class ZauberComparator implements Comparator<Zauber> {
