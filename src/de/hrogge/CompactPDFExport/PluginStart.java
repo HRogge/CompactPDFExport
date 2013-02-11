@@ -182,10 +182,15 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 
 		druckAnsicht = new DruckAnsicht(k, s, su);
 		
-		ladeKonfiguration();
+		try {
+			ladeKonfiguration();
+		} catch (ParserConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
-	protected void ladeKonfiguration() {
+	protected void ladeKonfiguration() throws ParserConfigurationException {
 		Document request, result;
 		Element requestElement;
 		DocumentBuilderFactory factory;
@@ -195,11 +200,7 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		String key, value;
 		
 		factory = DocumentBuilderFactory.newInstance();
-		try {
-			request = factory.newDocumentBuilder().newDocument();
-		} catch (Exception ex) {
-			request = null;
-		}
+		request = factory.newDocumentBuilder().newDocument();
 		
 		requestElement = request.createElement("action");
 		request.appendChild(requestElement);
@@ -207,7 +208,7 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		requestElement.setAttribute("pluginName", "CompactPDFExport");
 		
 		/* Parameter-Dokument vom Hauptprogramm laden */
-		result = (Document) dai.exec(request);
+		result = (Document) this.dai.exec(request);
 		propList = result.getElementsByTagName("prop");
 		
 		p = new Properties();
