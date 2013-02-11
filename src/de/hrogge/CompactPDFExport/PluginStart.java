@@ -22,12 +22,11 @@ import helden.plugin.datenxmlplugin.DatenAustausch3Interface;
 import java.awt.Dialog.ModalityType;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URISyntaxException;
-import java.security.CodeSource;
 import java.util.ArrayList;
+import java.util.Properties;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -40,8 +39,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
+import org.w3c.dom.*;
 
 import de.hrogge.CompactPDFExport.gui.DruckAnsicht;
 import de.hrogge.CompactPDFExport.gui.Konfiguration;
@@ -51,7 +49,6 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 	private JFrame frame;
 
 	private Konfiguration konfig;
-	private File propertiesFile;
 	private JMenuItem exportMenuItem;
 	private JMenuItem exportAlsMenuItem;
 	private JMenuItem einstellungenMenuItem;
@@ -65,20 +62,6 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		zwangsUpdate = false;
 
 		konfig = new Konfiguration();
-
-		CodeSource codeSource = PluginStart.class.getProtectionDomain()
-				.getCodeSource();
-		File jarFile = new File(codeSource.getLocation().toURI().getPath());
-
-		propertiesFile = new File(jarFile.getParentFile(),
-				"CompactPDFExport.properties");
-
-		try {
-			konfig.ladeKonfiguration(propertiesFile);
-		} catch (IOException e) {
-			/* Fehler beim laden ignorieren */
-		}
-
 		updater = new VorschauUpdaten();
 	}
 
@@ -198,8 +181,83 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		};
 
 		druckAnsicht = new DruckAnsicht(k, s, su);
+		
+		ladeKonfiguration();
 	}
+	
+	protected void ladeKonfiguration() {
+		Document request, result;
+		Element requestElement;
+		DocumentBuilderFactory factory;
+		NodeList propList;
+		Node propNode;
+		Properties p;
+		String key, value;
+		
+		factory = DocumentBuilderFactory.newInstance();
+		try {
+			request = factory.newDocumentBuilder().newDocument();
+		} catch (Exception ex) {
+			request = null;
+		}
+		
+		requestElement = request.createElement("action");
+		request.appendChild(requestElement);
+		requestElement.setAttribute("action", "listProperties");
+		requestElement.setAttribute("pluginName", "CompactPDFExport");
+		
+		/* Parameter-Dokument vom Hauptprogramm laden */
+		result = (Document) dai.exec(request);
+		propList = result.getElementsByTagName("prop");
+		
+		p = new Properties();
+		for (int i=0; i<propList.getLength(); i++) {
+			propNode = propList.item(i);
+			
+			key = propNode.getAttributes().getNamedItem("key").getNodeValue();
+			value = propNode.getAttributes().getNamedItem("value").getNodeValue();
+			
+			p.setProperty(key, value);
+		}
+		
+		konfig.konfigurationAnwenden(p);
+	}
+	
+	protected void speichereKonfiguration() throws ParserConfigurationException {
+		Document request;
+		DocumentBuilderFactory factory;
+		Element actionElement;
+		Element keyvalueElement;
+		Properties p;
+		String key, value;
+		
+		factory = DocumentBuilderFactory.newInstance();
+		request = factory.newDocumentBuilder().newDocument();
 
+		actionElement = request.createElement("action");
+		request.appendChild(actionElement);
+		actionElement.setAttribute("action", "saveProperties");
+		actionElement.setAttribute("pluginName", "CompactPDFExport");
+
+		p = this.konfig.konfigurationExportieren();
+		
+		for (Object k : p.keySet()) {
+			if (!(k instanceof String)) {
+				continue;
+			}
+			
+			key = (String) k;
+			value = p.getProperty(key);
+			
+			keyvalueElement = request.createElement("prop");
+			actionElement.appendChild(keyvalueElement);
+			keyvalueElement.setAttribute("key", key);
+			keyvalueElement.setAttribute("value", value);
+		}
+		
+		this.dai.exec(request);
+	}
+	
 	protected void einstellungenAction() {
 		int result = JOptionPane.showOptionDialog(frame, konfig.getPanel(),
 				"Einstellungen für kompakten Heldenbogen",
@@ -211,8 +269,9 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 			new Thread(updater).start();
 
 			try {
-				konfig.schreibeKonfig(propertiesFile);
-			} catch (IOException e) {
+				speichereKonfiguration();
+			} catch (ParserConfigurationException e) {
+				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -223,7 +282,9 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 	protected void exportierenAktion(boolean dialog) {
 		try {
 			org.w3c.dom.Document doc = heldEinlesen();
-
+			if (doc == null) {
+				return;
+			}
 			/*
 			 * Aktivieren für Debug-Output:
 			 * 
@@ -293,7 +354,10 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		requestElement.setAttribute("version", "2");
 
 		obj = dai.exec(request);
-		if (obj == null || !(obj instanceof org.w3c.dom.Document)) {
+		if (obj == null) {
+			return null;
+		}
+		if (!(obj instanceof org.w3c.dom.Document)) {
 			throw new Exception("Unbekannter Rückgabewert auf Request: "
 					+ obj.getClass().getCanonicalName());
 		}
@@ -336,6 +400,9 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 
 				try {
 					org.w3c.dom.Document doc = heldEinlesen();
+					if (doc == null) {
+						return;
+					}
 					PDFGenerator creator = new PDFGenerator();
 					pddoc = creator.erzeugePDFDokument(doc, konfig);
 

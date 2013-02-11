@@ -119,7 +119,7 @@ public class Konfiguration {
 		erzeugeZauberPanel();
 
 		/* Standardkonfiguration */
-		konfiguriere(new Properties());
+		konfigurationAnwenden(new Properties());
 	}
 
 	public boolean getOptionsDaten(String key) {
@@ -134,16 +134,31 @@ public class Konfiguration {
 		return textMap.get(key).getText();
 	}
 	
-	public void ladeKonfiguration(File f) throws IOException {
-		FileInputStream fis = new FileInputStream(f);
+	public void konfigurationAnwenden(Properties p) {
+		for (String key : textMap.keySet()) {
+			JTextField tf = textMap.get(key);
+			
+			if (p.containsKey(key)) {
+				tf.setText(p.getProperty(key));
+			}
+			else {
+				tf.setText(textStandardMap.get(key));
+			}
+		}
 
-		Properties p = new Properties();
-		p.load(fis);
-
-		konfiguriere(p);
+		for (String key : optionenMap.keySet()) {
+			JToggleButton tb = optionenMap.get(key);
+			
+			if (p.containsKey(key)) {
+				tb.setSelected(Boolean.parseBoolean(p.getProperty(key)));
+			}
+			else {
+				tb.setSelected(optionenStandardMap.get(key));
+			}
+		}
 	}
 	
-	public void schreibeKonfig(File f) throws IOException {
+	public Properties konfigurationExportieren() {
 		Properties p = new Properties();
 
 		for (String key : textMap.keySet()) {
@@ -157,11 +172,107 @@ public class Konfiguration {
 			
 			p.setProperty(key, Boolean.toString(tb.isSelected()));
 		}
-		
-		FileOutputStream fos = new FileOutputStream(f);
-		p.store(fos, "CompactPDFExportPlugin v1.0");
+		return p;
+	}
+
+	protected void hintergrundDialog() {
+		JFileChooser chooser = new JFileChooser();
+		chooser.setApproveButtonText("Auswählen");
+		chooser.setApproveButtonToolTipText("Dieses Bild als Hintergrundbild festlegen");
+		FileFilter filter = new FileFilter() {
+			@Override
+			public boolean accept(File f) {
+				return f.isDirectory() || f.getName().endsWith(".jpg")
+						|| f.getName().endsWith(".jpeg");
+			}
+
+			@Override
+			public String getDescription() {
+				return "JPEG Hintergrundbild für PDF-Export";
+			}
+		};
+		chooser.setFileFilter(filter);
+
+		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		chooser.setMultiSelectionEnabled(false);
+		chooser.setDialogType(JFileChooser.OPEN_DIALOG);
+		chooser.setDialogTitle("PDF Export speichern...");
+		chooser.setSelectedFile(new File(gpHintergrund.getText()));
+		if (chooser.showOpenDialog(panel) != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+
+		gpHintergrund.setText(chooser.getSelectedFile().getAbsolutePath());
 	}
 	
+	protected void zielOrdnerDialog() {
+		JFileChooser chooser = new JFileChooser();
+		chooser.setApproveButtonText("Auswählen");
+		chooser.setApproveButtonToolTipText("Dieses Verzeichnis als Standard für PDF-Export festlegen");
+		FileFilter filter = new FileFilter() {
+			@Override
+			public boolean accept(File f) {
+				return f.isDirectory();
+			}
+
+			@Override
+			public String getDescription() {
+				return "Verzeichnis für PDF-Export";
+			}
+		};
+		chooser.setFileFilter(filter);
+
+		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		chooser.setMultiSelectionEnabled(false);
+		chooser.setDialogType(JFileChooser.SAVE_DIALOG);
+		chooser.setDialogTitle("PDF Export speichern...");
+		chooser.setSelectedFile(new File(gpZielOrdner.getText()));
+		if (chooser.showSaveDialog(panel) != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+
+		gpZielOrdner.setText(chooser.getSelectedFile().getAbsolutePath());
+	}
+	
+	private void erzeugeFrontPanel() {
+		frontPanel = new JPanel();
+		frontPanel.setLayout(new BoxLayout(frontPanel, BoxLayout.PAGE_AXIS));
+		frontPanel.setBorder(BorderFactory.createTitledBorder("Vorderseite"));
+		einstellungenPanel.add(frontPanel);
+
+		fImmerPanel = new JPanel();
+		fImmerPanel.setLayout(new BoxLayout(fImmerPanel,
+				BoxLayout.PAGE_AXIS));
+		fImmerPanel.setBorder(BorderFactory
+				.createTitledBorder("Immer"));
+		frontPanel.add(fImmerPanel);
+
+		fiFernkampf = new JCheckBox("Fernkampf");
+		fiFernkampf.setAlignmentX(JComponent.LEFT_ALIGNMENT);
+		fImmerPanel.add(fiFernkampf);
+		optionenMap.put(FRONT_IMMER_FERNKAMPF, fiFernkampf);
+		
+		fiRuestungen = new JCheckBox("Rüstungen");
+		fiRuestungen.setAlignmentX(JComponent.LEFT_ALIGNMENT);
+		fImmerPanel.add(fiRuestungen);
+		optionenMap.put(FRONT_IMMER_RUESTUNGEN, fiRuestungen);
+		
+		fiSchilde = new JCheckBox("Schilde");
+		fiSchilde.setAlignmentX(JComponent.LEFT_ALIGNMENT);
+		fImmerPanel.add(fiSchilde);
+		optionenMap.put(FRONT_IMMER_SCHILDE, fiSchilde);
+		
+		fKaufbareEigenschaften = new JCheckBox("Kaufbare Eigenschaften");
+		fKaufbareEigenschaften.setAlignmentX(JComponent.LEFT_ALIGNMENT);
+		frontPanel.add(fKaufbareEigenschaften);
+		optionenMap.put(FRONT_KAUFBAREEIGENSCHAFTEN, fKaufbareEigenschaften);
+		
+		fMehrSF = new JCheckBox("Mehr Sonderfertigkeiten");
+		fMehrSF.setAlignmentX(JComponent.LEFT_ALIGNMENT);
+		frontPanel.add(fMehrSF);
+		optionenMap.put(FRONT_MEHRSF, fMehrSF);
+	}
+
 	private void erzeugeGlobalesPanel() {
 		globalesPanel = new JPanel(new BorderLayout());
 		panel.add(globalesPanel, BorderLayout.NORTH);
@@ -213,104 +324,6 @@ public class Konfiguration {
 		gDialogPanel.add(gdHintergrund);
 		gDialogPanel.add(new JLabel());
 		gDialogPanel.add(new JLabel());
-	}
-
-	protected void zielOrdnerDialog() {
-		JFileChooser chooser = new JFileChooser();
-		chooser.setApproveButtonText("Auswählen");
-		chooser.setApproveButtonToolTipText("Dieses Verzeichnis als Standard für PDF-Export festlegen");
-		FileFilter filter = new FileFilter() {
-			@Override
-			public boolean accept(File f) {
-				return f.isDirectory();
-			}
-
-			@Override
-			public String getDescription() {
-				return "Verzeichnis für PDF-Export";
-			}
-		};
-		chooser.setFileFilter(filter);
-
-		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-		chooser.setMultiSelectionEnabled(false);
-		chooser.setDialogType(JFileChooser.SAVE_DIALOG);
-		chooser.setDialogTitle("PDF Export speichern...");
-		chooser.setSelectedFile(new File(gpZielOrdner.getText()));
-		if (chooser.showSaveDialog(panel) != JFileChooser.APPROVE_OPTION) {
-			return;
-		}
-
-		gpZielOrdner.setText(chooser.getSelectedFile().getAbsolutePath());
-	}
-	
-	protected void hintergrundDialog() {
-		JFileChooser chooser = new JFileChooser();
-		chooser.setApproveButtonText("Auswählen");
-		chooser.setApproveButtonToolTipText("Dieses Bild als Hintergrundbild festlegen");
-		FileFilter filter = new FileFilter() {
-			@Override
-			public boolean accept(File f) {
-				return f.isDirectory() || f.getName().endsWith(".jpg")
-						|| f.getName().endsWith(".jpeg");
-			}
-
-			@Override
-			public String getDescription() {
-				return "JPEG Hintergrundbild für PDF-Export";
-			}
-		};
-		chooser.setFileFilter(filter);
-
-		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-		chooser.setMultiSelectionEnabled(false);
-		chooser.setDialogType(JFileChooser.OPEN_DIALOG);
-		chooser.setDialogTitle("PDF Export speichern...");
-		chooser.setSelectedFile(new File(gpHintergrund.getText()));
-		if (chooser.showOpenDialog(panel) != JFileChooser.APPROVE_OPTION) {
-			return;
-		}
-
-		gpHintergrund.setText(chooser.getSelectedFile().getAbsolutePath());
-	}
-	
-	private void erzeugeFrontPanel() {
-		frontPanel = new JPanel();
-		frontPanel.setLayout(new BoxLayout(frontPanel, BoxLayout.PAGE_AXIS));
-		frontPanel.setBorder(BorderFactory.createTitledBorder("Vorderseite"));
-		einstellungenPanel.add(frontPanel);
-
-		fImmerPanel = new JPanel();
-		fImmerPanel.setLayout(new BoxLayout(fImmerPanel,
-				BoxLayout.PAGE_AXIS));
-		fImmerPanel.setBorder(BorderFactory
-				.createTitledBorder("Immer"));
-		frontPanel.add(fImmerPanel);
-
-		fiFernkampf = new JCheckBox("Fernkampf");
-		fiFernkampf.setAlignmentX(JComponent.LEFT_ALIGNMENT);
-		fImmerPanel.add(fiFernkampf);
-		optionenMap.put(FRONT_IMMER_FERNKAMPF, fiFernkampf);
-		
-		fiRuestungen = new JCheckBox("Rüstungen");
-		fiRuestungen.setAlignmentX(JComponent.LEFT_ALIGNMENT);
-		fImmerPanel.add(fiRuestungen);
-		optionenMap.put(FRONT_IMMER_RUESTUNGEN, fiRuestungen);
-		
-		fiSchilde = new JCheckBox("Schilde");
-		fiSchilde.setAlignmentX(JComponent.LEFT_ALIGNMENT);
-		fImmerPanel.add(fiSchilde);
-		optionenMap.put(FRONT_IMMER_SCHILDE, fiSchilde);
-		
-		fKaufbareEigenschaften = new JCheckBox("Kaufbare Eigenschaften");
-		fKaufbareEigenschaften.setAlignmentX(JComponent.LEFT_ALIGNMENT);
-		frontPanel.add(fKaufbareEigenschaften);
-		optionenMap.put(FRONT_KAUFBAREEIGENSCHAFTEN, fKaufbareEigenschaften);
-		
-		fMehrSF = new JCheckBox("Mehr Sonderfertigkeiten");
-		fMehrSF.setAlignmentX(JComponent.LEFT_ALIGNMENT);
-		frontPanel.add(fMehrSF);
-		optionenMap.put(FRONT_MEHRSF, fMehrSF);
 	}
 
 	private void erzeugeTalentPanel() {
@@ -390,29 +403,5 @@ public class Konfiguration {
 		zSeitenzahlen.setAlignmentX(JComponent.LEFT_ALIGNMENT);
 		zauberPanel.add(zSeitenzahlen);
 		optionenMap.put(ZAUBER_SEITENZAHLEN, zSeitenzahlen);
-	}
-
-	private void konfiguriere(Properties p) {
-		for (String key : textMap.keySet()) {
-			JTextField tf = textMap.get(key);
-			
-			if (p.containsKey(key)) {
-				tf.setText(p.getProperty(key));
-			}
-			else {
-				tf.setText(textStandardMap.get(key));
-			}
-		}
-
-		for (String key : optionenMap.keySet()) {
-			JToggleButton tb = optionenMap.get(key);
-			
-			if (p.containsKey(key)) {
-				tb.setSelected(Boolean.parseBoolean(p.getProperty(key)));
-			}
-			else {
-				tb.setSelected(optionenStandardMap.get(key));
-			}
-		}
 	}
 }
