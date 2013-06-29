@@ -209,6 +209,9 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		
 		/* Parameter-Dokument vom Hauptprogramm laden */
 		result = (Document) this.dai.exec(request);
+		if (result == null) {
+			return;
+		}
 		propList = result.getElementsByTagName("prop");
 		
 		p = new Properties();
