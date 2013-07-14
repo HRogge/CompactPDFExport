@@ -55,6 +55,8 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 
 	private DruckAnsicht druckAnsicht;
 
+	private boolean debug;
+
 	public PluginStart() throws URISyntaxException {
 		druckAnsicht = null;
 		tabHatFokus = false;
@@ -63,6 +65,9 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 
 		konfig = new Konfiguration();
 		updater = new VorschauUpdaten();
+		
+		/* set to true to see some debugging XML output */
+		debug = false;
 	}
 
 	@Override
@@ -210,6 +215,10 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		/* Parameter-Dokument vom Hauptprogramm laden */
 		result = (Document) this.dai.exec(request);
 		if (result == null) {
+			try {
+				zeigeXML(frame, "Got null from dai.exec:\n", request);
+			} catch (Exception e) {
+			}
 			return;
 		}
 		propList = result.getElementsByTagName("prop");
@@ -259,7 +268,12 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 			keyvalueElement.setAttribute("value", value);
 		}
 		
-		this.dai.exec(request);
+		if (this.dai.exec(request) == null) {
+			try {
+				zeigeXML(frame, "Got null from dai.exec:\n", request);
+			} catch (Exception e) {
+			}
+		}
 	}
 	
 	protected void einstellungenAction() {
@@ -289,12 +303,9 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 			if (doc == null) {
 				return;
 			}
-			/*
-			 * Aktivieren für Debug-Output:
-			 * 
-			 * zeigeXML(frame, doc);
-			 */
-
+			
+			zeigeXML(frame, "Helden Dokument XML:\n", doc);
+			
 			PDFGenerator creator = new PDFGenerator();
 			creator.exportierePDF(frame, null, doc, konfig, dialog);
 		} catch (Exception e) {
@@ -302,13 +313,17 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		}
 	}
 
-	protected void zeigeXML(JFrame frame, Document doc)
+	private void zeigeXML(JFrame frame, String prefix, Document doc)
 			throws TransformerFactoryConfigurationError, TransformerException {
 
 		TransformerFactory transformerFactory;
 		Transformer transformer;
 		StringWriter writer;
 
+		if (!debug) {
+			return;
+		}
+		
 		/* Transformer initialisieren */
 		transformerFactory = TransformerFactory.newInstance();
 		transformer = transformerFactory.newTransformer();
@@ -323,10 +338,10 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		/*
 		 * Anzeige in Java Dialog
 		 */
-		JTextArea textarea = new JTextArea(writer.toString());
+		JTextArea textarea = new JTextArea(prefix + writer.toString());
 		JScrollPane scrollpane = new JScrollPane(textarea);
 
-		JDialog dialog = new JDialog(frame);
+		JDialog dialog = new JDialog(frame, "Debug output for CompactPDFExport");
 		dialog.add(scrollpane);
 		dialog.setModalityType(ModalityType.MODELESS);
 		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -359,6 +374,10 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 
 		obj = dai.exec(request);
 		if (obj == null) {
+			try {
+				zeigeXML(frame, "Got null from dai.exec:\n", request);
+			} catch (Exception e) {
+			}
 			return null;
 		}
 		if (!(obj instanceof org.w3c.dom.Document)) {
