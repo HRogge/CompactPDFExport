@@ -23,6 +23,7 @@ import java.awt.Dialog.ModalityType;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -216,7 +217,7 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		result = (Document) this.dai.exec(request);
 		if (result == null) {
 			try {
-				zeigeXML(frame, "Got null from dai.exec:\n", request);
+				zeigeXML(frame, "Got null from dai.exec", request);
 			} catch (Exception e) {
 			}
 			return;
@@ -270,7 +271,7 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		
 		if (this.dai.exec(request) == null) {
 			try {
-				zeigeXML(frame, "Got null from dai.exec:\n", request);
+				zeigeXML(frame, "Got null from dai.exec", request);
 			} catch (Exception e) {
 			}
 		}
@@ -304,7 +305,7 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 				return;
 			}
 			
-			zeigeXML(frame, "Helden Dokument XML:\n", doc);
+			zeigeXML(frame, null, doc);
 			
 			PDFGenerator creator = new PDFGenerator();
 			creator.exportierePDF(frame, null, doc, konfig, dialog);
@@ -313,7 +314,7 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		}
 	}
 
-	private void zeigeXML(JFrame frame, String prefix, Document doc)
+	private void zeigeXML(JFrame frame, String errorMessage, Document doc)
 			throws TransformerFactoryConfigurationError, TransformerException {
 
 		TransformerFactory transformerFactory;
@@ -333,12 +334,16 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 
 		/* Textform des XMLs generieren */
 		writer = new StringWriter();
+		if (errorMessage != null) {
+			new RuntimeException(errorMessage).printStackTrace(new PrintWriter(writer));
+		}
+		
 		transformer.transform(new DOMSource(doc), new StreamResult(writer));
 
 		/*
 		 * Anzeige in Java Dialog
 		 */
-		JTextArea textarea = new JTextArea(prefix + writer.toString());
+		JTextArea textarea = new JTextArea(writer.toString());
 		JScrollPane scrollpane = new JScrollPane(textarea);
 
 		JDialog dialog = new JDialog(frame, "Debug output for CompactPDFExport");
