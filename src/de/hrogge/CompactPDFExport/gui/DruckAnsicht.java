@@ -174,6 +174,9 @@ public class DruckAnsicht {
 		kontrollButtonsPanel.add(naechsteSeite);
 	}
 	private void zeigeNaechstesBild() {
+		if (seitenCache.size() <= angezeigteSeite +1) {
+			return;
+		}
 		if (angezeigteSeite < letzteSeite) {
 			if (seitenCache.get(angezeigteSeite + 1) != null) {
 				angezeigteSeite++;
@@ -183,6 +186,9 @@ public class DruckAnsicht {
 	}
 	
 	private void zeigeVorherigesBild() {
+		if (seitenCache.size() == 0) {
+			return;
+		}
 		if (angezeigteSeite > 0) {
 			if (seitenCache.get(angezeigteSeite - 1) != null) {
 				angezeigteSeite--;
