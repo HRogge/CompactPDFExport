@@ -91,11 +91,11 @@ public class ZauberSeite extends PDFSeite {
 		for (String cmd : commands) {
 			String[] split = cmd.split(":");
 
-			if (split.length != 2) {
+			if (split.length != 3) {
 				continue;
 			}
 
-			Zauber z = hausregeln.getHauszauber(split[0], split[1]);
+			Zauber z = hausregeln.getEigenenZauber(split[0], split[1], split[2]);
 			if (z != null) {
 				zauberListe.add(z);
 			}

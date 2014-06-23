@@ -108,7 +108,7 @@ public class TalentSeite extends PDFSeite {
 				continue;
 			}
 
-			Talent t = hausregeln.getHaustalent(split[0], split[1]);
+			Talent t = hausregeln.getEigenesTalent(split[0], split[1]);
 			if (t != null) {
 				talentHinzufuegen(gruppen, t);
 			}

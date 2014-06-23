@@ -24,20 +24,35 @@ import org.xml.sax.SAXException;
 import de.hrogge.CompactPDFExport.gui.Konfiguration;
 
 public class Hausregeln {
-	private Map<String, Properties> hauszauber;
-	private Map<String, Properties> haustalente;
+	private Map<String, Properties> eigeneZauber;
+	private Map<String, Properties> eigeneTalente;
 
+	static private Map<String, String> repraesentation;
+	
+	static {
+		// A(ch), E(lf), M(ag), D(ru), H(ex), G(eo), S(rl), K(Schelm = Kobold), B(or)
+		repraesentation = new HashMap<String, String>();
+		repraesentation.put("a", "Achaz");
+		repraesentation.put("e", "Elf");
+		repraesentation.put("m", "Magier");
+		repraesentation.put("d", "Druide");
+		repraesentation.put("g", "Geode");
+		repraesentation.put("s", "Scharlatan");
+		repraesentation.put("k", "Schelm");
+		repraesentation.put("b", "Borbaradianer");
+		repraesentation.put("f", "Fee");
+		repraesentation.put("he", "Hochelf");
+	}
+	
 	public Hausregeln(Konfiguration k) {
-		hauszauber = new HashMap<>();
-		haustalente = new HashMap<>();
+		eigeneZauber = new HashMap<String, Properties>();
+		eigeneTalente = new HashMap<String, Properties>();
 
 		String sourceFile = k.getTextDaten(Konfiguration.GLOBAL_HAUSREGELN);
-		if (sourceFile.length() > 0) {
+		if (sourceFile != null && sourceFile.length() > 0) {
 			try {
 				ladeHausregeln(sourceFile);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
 		}
 	}
@@ -46,6 +61,10 @@ public class Hausregeln {
 			throws ParserConfigurationException, SAXException, IOException {
 		File input = new File(filename);
 
+		if (!input.exists()) {
+			return;
+		}
+		
 		/* XML-Dokument des Eingabefiles erzeugen */
 		DocumentBuilderFactory documentFactory = DocumentBuilderFactory
 				.newInstance();
@@ -77,31 +96,31 @@ public class Hausregeln {
 			}
 
 			if (child.getNodeName().equals("zauber")) {
-				hauszauber.put(key, p);
+				eigeneZauber.put(key, p);
 			} else if (child.getNodeName().equals("talent")) {
-				haustalente.put(key, p);
+				eigeneTalente.put(key, p);
 			}
 		}
 	}
 
-	public Zauber getHauszauber(String key, String wert) {
-		Properties p = hauszauber.get(key);
+	public Zauber getEigenenZauber(String key, String wert, String rep) {
+		boolean hauszauber;
+		
+		hauszauber = key.endsWith("*");
+		if (hauszauber) {
+			key = key.substring(0, key.length()-1);
+		}
+		
+		Properties p = eigeneZauber.get(key);
 
 		if (p == null) {
 			return null;
 		}
 
-		/*
-		 * <zauber key="RHuGg" name="Resincendo Harz und Glut" hauszauber="true"
-		 * probe="MU/IN/FF" zd="" rw="" asp="" wd="" skt="" rep="Magier"
-		 * merkmal="Elem (Feu), Objk, Scha" anmerkung=""
-		 */
-
 		Zauber z = new Zauber();
-		
 		z.setNamemitvariante(p.getProperty("name", "-"));
 		z.setName(p.getProperty("name", "-"));
-		z.setHauszauber(Boolean.valueOf(p.getProperty("hauszauber", "false")));
+		z.setHauszauber(hauszauber);
 		z.setProbe(p.getProperty("probe", "--/--/--"));
 		z.setProbenwerte(p.getProperty("probe", "--/--/--"));
 		z.setZauberdauer(p.getProperty("zd", ""));
@@ -109,7 +128,12 @@ public class Hausregeln {
 		z.setKosten(p.getProperty("asp", ""));
 		z.setWirkungsdauer(p.getProperty("wd", ""));
 		z.setLernkomplexität(p.getProperty("skt", ""));
-		z.setRepräsentation(p.getProperty("rep", ""));
+		if (repraesentation.containsKey(rep)) {
+			z.setRepräsentation(repraesentation.get(rep));
+		}
+		else {
+			z.setRepräsentation("");
+		}
 		z.setMerkmale(p.getProperty("merkmal", ""));
 		z.setAnmerkung(p.getProperty("anmerkung", ""));
 
@@ -119,17 +143,13 @@ public class Hausregeln {
 		return z;
 	}
 
-	public Talent getHaustalent(String key, String wert) {
-		Properties p = haustalente.get(key);
-
+	public Talent getEigenesTalent(String key, String wert) {
+		Properties p = eigeneTalente.get(key);
+		
 		if (p == null) {
 			return null;
 		}
 
-		/*
-		 * <talent key="Pulver" name="Pulverwaffen" bereich="Kampf" probe=""
-		 * be="" skt="D"/>
-		 */
 		Talent t = new Talent();
 		t.setName(p.getProperty("name", "-"));
 		t.setBereich(p.getProperty("bereich", "Sondertalente/Gaben"));
