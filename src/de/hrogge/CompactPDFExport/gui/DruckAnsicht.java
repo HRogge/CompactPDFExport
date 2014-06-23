@@ -52,14 +52,14 @@ public class DruckAnsicht {
 		erzeugeKontrollButtonPanel();
 
 		seite = new JLabel();
-		
+
 		HandScrollListener scrollListener = new HandScrollListener(seite);
 		JScrollPane scroll = new JScrollPane(seite);
 		scroll.getViewport().addMouseMotionListener(scrollListener);
 		scroll.getViewport().addMouseListener(scrollListener);
 		scroll.setWheelScrollingEnabled(true);
 		scroll.getVerticalScrollBar().setUnitIncrement(20);
-		
+
 		panel.add(scroll, BorderLayout.CENTER);
 
 		seitenCache = new ArrayList<VolatileImage>();
@@ -173,8 +173,9 @@ public class DruckAnsicht {
 		});
 		kontrollButtonsPanel.add(naechsteSeite);
 	}
+
 	private void zeigeNaechstesBild() {
-		if (seitenCache.size() <= angezeigteSeite +1) {
+		if (seitenCache.size() <= angezeigteSeite + 1) {
 			return;
 		}
 		if (angezeigteSeite < letzteSeite) {
@@ -184,7 +185,7 @@ public class DruckAnsicht {
 			}
 		}
 	}
-	
+
 	private void zeigeVorherigesBild() {
 		if (seitenCache.size() == 0) {
 			return;
@@ -226,6 +227,7 @@ public class DruckAnsicht {
 
 	private void zeigeSeite(int i) {
 		seite.setIcon(new ImageIcon(seitenCache.get(angezeigteSeite)));
-		infoText.setText("Seite " + (angezeigteSeite+1) + "/" + (letzteSeite+1));
+		infoText.setText("Seite " + (angezeigteSeite + 1) + "/"
+				+ (letzteSeite + 1));
 	}
 }

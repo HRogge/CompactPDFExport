@@ -30,6 +30,7 @@ import javax.swing.filechooser.FileFilter;
 import javax.xml.bind.*;
 
 import jaxbGenerated.datenxml.*;
+
 import org.apache.pdfbox.exceptions.COSVisitorException;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
@@ -41,8 +42,9 @@ public class PDFGenerator {
 	private final float marginX = 5f;
 	private final float marginY = 10f;
 	private final float textMargin = 0.5f;
-	
-	public PDDocument erzeugePDFDokument(Document doc, Konfiguration k) throws IOException, COSVisitorException, JAXBException {
+
+	public PDDocument erzeugePDFDokument(Document doc, Konfiguration k)
+			throws IOException, COSVisitorException, JAXBException {
 		/* JAXB Repräsentation des XML-Dokuments erzeugen */
 		JAXBContext jaxbContext = JAXBContext
 				.newInstance(jaxbGenerated.datenxml.Daten.class);
@@ -53,10 +55,10 @@ public class PDFGenerator {
 
 		return internErzeugePDFDokument(k, daten);
 	}
-	
+
 	public void exportierePDF(JFrame frame, File output, Document input,
-			Konfiguration k, boolean speichernDialog)
-			throws IOException, COSVisitorException, JAXBException {
+			Konfiguration k, boolean speichernDialog) throws IOException,
+			COSVisitorException, JAXBException {
 		PDDocument doc = null;
 
 		/* JAXB Repräsentation des XML-Dokuments erzeugen */
@@ -77,12 +79,12 @@ public class PDFGenerator {
 					if (output == null) {
 						return;
 					}
-				}
-				else {
-					output = new File(ordner, daten.getAngaben().getName() + ".pdf");
+				} else {
+					output = new File(ordner, daten.getAngaben().getName()
+							+ ".pdf");
 				}
 			}
-			
+
 			if (output.exists()) {
 				int result = JOptionPane.showConfirmDialog(frame, "Die Datei "
 						+ output.getAbsolutePath()
@@ -102,7 +104,20 @@ public class PDFGenerator {
 		}
 	}
 
-	private PDDocument internErzeugePDFDokument(Konfiguration k, Daten daten) throws IOException {
+	private void extrahiereKommandos(List<String> list, String notiz) {
+		if (!notiz.startsWith("@")) {
+			return;
+		}
+
+		StringTokenizer st = new StringTokenizer(notiz.substring(1));
+
+		while (st.hasMoreTokens()) {
+			list.add(st.nextToken());
+		}
+	}
+
+	private PDDocument internErzeugePDFDokument(Konfiguration k, Daten daten)
+			throws IOException {
 		String[] guteEigenschaften;
 		List<PDFSonderfertigkeiten> sflist;
 		boolean tzm;
@@ -110,13 +125,16 @@ public class PDFGenerator {
 		String pfad;
 		PDJpeg charakterBild;
 		PDJpeg hintergrundBild;
-		
+		Hausregeln hausregeln;
+		List<String> commands;
 		doc = null;
-		
+
+		hausregeln = new Hausregeln(k);
+
 		charakterBild = null;
 		hintergrundBild = null;
 		tzm = daten.getConfig().getRsmodell().equals("zone");
-		
+
 		/*
 		 * Gute Eigenschaften auslesen, da sie seitenübergreifend gebraucht
 		 * werden
@@ -149,6 +167,22 @@ public class PDFGenerator {
 				sflist.add(new PDFSonderfertigkeiten(sf));
 			}
 		}
+
+		/* Kommandos aus Notizen extrahieren */
+		Notizen n = daten.getAngaben().getNotizen();
+		commands = new ArrayList<>();
+		extrahiereKommandos(commands, n.getN0());
+		extrahiereKommandos(commands, n.getN1());
+		extrahiereKommandos(commands, n.getN2());
+		extrahiereKommandos(commands, n.getN3());
+		extrahiereKommandos(commands, n.getN4());
+		extrahiereKommandos(commands, n.getN5());
+		extrahiereKommandos(commands, n.getN6());
+		extrahiereKommandos(commands, n.getN7());
+		extrahiereKommandos(commands, n.getN8());
+		extrahiereKommandos(commands, n.getN9());
+		extrahiereKommandos(commands, n.getN10());
+		extrahiereKommandos(commands, n.getN11());
 
 		try {
 			/* PDF erzeugen */
@@ -190,22 +224,24 @@ public class PDFGenerator {
 
 			/* Seiten erzeugen */
 			FrontSeite page1 = new FrontSeite(doc);
-			page1.erzeugeSeite(daten, charakterBild, hintergrundBild, guteEigenschaften,
-					sflist, tzm, k);
+			page1.erzeugeSeite(daten, charakterBild, hintergrundBild,
+					guteEigenschaften, sflist, tzm, k);
 
 			TalentSeite page2 = new TalentSeite(doc);
-			page2.erzeugeSeite(daten, hintergrundBild, guteEigenschaften, sflist, k);
+			page2.erzeugeSeite(daten, hintergrundBild, guteEigenschaften,
+					sflist, hausregeln, commands, k);
 
 			if (daten.getAngaben().isMagisch()) {
 				ZauberSeite page3 = new ZauberSeite(doc);
 				page3.erzeugeSeite(daten, hintergrundBild, guteEigenschaften,
-						sflist, k);
+						sflist, hausregeln, commands, k);
 			}
 
 			for (PDFSonderfertigkeiten sf : sflist) {
 				if (!sf.istGedruckt()) {
 					SFSeite page4 = new SFSeite(doc);
-					page4.erzeugeSeite(hintergrundBild, guteEigenschaften, sflist);
+					page4.erzeugeSeite(hintergrundBild, guteEigenschaften,
+							sflist);
 					break;
 				}
 			}

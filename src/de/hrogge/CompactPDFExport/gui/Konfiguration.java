@@ -30,22 +30,27 @@ public class Konfiguration {
 	public static final String GLOBAL_HINTERGRUND_VERZERREN = "global.hintergrundverzerren";
 	public static final String GLOBAL_PROBENWERTE = "global.probenwerte";
 	public static final String GLOBAL_ZIELORDNER = "global.zielordner";
+	public static final String GLOBAL_HAUSREGELN = "global.hausregeln";
 
 	private JPanel panel;
-	
+
 	private JPanel globalesPanel;
 	private JPanel gNamePanel;
 	private JLabel gnZielOrdner;
 	private JLabel gnHintergrund;
+	private JLabel gnHausregeln;
+
 	private JPanel gPfadPanel;
 	private JTextField gpZielOrdner;
 	private JTextField gpHintergrund;
+	private JTextField gpHausregeln;
 	private JCheckBox gpVerzerren;
 	private JCheckBox gpProbenwerte;
-	
+
 	private JPanel gDialogPanel;
 	private JButton gdZielOrdner;
 	private JButton gdHintergrund;
+	private JButton gdHausregeln;
 
 	private JPanel einstellungenPanel;
 
@@ -77,7 +82,7 @@ public class Konfiguration {
 	private Map<String, JToggleButton> optionenMap;
 	private Map<String, String> textStandardMap;
 	private Map<String, Boolean> optionenStandardMap;
-	
+
 	public Konfiguration() {
 		textMap = new HashMap<String, JTextField>();
 		optionenMap = new HashMap<String, JToggleButton>();
@@ -85,11 +90,12 @@ public class Konfiguration {
 		textStandardMap = new HashMap<String, String>();
 		textStandardMap.put(GLOBAL_ZIELORDNER, ".");
 		textStandardMap.put(GLOBAL_HINTERGRUND, "");
-		
+		textStandardMap.put(GLOBAL_HAUSREGELN, "");
+
 		optionenStandardMap = new HashMap<String, Boolean>();
 		optionenStandardMap.put(GLOBAL_HINTERGRUND_VERZERREN, false);
 		optionenStandardMap.put(GLOBAL_PROBENWERTE, false);
-		
+
 		optionenStandardMap.put(FRONT_IMMER_FERNKAMPF, false);
 		optionenStandardMap.put(FRONT_IMMER_RUESTUNGEN, true);
 		optionenStandardMap.put(FRONT_IMMER_SCHILDE, false);
@@ -133,43 +139,41 @@ public class Konfiguration {
 	public String getTextDaten(String key) {
 		return textMap.get(key).getText();
 	}
-	
+
 	public void konfigurationAnwenden(Properties p) {
 		for (String key : textMap.keySet()) {
 			JTextField tf = textMap.get(key);
-			
+
 			if (p.containsKey(key)) {
 				tf.setText(p.getProperty(key));
-			}
-			else {
+			} else {
 				tf.setText(textStandardMap.get(key));
 			}
 		}
 
 		for (String key : optionenMap.keySet()) {
 			JToggleButton tb = optionenMap.get(key);
-			
+
 			if (p.containsKey(key)) {
 				tb.setSelected(Boolean.parseBoolean(p.getProperty(key)));
-			}
-			else {
+			} else {
 				tb.setSelected(optionenStandardMap.get(key));
 			}
 		}
 	}
-	
+
 	public Properties konfigurationExportieren() {
 		Properties p = new Properties();
 
 		for (String key : textMap.keySet()) {
 			JTextField tf = textMap.get(key);
-			
+
 			p.setProperty(key, tf.getText());
 		}
-		
+
 		for (String key : optionenMap.keySet()) {
 			JToggleButton tb = optionenMap.get(key);
-			
+
 			p.setProperty(key, Boolean.toString(tb.isSelected()));
 		}
 		return p;
@@ -204,7 +208,7 @@ public class Konfiguration {
 
 		gpHintergrund.setText(chooser.getSelectedFile().getAbsolutePath());
 	}
-	
+
 	protected void zielOrdnerDialog() {
 		JFileChooser chooser = new JFileChooser();
 		chooser.setApproveButtonText("Auswählen");
@@ -233,7 +237,36 @@ public class Konfiguration {
 
 		gpZielOrdner.setText(chooser.getSelectedFile().getAbsolutePath());
 	}
-	
+
+	protected void hausregelDialog() {
+		JFileChooser chooser = new JFileChooser();
+		chooser.setApproveButtonText("Auswählen");
+		chooser.setApproveButtonToolTipText("Diese Datei als Quelle für Hausregeln laden");
+		FileFilter filter = new FileFilter() {
+			@Override
+			public boolean accept(File f) {
+				return f.isDirectory() || f.getName().endsWith(".xml");
+			}
+
+			@Override
+			public String getDescription() {
+				return "XML Datei mit Hausregeln";
+			}
+		};
+		chooser.setFileFilter(filter);
+
+		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		chooser.setMultiSelectionEnabled(false);
+		chooser.setDialogType(JFileChooser.OPEN_DIALOG);
+		chooser.setDialogTitle("Hausregeln laden...");
+		chooser.setSelectedFile(new File(gpHausregeln.getText()));
+		if (chooser.showOpenDialog(panel) != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+
+		gpHausregeln.setText(chooser.getSelectedFile().getAbsolutePath());
+	}
+
 	private void erzeugeFrontPanel() {
 		frontPanel = new JPanel();
 		frontPanel.setLayout(new BoxLayout(frontPanel, BoxLayout.PAGE_AXIS));
@@ -241,32 +274,30 @@ public class Konfiguration {
 		einstellungenPanel.add(frontPanel);
 
 		fImmerPanel = new JPanel();
-		fImmerPanel.setLayout(new BoxLayout(fImmerPanel,
-				BoxLayout.PAGE_AXIS));
-		fImmerPanel.setBorder(BorderFactory
-				.createTitledBorder("Immer"));
+		fImmerPanel.setLayout(new BoxLayout(fImmerPanel, BoxLayout.PAGE_AXIS));
+		fImmerPanel.setBorder(BorderFactory.createTitledBorder("Immer"));
 		frontPanel.add(fImmerPanel);
 
 		fiFernkampf = new JCheckBox("Fernkampf");
 		fiFernkampf.setAlignmentX(JComponent.LEFT_ALIGNMENT);
 		fImmerPanel.add(fiFernkampf);
 		optionenMap.put(FRONT_IMMER_FERNKAMPF, fiFernkampf);
-		
+
 		fiRuestungen = new JCheckBox("Rüstungen");
 		fiRuestungen.setAlignmentX(JComponent.LEFT_ALIGNMENT);
 		fImmerPanel.add(fiRuestungen);
 		optionenMap.put(FRONT_IMMER_RUESTUNGEN, fiRuestungen);
-		
+
 		fiSchilde = new JCheckBox("Schilde");
 		fiSchilde.setAlignmentX(JComponent.LEFT_ALIGNMENT);
 		fImmerPanel.add(fiSchilde);
 		optionenMap.put(FRONT_IMMER_SCHILDE, fiSchilde);
-		
+
 		fKaufbareEigenschaften = new JCheckBox("Kaufbare Eigenschaften");
 		fKaufbareEigenschaften.setAlignmentX(JComponent.LEFT_ALIGNMENT);
 		frontPanel.add(fKaufbareEigenschaften);
 		optionenMap.put(FRONT_KAUFBAREEIGENSCHAFTEN, fKaufbareEigenschaften);
-		
+
 		fMehrSF = new JCheckBox("Mehr Sonderfertigkeiten");
 		fMehrSF.setAlignmentX(JComponent.LEFT_ALIGNMENT);
 		frontPanel.add(fMehrSF);
@@ -284,9 +315,11 @@ public class Konfiguration {
 		gNamePanel.add(gnZielOrdner);
 		gnHintergrund = new JLabel("Hintergrund:");
 		gNamePanel.add(gnHintergrund);
+		gnHausregeln = new JLabel("Hausregeln:");
+		gNamePanel.add(gnHausregeln);
 		gNamePanel.add(new JLabel());
 		gNamePanel.add(new JLabel());
-		
+
 		gPfadPanel = new JPanel(new GridLayout(0, 1));
 		globalesPanel.add(gPfadPanel, BorderLayout.CENTER);
 
@@ -296,13 +329,16 @@ public class Konfiguration {
 		gpHintergrund = new JTextField();
 		gPfadPanel.add(gpHintergrund);
 		textMap.put(GLOBAL_HINTERGRUND, gpHintergrund);
+		gpHausregeln = new JTextField();
+		gPfadPanel.add(gpHausregeln);
+		textMap.put(GLOBAL_HAUSREGELN, gpHausregeln);
 		gpVerzerren = new JCheckBox("Hintergrund verzerren");
 		optionenMap.put(GLOBAL_HINTERGRUND_VERZERREN, gpVerzerren);
 		gPfadPanel.add(gpVerzerren);
 		gpProbenwerte = new JCheckBox("Probenwerte");
 		optionenMap.put(GLOBAL_PROBENWERTE, gpProbenwerte);
 		gPfadPanel.add(gpProbenwerte);
-		
+
 		gDialogPanel = new JPanel(new GridLayout(0, 1));
 		globalesPanel.add(gDialogPanel, BorderLayout.EAST);
 
@@ -322,6 +358,14 @@ public class Konfiguration {
 			}
 		});
 		gDialogPanel.add(gdHintergrund);
+		gdHausregeln = new JButton("...");
+		gdHausregeln.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				hausregelDialog();
+			}
+		});
+		gDialogPanel.add(gdHausregeln);
 		gDialogPanel.add(new JLabel());
 		gDialogPanel.add(new JLabel());
 	}
@@ -333,17 +377,15 @@ public class Konfiguration {
 		einstellungenPanel.add(talentPanel);
 
 		tImmerPanel = new JPanel();
-		tImmerPanel.setLayout(new BoxLayout(tImmerPanel,
-				BoxLayout.PAGE_AXIS));
-		tImmerPanel.setBorder(BorderFactory
-				.createTitledBorder("Immer"));
+		tImmerPanel.setLayout(new BoxLayout(tImmerPanel, BoxLayout.PAGE_AXIS));
+		tImmerPanel.setBorder(BorderFactory.createTitledBorder("Immer"));
 		talentPanel.add(tImmerPanel);
 
 		tiLeereSpalten = new JCheckBox("leere Spalten");
 		tiLeereSpalten.setAlignmentX(JComponent.LEFT_ALIGNMENT);
 		tImmerPanel.add(tiLeereSpalten);
 		optionenMap.put(TALENT_IMMER_LEERESPALTEN, tiLeereSpalten);
-		
+
 		tBasisTalente = new JCheckBox("Markiere Basistalente");
 		tBasisTalente.setAlignmentX(JComponent.LEFT_ALIGNMENT);
 		talentPanel.add(tBasisTalente);
@@ -357,17 +399,15 @@ public class Konfiguration {
 		einstellungenPanel.add(zauberPanel);
 
 		zImmerPanel = new JPanel();
-		zImmerPanel.setLayout(new BoxLayout(zImmerPanel,
-				BoxLayout.PAGE_AXIS));
-		zImmerPanel.setBorder(BorderFactory
-				.createTitledBorder("Immer"));
+		zImmerPanel.setLayout(new BoxLayout(zImmerPanel, BoxLayout.PAGE_AXIS));
+		zImmerPanel.setBorder(BorderFactory.createTitledBorder("Immer"));
 		zauberPanel.add(zImmerPanel);
 
 		ziRepraesentation = new JCheckBox("Repräsentation");
 		ziRepraesentation.setAlignmentX(JComponent.LEFT_ALIGNMENT);
 		zImmerPanel.add(ziRepraesentation);
 		optionenMap.put(ZAUBER_IMMER_REPRAESENTATION, ziRepraesentation);
-		
+
 		zNotizenPanel = new JPanel();
 		zNotizenPanel.setLayout(new BoxLayout(zNotizenPanel,
 				BoxLayout.PAGE_AXIS));
@@ -381,24 +421,24 @@ public class Konfiguration {
 		znGroup.add(znKeine);
 		zNotizenPanel.add(znKeine);
 		optionenMap.put(ZAUBER_NOTIZEN_KEINE, znKeine);
-		
+
 		znWerte = new JRadioButton("Werte");
 		znWerte.setAlignmentX(JComponent.LEFT_ALIGNMENT);
 		znGroup.add(znWerte);
 		zNotizenPanel.add(znWerte);
 		optionenMap.put(ZAUBER_NOTIZEN_WERTE, znWerte);
-		
+
 		znAnmerkungen = new JRadioButton("Anmerkungen");
 		znAnmerkungen.setAlignmentX(JComponent.LEFT_ALIGNMENT);
 		znGroup.add(znAnmerkungen);
 		zNotizenPanel.add(znAnmerkungen);
 		optionenMap.put(ZAUBER_NOTIZEN_ANMERKUNGEN, znAnmerkungen);
-		
+
 		zHauszauberOben = new JCheckBox("Hauszauber oben");
 		zHauszauberOben.setAlignmentX(JComponent.LEFT_ALIGNMENT);
 		zauberPanel.add(zHauszauberOben);
 		optionenMap.put(ZAUBER_HAUSZAUBEROBEN, zHauszauberOben);
-		
+
 		zSeitenzahlen = new JCheckBox("Seitenzahlen");
 		zSeitenzahlen.setAlignmentX(JComponent.LEFT_ALIGNMENT);
 		zauberPanel.add(zSeitenzahlen);

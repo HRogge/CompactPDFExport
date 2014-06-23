@@ -8,8 +8,6 @@
 
 package jaxbGenerated.datenxml;
 
-import java.util.ArrayList;
-import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -26,7 +24,7 @@ import javax.xml.bind.annotation.XmlType;
  *   &lt;complexContent>
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
  *       &lt;sequence>
- *         &lt;element ref="{}verbindung" maxOccurs="unbounded" minOccurs="0"/>
+ *         &lt;element ref="{}tier" minOccurs="0"/>
  *       &lt;/sequence>
  *     &lt;/restriction>
  *   &lt;/complexContent>
@@ -37,40 +35,35 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
-    "verbindung"
+    "tier"
 })
-@XmlRootElement(name = "verbindungen")
-public class Verbindungen {
+@XmlRootElement(name = "details")
+public class Details {
 
-    protected List<Verbindung> verbindung;
+    protected Tier tier;
 
     /**
-     * Gets the value of the verbindung property.
+     * Gets the value of the tier property.
      * 
-     * <p>
-     * This accessor method returns a reference to the live list,
-     * not a snapshot. Therefore any modification you make to the
-     * returned list will be present inside the JAXB object.
-     * This is why there is not a <CODE>set</CODE> method for the verbindung property.
-     * 
-     * <p>
-     * For example, to add a new item, do as follows:
-     * <pre>
-     *    getVerbindung().add(newItem);
-     * </pre>
-     * 
-     * 
-     * <p>
-     * Objects of the following type(s) are allowed in the list
-     * {@link Verbindung }
-     * 
-     * 
+     * @return
+     *     possible object is
+     *     {@link Tier }
+     *     
      */
-    public List<Verbindung> getVerbindung() {
-        if (verbindung == null) {
-            verbindung = new ArrayList<Verbindung>();
-        }
-        return this.verbindung;
+    public Tier getTier() {
+        return tier;
+    }
+
+    /**
+     * Sets the value of the tier property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link Tier }
+     *     
+     */
+    public void setTier(Tier value) {
+        this.tier = value;
     }
 
 }

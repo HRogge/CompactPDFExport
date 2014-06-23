@@ -67,7 +67,8 @@ public class TalentSeite extends PDFSeite {
 
 	public void erzeugeSeite(Daten daten, PDJpeg hintergrund,
 			String[] guteEigenschaften, List<PDFSonderfertigkeiten> alleSF,
-			Konfiguration k) throws IOException {
+			Hausregeln hausregeln, List<String> commands, Konfiguration k)
+			throws IOException {
 		TalentGruppe metatalente;
 		List<TalentGruppe> gruppen;
 		List<PDFSonderfertigkeiten> sfListe;
@@ -92,29 +93,24 @@ public class TalentSeite extends PDFSeite {
 		gruppen.add(new TalentGruppe("Sprachen/Schriften", "Sprachen",
 				"Schriften", false));
 		gruppen.add(new TalentGruppe("Handwerkstalente", "Handwerk", false));
-		gruppen.add(new TalentGruppe("Sondertalente/Gaben", null, false));
+		gruppen.add(new TalentGruppe("Sondertalente/Gaben", "Sondertalente",
+				false));
 
 		/* Talente in Gruppen einsortieren */
 		for (Talent t : daten.getTalentliste().getTalent()) {
-			TalentGruppe gruppe = null;
-			for (TalentGruppe g : gruppen) {
-				if (g.passendesTalent(t)) {
-					gruppe = g;
-					break;
-				}
+			talentHinzufuegen(gruppen, t);
+		}
+
+		for (String cmd : commands) {
+			String[] split = cmd.split(":");
+
+			if (split.length != 2) {
+				continue;
 			}
 
-			assert (gruppe != null);
-
-			gruppe.add(t);
-
-			if (t.getSpezialisierungen() != null
-					&& t.getSpezialisierungen().length() > 0) {
-				for (String s : t.getSpezialisierungen().split(",")) {
-					s = s.trim();
-
-					gruppe.add(new TalentSpezialisierung(t, s));
-				}
+			Talent t = hausregeln.getHaustalent(split[0], split[1]);
+			if (t != null) {
+				talentHinzufuegen(gruppen, t);
 			}
 		}
 
@@ -197,6 +193,27 @@ public class TalentSeite extends PDFSeite {
 		}
 
 		stream.close();
+	}
+
+	private void talentHinzufuegen(List<TalentGruppe> gruppen, Talent t) {
+		TalentGruppe gruppe = gruppen.get(gruppen.size() - 1);
+		for (TalentGruppe g : gruppen) {
+			if (g.passendesTalent(t)) {
+				gruppe = g;
+				break;
+			}
+		}
+
+		gruppe.add(t);
+
+		if (t.getSpezialisierungen() != null
+				&& t.getSpezialisierungen().length() > 0) {
+			for (String s : t.getSpezialisierungen().split(",")) {
+				s = s.trim();
+
+				gruppe.add(new TalentSpezialisierung(t, s));
+			}
+		}
 	}
 
 	private int berechneLayout(List<TalentGruppe> gruppen, int hoehe,
@@ -330,8 +347,8 @@ public class TalentSeite extends PDFSeite {
 		int y;
 
 		basis = ko.getOptionsDaten(Konfiguration.TALENT_BASISTALENTE);
-		probenwerte= ko.getOptionsDaten(Konfiguration.GLOBAL_PROBENWERTE);
-		
+		probenwerte = ko.getOptionsDaten(Konfiguration.GLOBAL_PROBENWERTE);
+
 		/* talentgruppen zeichnen */
 		talentBreite = new int[] { 0, 0, 0, 0, 0, 6, 2, 2, 3, 3, 2 };
 		kampfBreite = new int[] { 0, 2, 2, 2, 2, 0, 2, 2, 3, 3, 2 };
@@ -494,7 +511,7 @@ public class TalentSeite extends PDFSeite {
 	private class TalentTabelle extends AbstractTabellenZugriff {
 		boolean markiereBasis;
 		boolean probenWerte;
-		
+
 		public TalentTabelle(String titel, int[] columns, int width,
 				boolean markiereBasis, boolean probenWerte) {
 			super(new String[] { null, "AT", "", "PA", "", "Probe", "TaW", "",
@@ -531,8 +548,7 @@ public class TalentSeite extends PDFSeite {
 			case 5:
 				if (probenWerte && !t.getProbe().equals("--/--/--")) {
 					return t.getProbenwerte();
-				}
-				else {
+				} else {
 					return t.getProbe();
 				}
 			case 6:

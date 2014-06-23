@@ -38,7 +38,8 @@ public class ZauberSeite extends PDFSeite {
 
 	public void erzeugeSeite(Daten daten, PDJpeg hintergrund,
 			String[] guteEigenschaften, List<PDFSonderfertigkeiten> alleSF,
-			Konfiguration k) throws IOException {
+			Hausregeln hausregeln, List<String> commands, Konfiguration k)
+			throws IOException {
 		List<PDFSonderfertigkeiten> sfListe;
 		List<Zauber> zauberListe;
 		int zauberBreite, sfBreite, hoehe, bonus;
@@ -87,6 +88,19 @@ public class ZauberSeite extends PDFSeite {
 				}
 			}
 		}
+		for (String cmd : commands) {
+			String[] split = cmd.split(":");
+
+			if (split.length != 2) {
+				continue;
+			}
+
+			Zauber z = hausregeln.getHauszauber(split[0], split[1]);
+			if (z != null) {
+				zauberListe.add(z);
+			}
+		}
+
 		Collections.sort(
 				zauberListe,
 				new ZauberComparator(k
@@ -151,8 +165,7 @@ public class ZauberSeite extends PDFSeite {
 		while (zauberListe.size() > 0) {
 			if (first) {
 				first = false;
-			}
-			else {
+			} else {
 				neueSeite();
 			}
 			initPDFStream(hoehe);
@@ -176,7 +189,7 @@ public class ZauberSeite extends PDFSeite {
 		List<Zauber> seitenListe;
 		int count;
 
-		probenwerte= ko.getOptionsDaten(Konfiguration.GLOBAL_PROBENWERTE);
+		probenwerte = ko.getOptionsDaten(Konfiguration.GLOBAL_PROBENWERTE);
 
 		seitenListe = new ArrayList<Zauber>();
 
@@ -282,8 +295,9 @@ public class ZauberSeite extends PDFSeite {
 
 	private class ZauberTabelle extends AbstractTabellenZugriff {
 		boolean probenWerte;
-		
-		public ZauberTabelle(int[] spaltenBreite, int breite, boolean probenWerte) {
+
+		public ZauberTabelle(int[] spaltenBreite, int breite,
+				boolean probenWerte) {
 			super(new String[] { null, "Probe", "ZfW", "", "Seite", "ZD", "RW",
 					"AsP", "WD", "SKT", "Rep", "Merkmal", "Anmerkung" },
 					spaltenBreite, 0, "Zaubername", breite);
@@ -315,13 +329,15 @@ public class ZauberSeite extends PDFSeite {
 			case 1:
 				if (probenWerte && !z.getProbe().equals("--/--/--")) {
 					return z.getProbenwerte();
-				}
-				else {
+				} else {
 					return z.getProbe();
 				}
 			case 2:
 				return z.getWert().toString();
 			case 4:
+				if (z.getQuelle() == null) {
+					return "";
+				}
 				return z.getQuelle().getSeite().toString();
 			case 5:
 				return z.getZauberdauer();

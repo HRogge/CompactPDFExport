@@ -261,9 +261,13 @@ public class FrontSeite extends PDFSeite {
 						n.getN4(), n.getN5(), n.getN6(), n.getN7(), n.getN8(),
 						n.getN9(), n.getN10(), n.getN11() };
 
-				for (int i = 0; i < notizen - 2 && i < t.length && t[i] != null; i++) {
-					drawText(PDType1Font.HELVETICA, 0, kampfBreite, y + i + 1,
-							t[i], false);
+				for (int i = 0, j = 0; j < notizen - 2 && i < t.length
+						&& t[i] != null; i++) {
+					if (!t[i].startsWith("@")) {
+						drawText(PDType1Font.HELVETICA, 0, kampfBreite, y + j
+								+ 1, t[i], false);
+						j++;
+					}
 				}
 			}
 			y += notizen;

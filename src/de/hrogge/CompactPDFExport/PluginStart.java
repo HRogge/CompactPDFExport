@@ -66,9 +66,9 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 
 		konfig = new Konfiguration();
 		updater = new VorschauUpdaten();
-		
+
 		/* set to true to see some debugging XML output */
-		debug = false;
+		debug = true;
 	}
 
 	@Override
@@ -187,7 +187,7 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		};
 
 		druckAnsicht = new DruckAnsicht(k, s, su);
-		
+
 		try {
 			ladeKonfiguration();
 		} catch (ParserConfigurationException e) {
@@ -195,7 +195,7 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 			e.printStackTrace();
 		}
 	}
-	
+
 	protected void ladeKonfiguration() throws ParserConfigurationException {
 		Document request, result;
 		Element requestElement;
@@ -204,15 +204,15 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		Node propNode;
 		Properties p;
 		String key, value;
-		
+
 		factory = DocumentBuilderFactory.newInstance();
 		request = factory.newDocumentBuilder().newDocument();
-		
+
 		requestElement = request.createElement("action");
 		request.appendChild(requestElement);
 		requestElement.setAttribute("action", "listProperties");
 		requestElement.setAttribute("pluginName", "CompactPDFExport");
-		
+
 		/* Parameter-Dokument vom Hauptprogramm laden */
 		result = (Document) this.dai.exec(request);
 		if (result == null) {
@@ -223,20 +223,21 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 			return;
 		}
 		propList = result.getElementsByTagName("prop");
-		
+
 		p = new Properties();
-		for (int i=0; i<propList.getLength(); i++) {
+		for (int i = 0; i < propList.getLength(); i++) {
 			propNode = propList.item(i);
-			
+
 			key = propNode.getAttributes().getNamedItem("key").getNodeValue();
-			value = propNode.getAttributes().getNamedItem("value").getNodeValue();
-			
+			value = propNode.getAttributes().getNamedItem("value")
+					.getNodeValue();
+
 			p.setProperty(key, value);
 		}
-		
+
 		konfig.konfigurationAnwenden(p);
 	}
-	
+
 	protected void speichereKonfiguration() throws ParserConfigurationException {
 		Document request;
 		DocumentBuilderFactory factory;
@@ -244,7 +245,7 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		Element keyvalueElement;
 		Properties p;
 		String key, value;
-		
+
 		factory = DocumentBuilderFactory.newInstance();
 		request = factory.newDocumentBuilder().newDocument();
 
@@ -254,21 +255,21 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		actionElement.setAttribute("pluginName", "CompactPDFExport");
 
 		p = this.konfig.konfigurationExportieren();
-		
+
 		for (Object k : p.keySet()) {
 			if (!(k instanceof String)) {
 				continue;
 			}
-			
+
 			key = (String) k;
 			value = p.getProperty(key);
-			
+
 			keyvalueElement = request.createElement("prop");
 			actionElement.appendChild(keyvalueElement);
 			keyvalueElement.setAttribute("key", key);
 			keyvalueElement.setAttribute("value", value);
 		}
-		
+
 		if (this.dai.exec(request) == null) {
 			try {
 				zeigeXML(frame, "Got null from dai.exec", request);
@@ -276,7 +277,7 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 			}
 		}
 	}
-	
+
 	protected void einstellungenAction() {
 		int result = JOptionPane.showOptionDialog(frame, konfig.getPanel(),
 				"Einstellungen für kompakten Heldenbogen",
@@ -304,9 +305,9 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 			if (doc == null) {
 				return;
 			}
-			
+
 			zeigeXML(frame, null, doc);
-			
+
 			PDFGenerator creator = new PDFGenerator();
 			creator.exportierePDF(frame, null, doc, konfig, dialog);
 		} catch (Exception e) {
@@ -324,7 +325,7 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		if (!debug) {
 			return;
 		}
-		
+
 		/* Transformer initialisieren */
 		transformerFactory = TransformerFactory.newInstance();
 		transformer = transformerFactory.newTransformer();
@@ -335,9 +336,10 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		/* Textform des XMLs generieren */
 		writer = new StringWriter();
 		if (errorMessage != null) {
-			new RuntimeException(errorMessage).printStackTrace(new PrintWriter(writer));
+			new RuntimeException(errorMessage).printStackTrace(new PrintWriter(
+					writer));
 		}
-		
+
 		transformer.transform(new DOMSource(doc), new StreamResult(writer));
 
 		/*
@@ -375,7 +377,7 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		requestElement.setAttribute("action", "held");
 		requestElement.setAttribute("id", "selected");
 		requestElement.setAttribute("format", "xml");
-		requestElement.setAttribute("version", "2");
+		requestElement.setAttribute("version", "3");
 
 		obj = dai.exec(request);
 		if (obj == null) {
