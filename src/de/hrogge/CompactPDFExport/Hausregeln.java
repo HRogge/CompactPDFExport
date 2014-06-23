@@ -98,9 +98,10 @@ public class Hausregeln {
 		 */
 
 		Zauber z = new Zauber();
+		
 		z.setNamemitvariante(p.getProperty("name", "-"));
 		z.setName(p.getProperty("name", "-"));
-		z.setHauszauber(Boolean.getBoolean(p.getProperty("hauszauber", "false")));
+		z.setHauszauber(Boolean.valueOf(p.getProperty("hauszauber", "false")));
 		z.setProbe(p.getProperty("probe", "--/--/--"));
 		z.setProbenwerte(p.getProperty("probe", "--/--/--"));
 		z.setZauberdauer(p.getProperty("zd", ""));

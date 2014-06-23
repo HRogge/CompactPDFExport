@@ -12,6 +12,7 @@
 		- Liturgiekenntnis
 		- Ritualkenntnis
 	-->
-	<zauber key="RHuGg*" name="Resincendo Harz und Glut" hauszauber="true" probe="MU/IN/FF" zd="" rw="" asp="" wd="" skt="B" rep="Magier" merkmal="Elem (Feu), Objk, Scha" anmerkung=""/>
+	<zauber key="RHuGg" name="Resincendo Harz und Glut" hauszauber="false" probe="MU/IN/FF" zd="" rw="" asp="" wd="" skt="B" rep="Magier" merkmal="Elem (Feu), Objk, Scha" anmerkung=""/>
+	<zauber key="Zbtr"
 	<talent key="Pulver" name="Pulverwaffen" bereich="Kampf" probe="" be="" skt="D"/>
 </hausregeln>
