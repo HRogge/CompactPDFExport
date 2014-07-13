@@ -67,7 +67,7 @@ public class SonstigesSeite extends PDFSeite {
 	private class AusruestungsZabelle extends AbstractTabellenZugriff {
 		public AusruestungsZabelle() {
 			super(new String[] { "#", null, "Unzen" },
-					new int[] { 2, 0, 3 }, 3, "Name", 20);
+					new int[] { 2, 0, 3 }, 3, "Ausrüstung", 20);
 		}
 		
 		@Override
