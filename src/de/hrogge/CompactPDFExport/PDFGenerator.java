@@ -120,6 +120,7 @@ public class PDFGenerator {
 			throws IOException {
 		String[] guteEigenschaften;
 		List<PDFSonderfertigkeiten> sflist;
+		List<Gegenstand> ausruestung;
 		boolean tzm;
 		PDDocument doc;
 		String pfad;
@@ -168,6 +169,8 @@ public class PDFGenerator {
 			}
 		}
 
+		ausruestung = new ArrayList<>(daten.getGegenstaende().getGegenstand());
+		
 		/* Kommandos aus Notizen extrahieren */
 		Notizen n = daten.getAngaben().getNotizen();
 		commands = new ArrayList<>();
@@ -222,6 +225,9 @@ public class PDFGenerator {
 					hintergrundBild,
 					k.getOptionsDaten(Konfiguration.GLOBAL_HINTERGRUND_VERZERREN));
 
+			/* Sonderfertigkeiten sortieren */
+			Collections.sort(sflist);
+
 			/* Seiten erzeugen */
 			FrontSeite page1 = new FrontSeite(doc);
 			page1.erzeugeSeite(daten, charakterBild, hintergrundBild,
@@ -237,15 +243,20 @@ public class PDFGenerator {
 						sflist, hausregeln, commands, k);
 			}
 
-			for (PDFSonderfertigkeiten sf : sflist) {
-				if (!sf.istGedruckt()) {
-					SFSeite page4 = new SFSeite(doc);
-					page4.erzeugeSeite(hintergrundBild, guteEigenschaften,
-							sflist);
-					break;
+			/* Leerzeilen zu Sonderfertigkeitsliste hinzufügen */
+			for (int i = 1; i < sflist.size(); i++) {
+				if (sflist.get(i - 1).getKategorie() != sflist.get(i).getKategorie()) {
+					sflist.add(i, null);
+					i++;
 				}
 			}
-
+			
+			
+			while (hatNichtGedruckteSonderfertigkeit(sflist) || ausruestung.size() > 0) {
+				SonstigesSeite page4 = new SonstigesSeite(doc);
+				page4.erzeugeSeite(hintergrundBild, guteEigenschaften,
+						sflist, ausruestung);
+			}
 		} catch (IOException e) {
 			if (doc != null) {
 				doc.close();
@@ -254,6 +265,15 @@ public class PDFGenerator {
 			throw e;
 		}
 		return doc;
+	}
+
+	private boolean hatNichtGedruckteSonderfertigkeit(List<PDFSonderfertigkeiten> sflist) {
+		for (PDFSonderfertigkeiten sf : sflist) {
+			if (sf != null && !sf.istGedruckt()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private File waehlePDFFile(JFrame frame, Daten daten, String zielverzeichnis) {
