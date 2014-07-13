@@ -1,18 +1,17 @@
 <hausregeln>
-	<!-- Talentbereiche:
-		- Kampf
-		- Körperlich
-		- Gesellschaft
-		- Natur
-		- Metatalente
-		- Wissen
-		- Sprachen
-		- Handwerk
-		- Sondertalente
-		- Liturgiekenntnis
-		- Ritualkenntnis
-	-->
-	<zauber key="RHuG" name="Resincendo Harz und Glut" probe="MU/IN/FF" zd="" rw="" asp="" wd="" skt="C*" merkmal="Elem (Feu), Objk, Scha" anmerkung=""/>
-	<zauber key="Zbrt" name="Zaubertricks" probe="KL/IN/XX" skt="A+" merkmal=""/>
-	<talent key="Pulver" name="Pulverwaffen" bereich="Kampf" probe="" be="" skt="D"/>
+<!-- Talentbereiche:
+- Kampf
+- Körperlich
+- Gesellschaft
+- Natur
+- Metatalente
+- Wissen
+- Sprachen
+- Handwerk
+- Sondertalente
+- Liturgiekenntnis
+- Ritualkenntnis
+-->
+<zauber key="EFF" name="Eigener Flim Flam" probe="MU/IN/FF" zd="" rw="" asp="" wd="" skt="C*" merkmal="Umw" anmerkung=""/>
+<talent key="Kpts" name="Koptisch" bereich="Sprachen" probe="" be="" skt="B"/>
 </hausregeln>
