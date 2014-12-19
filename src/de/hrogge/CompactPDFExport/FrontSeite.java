@@ -739,7 +739,7 @@ public class FrontSeite extends PDFSeite {
 		for (y = box3.size(); y < count; y++) {
 			box3.add(null);
 		}
-		if (vierBoxen || nachteile.size() > vorteile.size()) {
+		if (vierBoxen || nachteile.size() >= vorteile.size()) {
 			for (y = box4.size(); y < count; y++) {
 				box4.add(null);
 			}
