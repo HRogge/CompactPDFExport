@@ -158,6 +158,9 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 
 	private Kategorie berechneKategorie(Sonderfertigkeit sf) {
 		List<String> bereich = sf.getBereich();
+		if (bereich.contains("Manöver")) {
+			return Kategorie.WAFFENLOS;
+		}
 		if (bereich.contains("Kampf")) {
 			return Kategorie.KAMPF;
 		}
@@ -199,6 +202,10 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 		switch (k) {
 		case KAMPF:
 			this.typ = "Kampfsonderfertigkeit:";
+			this.name = sf.getNameausfuehrlich();
+			break;
+		case WAFFENLOS:
+			this.typ = "Waffenloses Manöver:";
 			this.name = sf.getNameausfuehrlich();
 			break;
 		case MAGISCH:
@@ -251,6 +258,6 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 	}
 
 	public enum Kategorie {
-		KAMPF, GEWEIHT, LITURGIE, TALENT, TALENTSPEZ, MAGISCH, ZAUBERSPEZ, UNBEKANNT;
+		KAMPF, WAFFENLOS, GEWEIHT, LITURGIE, TALENT, TALENTSPEZ, MAGISCH, ZAUBERSPEZ, UNBEKANNT;
 	}
 }
