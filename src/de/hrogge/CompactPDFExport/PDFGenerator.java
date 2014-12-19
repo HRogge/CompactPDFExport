@@ -231,7 +231,7 @@ public class PDFGenerator {
 			/* Seiten erzeugen */
 			FrontSeite page1 = new FrontSeite(doc);
 			page1.erzeugeSeite(daten, charakterBild, hintergrundBild,
-					guteEigenschaften, sflist, tzm, k);
+					guteEigenschaften, sflist, hausregeln, commands, tzm, k);
 
 			TalentSeite page2 = new TalentSeite(doc);
 			page2.erzeugeSeite(daten, hintergrundBild, guteEigenschaften,

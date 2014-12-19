@@ -14,4 +14,6 @@
 -->
 <zauber key="EFF" name="Eigener Flim Flam" probe="MU/IN/FF" zd="" rw="" asp="" wd="" skt="C*" merkmal="Umw" anmerkung=""/>
 <talent key="Kpts" name="Koptisch" bereich="Sprachen" probe="" be="" skt="B"/>
+<vorteil key="hurra" name="Toller Vorteil!"/>
+<nachteil key="buh" name="Blöder Nachteil" wert="y"/>
 </hausregeln>

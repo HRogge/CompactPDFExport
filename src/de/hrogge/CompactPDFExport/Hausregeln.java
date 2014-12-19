@@ -26,6 +26,8 @@ import de.hrogge.CompactPDFExport.gui.Konfiguration;
 public class Hausregeln {
 	private Map<String, Properties> eigeneZauber;
 	private Map<String, Properties> eigeneTalente;
+	private Map<String, Properties> eigeneVorteile;
+	private Map<String, Properties> eigeneNachteile;
 
 	static private Map<String, String> repraesentation;
 	
@@ -47,6 +49,8 @@ public class Hausregeln {
 	public Hausregeln(Konfiguration k) {
 		eigeneZauber = new HashMap<String, Properties>();
 		eigeneTalente = new HashMap<String, Properties>();
+		eigeneVorteile = new HashMap<String, Properties>();
+		eigeneNachteile = new HashMap<String, Properties>();
 
 		String sourceFile = k.getTextDaten(Konfiguration.GLOBAL_HAUSREGELN);
 		if (sourceFile != null && sourceFile.length() > 0) {
@@ -99,6 +103,10 @@ public class Hausregeln {
 				eigeneZauber.put(key, p);
 			} else if (child.getNodeName().equals("talent")) {
 				eigeneTalente.put(key, p);
+			} else if (child.getNodeName().equals("vorteil")) {
+				eigeneVorteile.put(key, p);
+			} else if (child.getNodeName().equals("nachteil")) {
+				eigeneNachteile.put(key, p);
 			}
 		}
 	}
@@ -163,4 +171,30 @@ public class Hausregeln {
 		t.setWert(new BigInteger(wert));
 		return t;
 	}
+
+	public PDFVorteil getEigenenVorteil(String key, String wert) {
+		return getVorteil(eigeneVorteile, key, wert);
+	}
+	
+	public PDFVorteil getEigenenNachteil(String key, String wert) {
+		return getVorteil(eigeneNachteile, key, wert);
+	}
+	
+	private PDFVorteil getVorteil(Map<String, Properties> map,
+			String key, String wert) {
+		Properties p = map.get(key);
+		String name;
+		
+		if (p == null) {
+			return null;
+		}
+		
+		name = p.getProperty("name", "-");
+		
+		if (p.getProperty("wert", "n").equalsIgnoreCase("n")) {
+			wert = "";
+		}
+		
+		return new PDFVorteil(name, wert);
+	}	
 }

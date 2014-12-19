@@ -38,14 +38,14 @@ public class FrontSeite extends PDFSeite {
 
 	public void erzeugeSeite(Daten daten, PDJpeg bild, PDJpeg hintergrund,
 			String[] guteEigenschaften, List<PDFSonderfertigkeiten> alleSF,
-			boolean tzm, Konfiguration k) throws IOException {
+			Hausregeln h, List<String> commands, boolean tzm, Konfiguration k) throws IOException {
 		int patzerHoehe, patzerBreite, festerHeaderHoehe, professionsZeilen;
 		int notizen, kampfBreite, blockBreite, vorNachTeileLaenge;
 		int leer, y, bloecke, hoehe, charakterDatenHoehe, sfY;
 		List<Kampfset> kampfsets;
 		List<Nahkampfwaffe> nahkampf;
 		List<Fernkampfwaffe> fernkampf;
-		List<Vorteil> vorteile, nachteile;
+		List<PDFVorteil> vorteile, nachteile;
 		List<Kampfset> ruestung;
 		List<Schild> schilde;
 		List<PDFSonderfertigkeiten> sfListe;
@@ -78,10 +78,32 @@ public class FrontSeite extends PDFSeite {
 		}
 
 		/* Vor und Nachteile sind statisch */
-		vorteile = new ArrayList<Vorteil>();
-		nachteile = new ArrayList<Vorteil>();
+		vorteile = new ArrayList<PDFVorteil>();
+		nachteile = new ArrayList<PDFVorteil>();
 
 		extrahiereVorNachteile(daten, vorteile, nachteile);
+
+		for (String cmd : commands) {
+			String[] split = cmd.split(":");
+			String wert = "";
+			
+			if (split.length == 2) {
+				wert = split[1];
+			}
+			else if (split.length > 2) {
+				continue;
+			}
+			PDFVorteil v = h.getEigenenVorteil(split[0], wert);
+			if (v != null) {
+				vorteile.add(v);
+			}
+			
+			v = h.getEigenenNachteil(split[0], wert);
+			if (v != null) {
+				nachteile.add(v);
+				System.out.println("1");
+			}
+		}
 
 		if (!k.getOptionsDaten(Konfiguration.FRONT_MEHRSF)) {
 			vorNachTeileLaenge = (Math.max(vorteile.size(), nachteile.size()) + 1) / 2;
@@ -596,24 +618,30 @@ public class FrontSeite extends PDFSeite {
 		return zeile + 1;
 	}
 
-	private void extrahiereVorNachteile(Daten daten, List<Vorteil> vorteile,
-			List<Vorteil> nachteile) {
+	private void extrahiereVorNachteile(Daten daten, List<PDFVorteil> vorteile,
+			List<PDFVorteil> nachteile) {
 		for (Vorteil v : daten.getVorteile().getVorteil()) {
-			List<Vorteil> gruppe = null;
-
+			List<PDFVorteil> gruppe = null;
+			String wert = "";
+			
 			if (v.isIstvorteil()) {
 				gruppe = vorteile;
 			} else if (v.isIstnachteil()) {
 				gruppe = nachteile;
 			}
 
+			if (v.getWert() != null) {
+				wert = v.getWert().toString();
+			}
 			if (v.getAuswahlen() != null
 					&& v.getAuswahlen().getAuswahl().size() > 0) {
 				for (String auswahl : v.getAuswahlen().getAuswahl()) {
-					gruppe.add(new VorteilAuswahl(v, auswahl));
+					gruppe.add(new PDFVorteil(
+							v.getBezeichner() + ": " + auswahl,
+							wert));
 				}
 			} else {
-				gruppe.add(v);
+				gruppe.add(new PDFVorteil(v.getBezeichner(), wert));
 			}
 		}
 	}
@@ -685,20 +713,23 @@ public class FrontSeite extends PDFSeite {
 				"Fernkampfpatzer (WdS Seite 99)", x2 - x1));
 	}
 
-	private int vorteileNachteile(int offset, List<Vorteil> vorteile,
-			List<Vorteil> nachteile, int count, Konfiguration k)
+	private int vorteileNachteile(int offset, List<PDFVorteil> vorteile,
+			List<PDFVorteil> nachteile, int count, Konfiguration k)
 			throws IOException {
-		List<Vorteil> box1, box2, box3, box4;
+		List<PDFVorteil> box1, box2, box3, box4;
 		boolean vierBoxen;
 		int breite, x, y;
 
 		breite = 15;
 
 		/* aufspalten */
-		box1 = new ArrayList<Vorteil>();
-		box2 = new ArrayList<Vorteil>();
-		box3 = new ArrayList<Vorteil>();
-		box4 = new ArrayList<Vorteil>();
+		box1 = new ArrayList<PDFVorteil>();
+		box2 = new ArrayList<PDFVorteil>();
+		box3 = new ArrayList<PDFVorteil>();
+		box4 = new ArrayList<PDFVorteil>();
+
+		Collections.sort(vorteile);
+		Collections.sort(nachteile);
 
 		vierBoxen = !k.getOptionsDaten(Konfiguration.FRONT_MEHRSF);
 		if (vierBoxen) {
@@ -1082,67 +1113,25 @@ public class FrontSeite extends PDFSeite {
 		}
 	}
 
-	private class VorteilAuswahl extends Vorteil {
-		private Vorteil referenz;
-		private String auswahl;
-
-		public VorteilAuswahl(Vorteil referenz, String auswahl) {
-			super();
-			this.referenz = referenz;
-			this.auswahl = auswahl;
-		}
-
-		public Vorteil getVAReferenz() {
-			return referenz;
-		}
-
-		public String getVAText() {
-			return auswahl;
-		}
-	}
-
 	private class VorteilTabelle extends AbstractTabellenZugriff {
-		boolean vorteil;
-
 		public VorteilTabelle(int breite) {
 			super(new String[] { null }, new int[] { 0 }, 0, "Vorteile", breite);
-			vorteil = true;
 		}
 
 		public VorteilTabelle(String titel, int breite) {
 			super(new String[] { null, "Wert" }, new int[] { 0, 2 }, 0, titel,
 					breite);
-			vorteil = false;
 		}
 
 		@Override
 		public String get(Object obj, int x) {
-			if (obj instanceof VorteilAuswahl) {
-				VorteilAuswahl va = (VorteilAuswahl) obj;
-
-				if (x == 0) {
-					return va.getVAReferenz().getBezeichner() + ": "
-							+ va.getVAText();
-				} else {
-					return "";
-				}
-			}
-
-			Vorteil v = (Vorteil) obj;
-			String out;
+			PDFVorteil v = (PDFVorteil) obj;
 
 			switch (x) {
 			case 0:
-				out = v.getBezeichner();
-				if (vorteil && v.getWert() != null) {
-					out = out + " " + v.getWert().toString();
-				}
-				return out;
+				return v.getName();
 			case 1:
-				if (v.getWert() != null) {
-					return v.getWert().toString();
-				}
-				return "";
+				return v.getWert();
 			}
 			return "";
 		}
