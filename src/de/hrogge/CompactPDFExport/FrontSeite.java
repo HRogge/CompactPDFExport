@@ -20,7 +20,9 @@ import java.awt.Color;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.text.Collator;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import jaxbGenerated.datenxml.*;
 
@@ -30,15 +32,16 @@ import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
 
 import de.hrogge.CompactPDFExport.PDFSonderfertigkeiten.Kategorie;
 import de.hrogge.CompactPDFExport.gui.Konfiguration;
+import de.hrogge.CompactPDFExport.gui.KonfigurationGlobal;
 
 public class FrontSeite extends PDFSeite {
 	public FrontSeite(PDDocument d) throws IOException {
 		super(d);
 	}
 
-	public void erzeugeSeite(Daten daten, PDJpeg bild, PDJpeg hintergrund,
-			String[] guteEigenschaften, List<PDFSonderfertigkeiten> alleSF,
-			Hausregeln h, List<String> commands, boolean tzm, Konfiguration k) throws IOException {
+	public void erzeugeSeite(Daten daten, PDJpeg bild, PDJpeg hintergrund, String[] guteEigenschaften,
+			List<PDFSonderfertigkeiten> alleSF, Hausregeln h, List<String> commands, boolean tzm, Konfiguration k)
+			throws IOException {
 		int patzerHoehe, patzerBreite, festerHeaderHoehe, professionsZeilen;
 		int notizen, kampfBreite, blockBreite, vorNachTeileLaenge;
 		int leer, y, bloecke, hoehe, charakterDatenHoehe, sfY;
@@ -86,18 +89,17 @@ public class FrontSeite extends PDFSeite {
 		for (String cmd : commands) {
 			String[] split = cmd.split(":");
 			String wert = "";
-			
+
 			if (split.length == 2) {
 				wert = split[1];
-			}
-			else if (split.length > 2) {
+			} else if (split.length > 2) {
 				continue;
 			}
 			PDFVorteil v = h.getEigenenVorteil(split[0], wert);
 			if (v != null) {
 				vorteile.add(v);
 			}
-			
+
 			v = h.getEigenenNachteil(split[0], wert);
 			if (v != null) {
 				nachteile.add(v);
@@ -105,19 +107,16 @@ public class FrontSeite extends PDFSeite {
 			}
 		}
 
-		if (!k.getOptionsDaten(Konfiguration.FRONT_MEHRSF)) {
+		if (!k.getOptionsDaten(KonfigurationGlobal.FRONT_MEHRSF)) {
 			vorNachTeileLaenge = (Math.max(vorteile.size(), nachteile.size()) + 1) / 2;
 		} else if (vorteile.size() > nachteile.size()) {
-			vorNachTeileLaenge = Math.max((vorteile.size() + 1) / 2,
-					nachteile.size());
+			vorNachTeileLaenge = Math.max((vorteile.size() + 1) / 2, nachteile.size());
 		} else {
-			vorNachTeileLaenge = Math.max(vorteile.size(),
-					(nachteile.size() + 1) / 2);
+			vorNachTeileLaenge = Math.max(vorteile.size(), (nachteile.size() + 1) / 2);
 		}
 
 		/* Sonderfertigkeiten extrahieren */
-		PDFSonderfertigkeiten.Kategorie kat[] = { Kategorie.KAMPF,
-				Kategorie.GEWEIHT, Kategorie.LITURGIE };
+		PDFSonderfertigkeiten.Kategorie kat[] = { Kategorie.KAMPF, Kategorie.GEWEIHT, Kategorie.LITURGIE };
 		sfListe = PDFSonderfertigkeiten.extrahiereKategorien(alleSF, kat);
 
 		/* Layout für den Rest errechnen */
@@ -136,21 +135,17 @@ public class FrontSeite extends PDFSeite {
 			ruestung = new ArrayList<Kampfset>();
 			schilde = new ArrayList<Schild>();
 
-			zeigeFernkampf = k
-					.getOptionsDaten(Konfiguration.FRONT_IMMER_FERNKAMPF);
-			zeigeRuestung = k
-					.getOptionsDaten(Konfiguration.FRONT_IMMER_RUESTUNGEN);
-			zeigeSchilde = k.getOptionsDaten(Konfiguration.FRONT_IMMER_SCHILDE);
+			zeigeFernkampf = k.getOptionsDaten(KonfigurationGlobal.FRONT_IMMER_FERNKAMPF);
+			zeigeRuestung = k.getOptionsDaten(KonfigurationGlobal.FRONT_IMMER_RUESTUNGEN);
+			zeigeSchilde = k.getOptionsDaten(KonfigurationGlobal.FRONT_IMMER_SCHILDE);
 
 			for (Kampfset set : kampfsets) {
-				for (Nahkampfwaffe w : set.getNahkampfwaffen()
-						.getNahkampfwaffe()) {
+				for (Nahkampfwaffe w : set.getNahkampfwaffen().getNahkampfwaffe()) {
 					w.setNummer(set.getNr());
 					nahkampf.add(w);
 				}
 
-				for (Fernkampfwaffe w : set.getFernkampfwaffen()
-						.getFernkampfwaffe()) {
+				for (Fernkampfwaffe w : set.getFernkampfwaffen().getFernkampfwaffe()) {
 					w.setNummer(set.getNr());
 					fernkampf.add(w);
 					zeigeFernkampf = true;
@@ -185,9 +180,7 @@ public class FrontSeite extends PDFSeite {
 				bloecke++;
 			}
 
-			leer = hoehe
-					- (4 + professionsZeilen + 1 + 9 + 1 + vorNachTeileLaenge + 1)
-					- patzerHoehe;
+			leer = hoehe - (4 + professionsZeilen + 1 + 9 + 1 + vorNachTeileLaenge + 1) - patzerHoehe;
 			leer -= 2 + nahkampf.size();
 			if (zeigeFernkampf) {
 				leer -= 2 + fernkampf.size();
@@ -256,10 +249,9 @@ public class FrontSeite extends PDFSeite {
 		}
 
 		/* Flexiblen Teil der PDF Seite erzeugen */
-		y = vorteileNachteile(festerHeaderHoehe, vorteile, nachteile,
-				vorNachTeileLaenge, k);
+		y = vorteileNachteile(festerHeaderHoehe, vorteile, nachteile, vorNachTeileLaenge, k);
 
-		if (!k.getOptionsDaten(Konfiguration.FRONT_MEHRSF)) {
+		if (!k.getOptionsDaten(KonfigurationGlobal.FRONT_MEHRSF)) {
 			sfY = y;
 		} else {
 			sfY = charakterDatenHoehe;
@@ -271,23 +263,20 @@ public class FrontSeite extends PDFSeite {
 		}
 		Collections.sort(sfListe);
 
-		PDFSonderfertigkeiten.zeichneTabelle(this, kampfBreite + 1, sfY,
-				cellCountX, hoehe, "Sonderfertigkeiten", sfListe);
+		PDFSonderfertigkeiten.zeichneTabelle(this, kampfBreite + 1, sfY, cellCountX, hoehe, "Sonderfertigkeiten",
+				sfListe);
 		if (notizen > 0) {
 			drawLabeledBox(0, y, kampfBreite, y + notizen - 1, "Notizen");
 
 			if (!daten.getAngaben().getNotizen().getText().equals("Notizen")) {
 				Notizen n = daten.getAngaben().getNotizen();
 
-				String[] t = { n.getN0(), n.getN1(), n.getN2(), n.getN3(),
-						n.getN4(), n.getN5(), n.getN6(), n.getN7(), n.getN8(),
-						n.getN9(), n.getN10(), n.getN11() };
+				String[] t = { n.getN0(), n.getN1(), n.getN2(), n.getN3(), n.getN4(), n.getN5(), n.getN6(), n.getN7(),
+						n.getN8(), n.getN9(), n.getN10(), n.getN11() };
 
-				for (int i = 0, j = 0; j < notizen - 2 && i < t.length
-						&& t[i] != null; i++) {
+				for (int i = 0, j = 0; j < notizen - 2 && i < t.length && t[i] != null; i++) {
 					if (!t[i].startsWith("@")) {
-						drawText(PDType1Font.HELVETICA, 0, kampfBreite, y + j
-								+ 1, t[i], false);
+						drawText(PDType1Font.HELVETICA, 0, kampfBreite, y + j + 1, t[i], false);
 						j++;
 					}
 				}
@@ -295,84 +284,71 @@ public class FrontSeite extends PDFSeite {
 			y += notizen;
 		}
 
-		y = drawTabelle(0, kampfBreite, y,
-				nahkampf.toArray(new Nahkampfwaffe[nahkampf.size()]),
-				new NahkampfTable(kampfBreite));
+		y = drawTabelle(0, kampfBreite, y, nahkampf.toArray(new Nahkampfwaffe[nahkampf.size()]), new NahkampfTable(
+				kampfBreite));
 		if (zeigeFernkampf) {
-			y = drawTabelle(0, kampfBreite, y,
-					fernkampf.toArray(new Fernkampfwaffe[fernkampf.size()]),
+			y = drawTabelle(0, kampfBreite, y, fernkampf.toArray(new Fernkampfwaffe[fernkampf.size()]),
 					new FernkampfTabelle(kampfBreite));
 		}
 		if (zeigeRuestung) {
-			y = drawTabelle(0, kampfBreite, y, ruestung.toArray(),
-					new RuestungsTabelle(kampfBreite, tzm));
+			y = drawTabelle(0, kampfBreite, y, ruestung.toArray(), new RuestungsTabelle(kampfBreite, tzm));
 		}
 		if (zeigeSchilde) {
-			y = drawTabelle(0, kampfBreite, y, schilde.toArray(),
-					new ParierwaffenTabelle(kampfBreite));
+			y = drawTabelle(0, kampfBreite, y, schilde.toArray(), new ParierwaffenTabelle(kampfBreite));
 		}
 
 		/* 13 Zeilen fuer den Rest */
 		y = cellCountY - patzerHoehe;
 		patzerBlock(0, patzerBreite, y);
 
-		y = initiativeAusweichen(kampfsets, patzerBreite + 1, kampfBreite, y,
-				tzm);
+		y = initiativeAusweichen(kampfsets, patzerBreite + 1, kampfBreite, y, tzm);
 
 		y = waffenlos(kampfsets, patzerBreite + 1, kampfBreite, y, tzm);
 
-		y = basisKampfBlock(daten.getEigenschaften(), patzerBreite + 1,
-				kampfBreite, y);
+		y = basisKampfBlock(daten.getEigenschaften(), patzerBreite + 1, kampfBreite, y);
 
 		stream.close();
 	}
 
-	private int basisKampfBlock(Eigenschaften eigen, int x1, int x2, int y)
-			throws IOException {
+	private int basisKampfBlock(Eigenschaften eigen, int x1, int x2, int y) throws IOException {
 		String[][] werte;
 
 		werte = new String[4][3];
-		werte[0] = new String[] { "Attacke",
-				eigen.getAttacke().getAkt().toString(), "(MU+GE+KK)/5" };
-		werte[1] = new String[] { "Parade",
-				eigen.getParade().getAkt().toString(), "(IN+GE+KK)/5" };
-		werte[2] = new String[] { "Fernkampf",
-				eigen.getFernkampfBasis().getAkt().toString(), "(IN+FF+KK)/5" };
-		werte[3] = new String[] { "Initiative",
-				eigen.getInitiative().getAkt().toString(), "(2xMU+IN+GE)/5" };
+		werte[0] = new String[] { "Attacke", eigen.getAttacke().getAkt().toString(), "(MU+GE+KK)/5" };
+		werte[1] = new String[] { "Parade", eigen.getParade().getAkt().toString(), "(IN+GE+KK)/5" };
+		werte[2] = new String[] { "Fernkampf", eigen.getFernkampfBasis().getAkt().toString(), "(IN+FF+KK)/5" };
+		werte[3] = new String[] { "Initiative", eigen.getInitiative().getAkt().toString(), "(2xMU+IN+GE)/5" };
 
 		drawTabelle(x1, x2, y, werte, new BasisKampfTabelle(x2 - x1));
 		return y + werte.length + 2;
 	}
 
-	private int basisWerte(int offsetY, Daten daten, PDJpeg bild,
-			String[] guteEigW, Konfiguration k) throws IOException {
+	private int basisWerte(int offsetY, Daten daten, PDJpeg bild, String[] guteEigW, Konfiguration k)
+			throws IOException {
 		int boxW;
 		int offset2, offset3, offset4;
 		int height;
 
-		String[] guteEig = { "Mut", "Klugheit", "Intuition", "Charisma",
-				"Fingerfertigkeit", "Gewandheit", "Konstitution", "Körperkraft" };
+		String[] guteEig = { "Mut", "Klugheit", "Intuition", "Charisma", "Fingerfertigkeit", "Gewandheit",
+				"Konstitution", "Körperkraft" };
 
-		String[] basis = { "Lebensenergie", "Ausdauer", "Astralenergie",
-				"Karmaenergie", "Magieresistenz", "Abenteuerpunkte",
-				"verbraucht", "übrig" };
+		String[] basis = { "Lebensenergie", "Ausdauer", "Astralenergie", "Karmaenergie", "Magieresistenz",
+				"Abenteuerpunkte", "verbraucht", "übrig" };
 		String[] basisW;
 
-		String[] sonstige = { "Geschwindigkeit", "Sozialstatus", "Stufe",
-				"Wundschwelle", "Regeneration LE", "Regeneration AE" };
+		String[] sonstige = { "Geschwindigkeit", "Sozialstatus", "Stufe", "Wundschwelle", "Regeneration LE",
+				"Regeneration AE" };
 		String[] sonstigeW;
 
 		Angaben angaben = daten.getAngaben();
 		Eigenschaften eigenschaften = daten.getEigenschaften();
 
-		if (k.getOptionsDaten(Konfiguration.FRONT_KAUFBAREEIGENSCHAFTEN)) {
+		if (k.getOptionsDaten(KonfigurationGlobal.FRONT_KAUFBAREEIGENSCHAFTEN)) {
 			guteEig[0] += " (" + kaufbar(eigenschaften.getMut()) + ")";
 			guteEig[1] += " (" + kaufbar(eigenschaften.getKlugheit()) + ")";
 			guteEig[2] += " (" + kaufbar(eigenschaften.getIntuition()) + ")";
 			guteEig[3] += " (" + kaufbar(eigenschaften.getCharisma()) + ")";
-			guteEig[4] += " (" + kaufbar(eigenschaften.getFingerfertigkeit())
-					+ ")";
+			guteEig[4] += " (" + kaufbar(eigenschaften.getFingerfertigkeit()) + ")";
 			guteEig[5] += " (" + kaufbar(eigenschaften.getGewandtheit()) + ")";
 			guteEig[6] += " (" + kaufbar(eigenschaften.getKonstitution()) + ")";
 			guteEig[7] += " (" + kaufbar(eigenschaften.getKoerperkraft()) + ")";
@@ -416,74 +392,58 @@ public class FrontSeite extends PDFSeite {
 		offset3 = offset2 + viertelBreite + 1;
 		offset4 = offset3 + viertelBreite + 1;
 
-		drawLabeledBox(0, offsetY, viertelBreite, offsetY + height + 1,
-				"Gute Eigenschaften");
-		drawLabeledBox(offset2, offsetY, offset2 + viertelBreite, offsetY
-				+ height + 1, "Grundwerte");
-		drawLabeledBox(offset3, offsetY, offset3 + viertelBreite, offsetY
-				+ height + 1, "Sonstige Werte");
+		drawLabeledBox(0, offsetY, viertelBreite, offsetY + height + 1, "Gute Eigenschaften");
+		drawLabeledBox(offset2, offsetY, offset2 + viertelBreite, offsetY + height + 1, "Grundwerte");
+		drawLabeledBox(offset3, offsetY, offset3 + viertelBreite, offsetY + height + 1, "Sonstige Werte");
 
-		if (!k.getOptionsDaten(Konfiguration.FRONT_MEHRSF)) {
+		if (!k.getOptionsDaten(KonfigurationGlobal.FRONT_MEHRSF)) {
 			if (bild != null) {
-				drawImage(offset4, offsetY + 1, cellCountX, offsetY + height
-						+ 1, bild);
+				drawImage(offset4, offsetY + 1, cellCountX, offsetY + height + 1, bild);
 			}
 
-			drawLabeledBox(offset4, offsetY, cellCountX, offsetY + height + 1,
-					"Bild");
+			drawLabeledBox(offset4, offsetY, cellCountX, offsetY + height + 1, "Bild");
 		}
 
 		stream.setLineWidth(0.1f);
 
 		for (int y = offsetY + 1; y < offsetY + 10; y++) {
 			addLine(viertelBreite - 2 * boxW, y, viertelBreite, y);
-			addLine(offset2 + viertelBreite - 2 * boxW, y, offset2
-					+ viertelBreite, y);
-			addLine(offset3 + viertelBreite - 2 * boxW, y, offset3
-					+ viertelBreite, y);
+			addLine(offset2 + viertelBreite - 2 * boxW, y, offset2 + viertelBreite, y);
+			addLine(offset3 + viertelBreite - 2 * boxW, y, offset3 + viertelBreite, y);
 		}
-		addLine(viertelBreite - 2 * boxW, offsetY + 1,
-				viertelBreite - 2 * boxW, offsetY + 1 + height);
-		addLine(viertelBreite - boxW, offsetY + 1, viertelBreite - boxW,
-				offsetY + 1 + height);
-		addLine(offset2 + viertelBreite - 2 * boxW, offsetY + 1, offset2
-				+ viertelBreite - 2 * boxW, offsetY + 1 + height);
-		addLine(offset2 + viertelBreite - boxW, offsetY + 1, offset2
-				+ viertelBreite - boxW, offsetY + 1 + height);
-		addLine(offset3 + viertelBreite - 2 * boxW, offsetY + 1, offset3
-				+ viertelBreite - 2 * boxW, offsetY + 1 + height);
-		addLine(offset3 + viertelBreite - boxW, offsetY + 1, offset3
-				+ viertelBreite - boxW, offsetY + 1 + height);
+		addLine(viertelBreite - 2 * boxW, offsetY + 1, viertelBreite - 2 * boxW, offsetY + 1 + height);
+		addLine(viertelBreite - boxW, offsetY + 1, viertelBreite - boxW, offsetY + 1 + height);
+		addLine(offset2 + viertelBreite - 2 * boxW, offsetY + 1, offset2 + viertelBreite - 2 * boxW, offsetY + 1
+				+ height);
+		addLine(offset2 + viertelBreite - boxW, offsetY + 1, offset2 + viertelBreite - boxW, offsetY + 1 + height);
+		addLine(offset3 + viertelBreite - 2 * boxW, offsetY + 1, offset3 + viertelBreite - 2 * boxW, offsetY + 1
+				+ height);
+		addLine(offset3 + viertelBreite - boxW, offsetY + 1, offset3 + viertelBreite - boxW, offsetY + 1 + height);
 		stream.closeAndStroke();
 
 		for (int y = 0; y < guteEig.length; y++) {
-			drawText(PDType1Font.HELVETICA_BOLD, 0, viertelBreite - 2 * boxW, y
-					+ offsetY + 1, guteEig[y], false);
+			drawText(PDType1Font.HELVETICA_BOLD, 0, viertelBreite - 2 * boxW, y + offsetY + 1, guteEig[y], false);
 
-			drawText(PDType1Font.HELVETICA, viertelBreite - 2 * boxW,
-					viertelBreite - boxW, y + offsetY + 1, guteEigW[y], true);
+			drawText(PDType1Font.HELVETICA, viertelBreite - 2 * boxW, viertelBreite - boxW, y + offsetY + 1,
+					guteEigW[y], true);
 		}
 		for (int y = 0; y < basis.length; y++) {
-			drawText(PDType1Font.HELVETICA_BOLD, offset2
-					+ (y == 6 || y == 7 ? 2 : 0), offset2 + viertelBreite - 2
+			drawText(PDType1Font.HELVETICA_BOLD, offset2 + (y == 6 || y == 7 ? 2 : 0), offset2 + viertelBreite - 2
 					* boxW, y + offsetY + 1, basis[y], false);
 
-			drawText(PDType1Font.HELVETICA, offset2 + viertelBreite - 2 * boxW,
-					offset2 + viertelBreite - boxW, y + offsetY + 1, basisW[y],
-					true);
+			drawText(PDType1Font.HELVETICA, offset2 + viertelBreite - 2 * boxW, offset2 + viertelBreite - boxW, y
+					+ offsetY + 1, basisW[y], true);
 		}
 		int len = sonstige.length;
 		if (!angaben.isMagisch()) {
 			len--;
 		}
 		for (int y = 0; y < len; y++) {
-			drawText(PDType1Font.HELVETICA_BOLD, offset3, offset3
-					+ viertelBreite - 2 * boxW, y + offsetY + 1, sonstige[y],
-					false);
+			drawText(PDType1Font.HELVETICA_BOLD, offset3, offset3 + viertelBreite - 2 * boxW, y + offsetY + 1,
+					sonstige[y], false);
 
-			drawText(PDType1Font.HELVETICA, offset3 + viertelBreite - 2 * boxW,
-					offset3 + viertelBreite - boxW, y + offsetY + 1,
-					sonstigeW[y], true);
+			drawText(PDType1Font.HELVETICA, offset3 + viertelBreite - 2 * boxW, offset3 + viertelBreite - boxW, y
+					+ offsetY + 1, sonstigeW[y], true);
 		}
 
 		return offsetY + 2 + height;
@@ -493,20 +453,17 @@ public class FrontSeite extends PDFSeite {
 		Angaben angaben = daten.getAngaben();
 		float breite;
 
-		if (angaben.getRasse().length() < 20
-				&& angaben.getKultur().length() < 40
+		if (angaben.getRasse().length() < 20 && angaben.getKultur().length() < 40
 				&& angaben.getProfession().getText().length() < 60) {
 			return 0;
 		}
 
 		/* Maximaler Stauchungsfaktor 1.5 */
-		breite = berechneTextUeberlauf(PDType1Font.HELVETICA, 6, cellCountX, 1,
-				angaben.getProfession().getText());
+		breite = berechneTextUeberlauf(PDType1Font.HELVETICA, 6, cellCountX, 1, angaben.getProfession().getText());
 		return (int) Math.ceil(breite / 1.5f);
 	}
 
-	private int charakterDaten(Daten daten, int professionsZeilen)
-			throws IOException {
+	private int charakterDaten(Daten daten, int professionsZeilen) throws IOException {
 		Angaben angaben = daten.getAngaben();
 		int zeile = 0;
 		String profession;
@@ -516,50 +473,37 @@ public class FrontSeite extends PDFSeite {
 		drawText(PDType1Font.HELVETICA, 4, 31, zeile, angaben.getName(), true);
 
 		drawText(PDType1Font.HELVETICA_BOLD, 30, 34, zeile, "Stand:", false);
-		drawText(PDType1Font.HELVETICA, 34, 40, zeile, angaben.getStand(),
-				false);
+		drawText(PDType1Font.HELVETICA, 34, 40, zeile, angaben.getStand(), false);
 
 		drawText(PDType1Font.HELVETICA_BOLD, 40, 43, zeile, "Alter:", false);
-		drawText(PDType1Font.HELVETICA, 43, 46, zeile, angaben.getAlter()
-				.toString(), true);
+		drawText(PDType1Font.HELVETICA, 43, 46, zeile, angaben.getAlter().toString(), true);
 
-		drawText(PDType1Font.HELVETICA_BOLD, 46, 52, zeile, "Geburtstag:",
-				false);
-		drawText(PDType1Font.HELVETICA, 52, cellCountX, zeile,
-				angaben.getGeburtstag(), true);
+		drawText(PDType1Font.HELVETICA_BOLD, 46, 52, zeile, "Geburtstag:", false);
+		drawText(PDType1Font.HELVETICA, 52, cellCountX, zeile, angaben.getGeburtstag(), true);
 		zeile++;
 
 		/* zweite Zeile (evt. mehrfach) */
 		profession = angaben.getProfession().getText().trim();
 		if (professionsZeilen == 0) {
 			drawText(PDType1Font.HELVETICA_BOLD, 0, 4, zeile, "Rasse:", false);
-			drawText(PDType1Font.HELVETICA, 4, 11, zeile, angaben.getRasse(),
-					true);
+			drawText(PDType1Font.HELVETICA, 4, 11, zeile, angaben.getRasse(), true);
 
-			drawText(PDType1Font.HELVETICA_BOLD, 11, 15, zeile, "Kultur:",
-					false);
-			drawText(PDType1Font.HELVETICA, 15, 30, zeile, angaben.getKultur(),
-					true);
+			drawText(PDType1Font.HELVETICA_BOLD, 11, 15, zeile, "Kultur:", false);
+			drawText(PDType1Font.HELVETICA, 15, 30, zeile, angaben.getKultur(), true);
 
-			drawText(PDType1Font.HELVETICA_BOLD, 30, 36, zeile, "Profession:",
-					false);
-			drawText(PDType1Font.HELVETICA, 36, cellCountX, zeile, profession,
-					true);
+			drawText(PDType1Font.HELVETICA_BOLD, 30, 36, zeile, "Profession:", false);
+			drawText(PDType1Font.HELVETICA, 36, cellCountX, zeile, profession, true);
 
 			zeile++;
 		} else {
 			drawText(PDType1Font.HELVETICA_BOLD, 0, 4, zeile, "Rasse:", false);
-			drawText(PDType1Font.HELVETICA, 4, 30, zeile, angaben.getRasse(),
-					true);
+			drawText(PDType1Font.HELVETICA, 4, 30, zeile, angaben.getRasse(), true);
 
-			drawText(PDType1Font.HELVETICA_BOLD, 30, 35, zeile, "Kultur:",
-					false);
-			drawText(PDType1Font.HELVETICA, 35, cellCountX, zeile,
-					angaben.getKultur(), true);
+			drawText(PDType1Font.HELVETICA_BOLD, 30, 35, zeile, "Kultur:", false);
+			drawText(PDType1Font.HELVETICA, 35, cellCountX, zeile, angaben.getKultur(), true);
 			zeile++;
 
-			drawText(PDType1Font.HELVETICA_BOLD, 0, 6, zeile, "Profession:",
-					false);
+			drawText(PDType1Font.HELVETICA_BOLD, 0, 6, zeile, "Profession:", false);
 			for (int i = 0; i < professionsZeilen; i++) {
 				int pos, l, r;
 				String teil;
@@ -580,33 +524,26 @@ public class FrontSeite extends PDFSeite {
 					profession = profession.substring(pos + 1);
 				}
 
-				drawText(PDType1Font.HELVETICA, 6, cellCountX, zeile, teil,
-						true);
+				drawText(PDType1Font.HELVETICA, 6, cellCountX, zeile, teil, true);
 				zeile++;
 			}
 		}
 
 		/* dritte Zeile */
 		drawText(PDType1Font.HELVETICA_BOLD, 0, 7, zeile, "Geschlecht:", false);
-		drawText(PDType1Font.HELVETICA, 7, 9, zeile, angaben.getGeschlecht()
-				.substring(0, 1), false);
+		drawText(PDType1Font.HELVETICA, 7, 9, zeile, angaben.getGeschlecht().substring(0, 1), false);
 
 		drawText(PDType1Font.HELVETICA_BOLD, 11, 15, zeile, "Größe:", false);
-		drawText(PDType1Font.HELVETICA, 15, 20, zeile, angaben.getGroesse()
-				.toString() + " cm", false);
+		drawText(PDType1Font.HELVETICA, 15, 20, zeile, angaben.getGroesse().toString() + " cm", false);
 
 		drawText(PDType1Font.HELVETICA_BOLD, 20, 25, zeile, "Gewicht:", false);
-		drawText(PDType1Font.HELVETICA, 25, 30, zeile, angaben.getGewicht()
-				.toString() + " kg", false);
+		drawText(PDType1Font.HELVETICA, 25, 30, zeile, angaben.getGewicht().toString() + " kg", false);
 
 		drawText(PDType1Font.HELVETICA_BOLD, 30, 36, zeile, "Haarfarbe:", false);
-		drawText(PDType1Font.HELVETICA, 36, 44, zeile, angaben.getHaarfarbe(),
-				false);
+		drawText(PDType1Font.HELVETICA, 36, 44, zeile, angaben.getHaarfarbe(), false);
 
-		drawText(PDType1Font.HELVETICA_BOLD, 44, 52, zeile, "Augenfarbe:",
-				false);
-		drawText(PDType1Font.HELVETICA, 52, cellCountX, zeile,
-				angaben.getAugenfarbe(), true);
+		drawText(PDType1Font.HELVETICA_BOLD, 44, 52, zeile, "Augenfarbe:", false);
+		drawText(PDType1Font.HELVETICA, 52, cellCountX, zeile, angaben.getAugenfarbe(), true);
 		zeile++;
 
 		/* Linien für Charakter-Daten */
@@ -618,12 +555,11 @@ public class FrontSeite extends PDFSeite {
 		return zeile + 1;
 	}
 
-	private void extrahiereVorNachteile(Daten daten, List<PDFVorteil> vorteile,
-			List<PDFVorteil> nachteile) {
+	private void extrahiereVorNachteile(Daten daten, List<PDFVorteil> vorteile, List<PDFVorteil> nachteile) {
 		for (Vorteil v : daten.getVorteile().getVorteil()) {
 			List<PDFVorteil> gruppe = null;
 			String wert = "";
-			
+
 			if (v.isIstvorteil()) {
 				gruppe = vorteile;
 			} else if (v.isIstnachteil()) {
@@ -633,12 +569,14 @@ public class FrontSeite extends PDFSeite {
 			if (v.getWert() != null) {
 				wert = v.getWert().toString();
 			}
-			if (v.getAuswahlen() != null
-					&& v.getAuswahlen().getAuswahl().size() > 0) {
-				for (String auswahl : v.getAuswahlen().getAuswahl()) {
-					gruppe.add(new PDFVorteil(
-							v.getBezeichner() + ": " + auswahl,
-							wert));
+			if (v.getAuswahlen() != null && v.getAuswahlen().getAuswahl().size() > 0) {
+				for (Vorteil.Auswahlen.Auswahl auswahl : v.getAuswahlen().getAuswahl()) {
+					if (auswahl.getWert() != null) {
+						gruppe.add(new PDFVorteil(v.getBezeichner() + ": " + auswahl.getName(), auswahl.getWert()
+								.toString()));
+					} else {
+						gruppe.add(new PDFVorteil(v.getBezeichner() + ": " + auswahl.getName(), wert));
+					}
 				}
 			} else {
 				gruppe.add(new PDFVorteil(v.getBezeichner(), wert));
@@ -646,8 +584,7 @@ public class FrontSeite extends PDFSeite {
 		}
 	}
 
-	private int initiativeAusweichen(List<Kampfset> sets, int x1, int x2,
-			int y, boolean tzm) throws IOException {
+	private int initiativeAusweichen(List<Kampfset> sets, int x1, int x2, int y, boolean tzm) throws IOException {
 		String[][] data;
 		List<String> data0, data1;
 
@@ -662,8 +599,7 @@ public class FrontSeite extends PDFSeite {
 			if (tzm) {
 				ini -= Long.parseLong(set.getRuestungzonen().getBehinderung());
 			} else {
-				ini -= Long
-						.parseLong(set.getRuestungeinfach().getBehinderung());
+				ini -= Long.parseLong(set.getRuestungeinfach().getBehinderung());
 			}
 			data0.add(Long.toString(ini));
 			data1.add(set.getAusweichen().toString());
@@ -673,8 +609,7 @@ public class FrontSeite extends PDFSeite {
 		data[0] = data0.toArray(new String[data0.size()]);
 		data[1] = data1.toArray(new String[data0.size()]);
 
-		drawTabelle(x1, x2, y, data, new IniAusweichenTabelle(sets.size() + 1,
-				x2 - x1));
+		drawTabelle(x1, x2, y, data, new IniAusweichenTabelle(sets.size() + 1, x2 - x1));
 		return y + 4;
 	}
 
@@ -704,18 +639,14 @@ public class FrontSeite extends PDFSeite {
 		fernkampfPatzer[0] = new String[] { "2", "-4", "Waffe zerstört" };
 		fernkampfPatzer[1] = new String[] { "3", "-3", "Waffe beschädigt " };
 		fernkampfPatzer[2] = new String[] { "4-10", "-2", "Fehlschuss" };
-		fernkampfPatzer[3] = new String[] { "11-12", "-3",
-				"Gefährten getroffen" };
+		fernkampfPatzer[3] = new String[] { "11-12", "-3", "Gefährten getroffen" };
 
-		y = drawTabelle(x1, x2, y, nahkampfPatzer, new PatzerTabelle(
-				"Nahkampfpatzer (WdS Seite 85)", x2 - x1));
-		y = drawTabelle(x1, x2, y, fernkampfPatzer, new PatzerTabelle(
-				"Fernkampfpatzer (WdS Seite 99)", x2 - x1));
+		y = drawTabelle(x1, x2, y, nahkampfPatzer, new PatzerTabelle("Nahkampfpatzer (WdS Seite 85)", x2 - x1));
+		y = drawTabelle(x1, x2, y, fernkampfPatzer, new PatzerTabelle("Fernkampfpatzer (WdS Seite 99)", x2 - x1));
 	}
 
-	private int vorteileNachteile(int offset, List<PDFVorteil> vorteile,
-			List<PDFVorteil> nachteile, int count, Konfiguration k)
-			throws IOException {
+	private int vorteileNachteile(int offset, List<PDFVorteil> vorteile, List<PDFVorteil> nachteile, int count,
+			Konfiguration k) throws IOException {
 		List<PDFVorteil> box1, box2, box3, box4;
 		boolean vierBoxen;
 		int breite, x, y;
@@ -731,7 +662,7 @@ public class FrontSeite extends PDFSeite {
 		Collections.sort(vorteile);
 		Collections.sort(nachteile);
 
-		vierBoxen = !k.getOptionsDaten(Konfiguration.FRONT_MEHRSF);
+		vierBoxen = !k.getOptionsDaten(KonfigurationGlobal.FRONT_MEHRSF);
 		if (vierBoxen) {
 			y = (vorteile.size() + 1) / 2;
 			box1.addAll(vorteile.subList(0, y));
@@ -778,37 +709,31 @@ public class FrontSeite extends PDFSeite {
 
 		x = 0;
 
-		drawTabelle(x, x + viertelBreite, offset, box1.toArray(),
-				new VorteilTabelle(breite));
+		drawTabelle(x, x + viertelBreite, offset, box1.toArray(), new VorteilTabelle(breite));
 		x += viertelBreite + 1;
 
 		if (box2.size() > 0) {
-			drawTabelle(x, x + viertelBreite, offset, box2.toArray(),
-					new VorteilTabelle(breite));
+			drawTabelle(x, x + viertelBreite, offset, box2.toArray(), new VorteilTabelle(breite));
 			x += viertelBreite + 1;
 		}
 
-		drawTabelle(x, x + viertelBreite, offset, box3.toArray(),
-				new VorteilTabelle("Nachteile", breite));
+		drawTabelle(x, x + viertelBreite, offset, box3.toArray(), new VorteilTabelle("Nachteile", breite));
 		x += viertelBreite + 1;
 
 		if (box4.size() > 0) {
-			drawTabelle(x, x + viertelBreite, offset, box4.toArray(),
-					new VorteilTabelle("Nachteile", breite));
+			drawTabelle(x, x + viertelBreite, offset, box4.toArray(), new VorteilTabelle("Nachteile", breite));
 		}
 
 		return offset + count + 2;
 	}
 
-	private int waffenlos(List<Kampfset> sets, int x1, int x2, int y,
-			boolean tzm) throws IOException {
+	private int waffenlos(List<Kampfset> sets, int x1, int x2, int y, boolean tzm) throws IOException {
 		String[][] daten;
 		int anzahl;
 		String be;
 
 		if (sets.size() == 0) {
-			drawTabelle(x1, x2, y, new String[] { null, null },
-					new WaffenlosTabelle(x2 - x1, 1));
+			drawTabelle(x1, x2, y, new String[] { null, null }, new WaffenlosTabelle(x2 - x1, 1));
 		}
 		daten = new String[2][8];
 		daten[0][0] = "Raufen";
@@ -832,8 +757,7 @@ public class FrontSeite extends PDFSeite {
 					be = null;
 				}
 			} else {
-				if (!sets.get(i).getRuestungeinfach().getBehinderung()
-						.equals(be)) {
+				if (!sets.get(i).getRuestungeinfach().getBehinderung().equals(be)) {
 					be = null;
 				}
 			}
@@ -846,8 +770,7 @@ public class FrontSeite extends PDFSeite {
 
 	private class BasisKampfTabelle extends AbstractTabellenZugriff {
 		public BasisKampfTabelle(int breite) {
-			super(new String[] { null, "Wert", "Formel" },
-					new int[] { 0, 4, 12 }, 0, "Basiswerte", breite);
+			super(new String[] { null, "Wert", "Formel" }, new int[] { 0, 4, 12 }, 0, "Basiswerte", breite);
 		}
 
 		@Override
@@ -859,9 +782,8 @@ public class FrontSeite extends PDFSeite {
 
 	private class FernkampfTabelle extends AbstractTabellenZugriff {
 		public FernkampfTabelle(int breite) {
-			super(new String[] { "#", null, "AT", "TP", "Entfernung",
-					"TP/Entfernung" }, new int[] { 2, 0, 3, 5, 10, 8 }, 0,
-					"Fernkampfwaffe", breite);
+			super(new String[] { "#", null, "AT", "TP", "Entfernung", "TP/Entfernung" },
+					new int[] { 2, 0, 3, 5, 10, 8 }, 0, "Fernkampfwaffe", breite);
 		}
 
 		@Override
@@ -895,8 +817,8 @@ public class FrontSeite extends PDFSeite {
 
 	private class IniAusweichenTabelle extends AbstractTabellenZugriff {
 		public IniAusweichenTabelle(int colcount, int breite) {
-			super(new String[] { null, "#1", "#2", "#3" }, new int[] { 0, 3, 3,
-					3 }, colcount, "BE-abhängige Werte", breite);
+			super(new String[] { null, "#1", "#2", "#3" }, new int[] { 0, 3, 3, 3 }, colcount, "BE-abhängige Werte",
+					breite);
 		}
 
 		@Override
@@ -914,10 +836,8 @@ public class FrontSeite extends PDFSeite {
 
 	private class NahkampfTable extends AbstractTabellenZugriff {
 		public NahkampfTable(int width) {
-			super(new String[] { "#", null, "AT", "PA", "TP", "TP/KK", "DK",
-					"INI", "Bruchfaktor", "", "", "", "" }, new int[] { 2, 0,
-					3, 3, 4, 4, 3, 3, 2, 2, 2, 2, 2 }, 0, "Nahkampfwaffe",
-					width);
+			super(new String[] { "#", null, "AT", "PA", "TP", "TP/KK", "DK", "INI", "Bruchfaktor", "", "", "", "" },
+					new int[] { 2, 0, 3, 3, 4, 4, 3, 3, 2, 2, 2, 2, 2 }, 0, "Nahkampfwaffe", width);
 		}
 
 		@Override
@@ -936,8 +856,7 @@ public class FrontSeite extends PDFSeite {
 			case 4:
 				return waffe.getTpinkl();
 			case 5:
-				return waffe.getTpkk().getSchwelle().toString() + "/"
-						+ waffe.getTpkk().getSchrittweite().toString();
+				return waffe.getTpkk().getSchwelle().toString() + "/" + waffe.getTpkk().getSchrittweite().toString();
 			case 6:
 				return waffe.getDk().replace(" ", "");
 			case 7:
@@ -966,10 +885,8 @@ public class FrontSeite extends PDFSeite {
 
 	private class ParierwaffenTabelle extends AbstractTabellenZugriff {
 		public ParierwaffenTabelle(int breite) {
-			super(new String[] { "#", null, "PA", "WM", "INI", "Bruchfaktor",
-					"", "", "", "" },
-					new int[] { 2, 0, 3, 4, 3, 2, 2, 2, 2, 2 }, 0,
-					"Parierwaffe/Schild", breite);
+			super(new String[] { "#", null, "PA", "WM", "INI", "Bruchfaktor", "", "", "", "" }, new int[] { 2, 0, 3, 4,
+					3, 2, 2, 2, 2, 2 }, 0, "Parierwaffe/Schild", breite);
 		}
 
 		@Override
@@ -1008,8 +925,7 @@ public class FrontSeite extends PDFSeite {
 
 	private class PatzerTabelle extends AbstractTabellenZugriff {
 		public PatzerTabelle(String titel, int breite) {
-			super(new String[] { "Wurf", "INI", null }, new int[] { 3, 3, 0 },
-					0, titel, breite);
+			super(new String[] { "Wurf", "INI", null }, new int[] { 3, 3, 0 }, 0, titel, breite);
 		}
 
 		@Override
@@ -1023,14 +939,12 @@ public class FrontSeite extends PDFSeite {
 		private boolean tzm;
 
 		public RuestungsTabelle(int breite, boolean tzm) {
-			super(new String[] { "#", null, "RS", "BE", "Ko", "Br", "Rü", "Ba",
-					"LA", "RA", "LB", "RB" }, new int[] { 2, 0, 3, 3, 2, 2, 2,
-					2, 2, 2, 2, 2 }, tzm ? 0 : 4, "Rüstung", breite);
+			super(new String[] { "#", null, "RS", "BE", "Ko", "Br", "Rü", "Ba", "LA", "RA", "LB", "RB" }, new int[] {
+					2, 0, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2 }, tzm ? 0 : 4, "Rüstung", breite);
 			this.tzm = tzm;
 		}
 
-		public RuestungsTabelle(String[] col, int[] colwidth, int colcount,
-				String titel, int width) {
+		public RuestungsTabelle(String[] col, int[] colwidth, int colcount, String titel, int width) {
 			super(col, colwidth, colcount, titel, width);
 		}
 
@@ -1119,8 +1033,7 @@ public class FrontSeite extends PDFSeite {
 		}
 
 		public VorteilTabelle(String titel, int breite) {
-			super(new String[] { null, "Wert" }, new int[] { 0, 2 }, 0, titel,
-					breite);
+			super(new String[] { null, "Wert" }, new int[] { 0, 2 }, 0, titel, breite);
 		}
 
 		@Override
@@ -1139,10 +1052,9 @@ public class FrontSeite extends PDFSeite {
 
 	private class WaffenlosTabelle extends AbstractTabellenZugriff {
 		public WaffenlosTabelle(int breite, int anzahl) {
-			super(new String[] { null, "TP(A)",
-					anzahl == 1 ? "AT/PA" : "AT/PA #1", "", "AT/PA #2", "",
-					"AT/PA #3", "" }, new int[] { 0, 4, 3, 3, 3, 3, 3, 3 },
-					anzahl, "Waffenlos", breite);
+			super(
+					new String[] { null, "TP(A)", anzahl == 1 ? "AT/PA" : "AT/PA #1", "", "AT/PA #2", "", "AT/PA #3",
+							"" }, new int[] { 0, 4, 3, 3, 3, 3, 3, 3 }, anzahl, "Waffenlos", breite);
 		}
 
 		@Override

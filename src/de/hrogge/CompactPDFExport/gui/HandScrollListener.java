@@ -14,10 +14,8 @@ import javax.swing.JViewport;
  * dragging
  */
 public class HandScrollListener extends MouseAdapter {
-	private final Cursor defCursor = Cursor
-			.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
-	private final Cursor hndCursor = Cursor
-			.getPredefinedCursor(Cursor.HAND_CURSOR);
+	private final Cursor defCursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
+	private final Cursor hndCursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
 	private final Point pp = new Point();
 	private JLabel image;
 
@@ -25,6 +23,7 @@ public class HandScrollListener extends MouseAdapter {
 		this.image = image;
 	}
 
+	@Override
 	public void mouseDragged(final MouseEvent e) {
 		JViewport vport = (JViewport) e.getSource();
 		Point cp = e.getPoint();
@@ -34,11 +33,13 @@ public class HandScrollListener extends MouseAdapter {
 		pp.setLocation(cp);
 	}
 
+	@Override
 	public void mousePressed(MouseEvent e) {
 		image.setCursor(hndCursor);
 		pp.setLocation(e.getPoint());
 	}
 
+	@Override
 	public void mouseReleased(MouseEvent e) {
 		image.setCursor(defCursor);
 		image.repaint();

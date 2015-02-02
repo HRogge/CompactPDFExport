@@ -3,16 +3,16 @@ package de.hrogge.CompactPDFExport;
 import java.awt.Color;
 import java.io.IOException;
 import java.text.Collator;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import jaxbGenerated.datenxml.Sonderfertigkeit;
 
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
 public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> {
-	private static final Collator col = Collator.getInstance();
-
-	static public int anzeigeGroesse(List<PDFSonderfertigkeiten> sflist) {
+	public static int anzeigeGroesse(List<PDFSonderfertigkeiten> sflist) {
 		String typ = null;
 		int count = 0;
 
@@ -30,8 +30,7 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 		return count;
 	}
 
-	static public List<PDFSonderfertigkeiten> extrahiereKategorien(
-			List<PDFSonderfertigkeiten> sflist, Kategorie[] k) {
+	public static List<PDFSonderfertigkeiten> extrahiereKategorien(List<PDFSonderfertigkeiten> sflist, Kategorie[] k) {
 		List<Kategorie> katlist;
 		List<PDFSonderfertigkeiten> res;
 
@@ -45,9 +44,8 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 		return res;
 	}
 
-	static public void zeichneTabelle(PDFSeite seite, int x1, int y1, int x2,
-			int y2, String titel, List<PDFSonderfertigkeiten> sflist)
-			throws IOException {
+	public static void zeichneTabelle(PDFSeite seite, int x1, int y1, int x2, int y2, String titel,
+			List<PDFSonderfertigkeiten> sflist) throws IOException {
 		String typ;
 		PDFSonderfertigkeiten s;
 
@@ -71,8 +69,7 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 				if (s.getTyp().length() == 0) {
 					typ = null;
 
-					seite.drawText(PDType1Font.HELVETICA, x1, x2, y,
-							s.getName(), false);
+					seite.drawText(PDType1Font.HELVETICA, x1, x2, y, s.getName(), false);
 				} else {
 					if (!s.getTyp().equals(typ)) {
 						if (y == y2 - 1) {
@@ -80,18 +77,18 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 						}
 						typ = s.getTyp();
 
-						seite.drawText(PDType1Font.HELVETICA_BOLD, x1, x2, y,
-								s.getTyp(), false);
+						seite.drawText(PDType1Font.HELVETICA_BOLD, x1, x2, y, s.getTyp(), false);
 						y++;
 					}
 
-					seite.drawText(PDType1Font.HELVETICA, x1 + 2, x2, y,
-							s.getName(), false);
+					seite.drawText(PDType1Font.HELVETICA, x1 + 2, x2, y, s.getName(), false);
 				}
 			}
 			sflist.remove(0);
 		}
 	}
+
+	private static final Collator col = Collator.getInstance();
 
 	private Kategorie kategorie;
 	private String typ;
@@ -191,8 +188,7 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 		return Kategorie.UNBEKANNT;
 	}
 
-	private void berechneTypName(Sonderfertigkeit sf, Kategorie k,
-			String auswahl) {
+	private void berechneTypName(Sonderfertigkeit sf, Kategorie k, String auswahl) {
 		String n;
 		int idx;
 

@@ -40,12 +40,9 @@ public class DruckAnsicht {
 		speichern = s;
 		speichernUnter = su;
 
-		vorherBild = new ImageIcon(
-				DruckAnsicht.class.getResource("VCRBack.gif"));
-		nachherBild = new ImageIcon(
-				DruckAnsicht.class.getResource("VCRForward.gif"));
-		konfigurierenBild = new ImageIcon(
-				DruckAnsicht.class.getResource("guiuse.gif"));
+		vorherBild = new ImageIcon(DruckAnsicht.class.getResource("VCRBack.gif"));
+		nachherBild = new ImageIcon(DruckAnsicht.class.getResource("VCRForward.gif"));
+		konfigurierenBild = new ImageIcon(DruckAnsicht.class.getResource("guiuse.gif"));
 
 		panel = new JPanel(new BorderLayout());
 
@@ -77,8 +74,7 @@ public class DruckAnsicht {
 		resolution = Toolkit.getDefaultToolkit().getScreenResolution();
 		seitenCache.clear();
 
-		seiten = (java.util.List<PDPage>) pddoc.getDocumentCatalog()
-				.getAllPages();
+		seiten = pddoc.getDocumentCatalog().getAllPages();
 		letzteSeite = seiten.size() - 1;
 		if (angezeigteSeite > letzteSeite) {
 			angezeigteSeite = letzteSeite;
@@ -88,8 +84,7 @@ public class DruckAnsicht {
 			if (i != angezeigteSeite) {
 				seitenCache.add(null);
 			} else {
-				seitenCache.add(seiteZeichnen(resolution,
-						seiten.get(angezeigteSeite)));
+				seitenCache.add(seiteZeichnen(resolution, seiten.get(angezeigteSeite)));
 			}
 		}
 
@@ -128,8 +123,7 @@ public class DruckAnsicht {
 		kontrollPanel.add(infoText, BorderLayout.CENTER);
 
 		kontrollButtonsPanel = new JPanel();
-		kontrollButtonsPanel.setLayout(new BoxLayout(kontrollButtonsPanel,
-				BoxLayout.LINE_AXIS));
+		kontrollButtonsPanel.setLayout(new BoxLayout(kontrollButtonsPanel, BoxLayout.LINE_AXIS));
 		kontrollPanel.add(kontrollButtonsPanel, BorderLayout.EAST);
 
 		exportierenButton = new JButton("Exportieren");
@@ -174,32 +168,7 @@ public class DruckAnsicht {
 		kontrollButtonsPanel.add(naechsteSeite);
 	}
 
-	private void zeigeNaechstesBild() {
-		if (seitenCache.size() <= angezeigteSeite + 1) {
-			return;
-		}
-		if (angezeigteSeite < letzteSeite) {
-			if (seitenCache.get(angezeigteSeite + 1) != null) {
-				angezeigteSeite++;
-				zeigeSeite(angezeigteSeite);
-			}
-		}
-	}
-
-	private void zeigeVorherigesBild() {
-		if (seitenCache.size() == 0) {
-			return;
-		}
-		if (angezeigteSeite > 0) {
-			if (seitenCache.get(angezeigteSeite - 1) != null) {
-				angezeigteSeite--;
-				zeigeSeite(angezeigteSeite);
-			}
-		}
-	}
-
-	private VolatileImage seiteZeichnen(int resolution, PDPage page)
-			throws IOException {
+	private VolatileImage seiteZeichnen(int resolution, PDPage page) throws IOException {
 		VolatileImage img;
 		/* from PDFBox convertToImage */
 		PDRectangle cropBox = page.findCropBox();
@@ -212,8 +181,7 @@ public class DruckAnsicht {
 
 		Dimension pageDimension = new Dimension((int) widthPt, (int) heightPt);
 
-		img = seite.getGraphicsConfiguration().createCompatibleVolatileImage(
-				widthPx, heightPx);
+		img = seite.getGraphicsConfiguration().createCompatibleVolatileImage(widthPx, heightPx);
 
 		Graphics2D graphics = img.createGraphics();
 		graphics.setBackground(Color.WHITE);
@@ -225,9 +193,32 @@ public class DruckAnsicht {
 		return img;
 	}
 
+	private void zeigeNaechstesBild() {
+		if (seitenCache.size() <= angezeigteSeite + 1) {
+			return;
+		}
+		if (angezeigteSeite < letzteSeite) {
+			if (seitenCache.get(angezeigteSeite + 1) != null) {
+				angezeigteSeite++;
+				zeigeSeite(angezeigteSeite);
+			}
+		}
+	}
+
 	private void zeigeSeite(int i) {
 		seite.setIcon(new ImageIcon(seitenCache.get(angezeigteSeite)));
-		infoText.setText("Seite " + (angezeigteSeite + 1) + "/"
-				+ (letzteSeite + 1));
+		infoText.setText("Seite " + (angezeigteSeite + 1) + "/" + (letzteSeite + 1));
+	}
+
+	private void zeigeVorherigesBild() {
+		if (seitenCache.size() == 0) {
+			return;
+		}
+		if (angezeigteSeite > 0) {
+			if (seitenCache.get(angezeigteSeite - 1) != null) {
+				angezeigteSeite--;
+				zeigeSeite(angezeigteSeite);
+			}
+		}
 	}
 }

@@ -30,15 +30,15 @@ import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
 
 import de.hrogge.CompactPDFExport.PDFSonderfertigkeiten.Kategorie;
 import de.hrogge.CompactPDFExport.gui.Konfiguration;
+import de.hrogge.CompactPDFExport.gui.KonfigurationGlobal;
 
 public class ZauberSeite extends PDFSeite {
 	public ZauberSeite(PDDocument d) throws IOException {
 		super(d);
 	}
 
-	public void erzeugeSeite(Daten daten, PDJpeg hintergrund,
-			String[] guteEigenschaften, List<PDFSonderfertigkeiten> alleSF,
-			Hausregeln hausregeln, List<String> commands, Konfiguration k)
+	public void erzeugeSeite(Daten daten, PDJpeg hintergrund, String[] guteEigenschaften,
+			List<PDFSonderfertigkeiten> alleSF, Hausregeln hausregeln, List<String> commands, Konfiguration k)
 			throws IOException {
 		List<PDFSonderfertigkeiten> sfListe;
 		List<Zauber> zauberListe;
@@ -60,8 +60,7 @@ public class ZauberSeite extends PDFSeite {
 
 		/* diese Spezialisierungen werden direkt in der Zauberliste angezeigt */
 		PDFSonderfertigkeiten.Kategorie kat2[] = { Kategorie.ZAUBERSPEZ };
-		for (PDFSonderfertigkeiten sf : PDFSonderfertigkeiten
-				.extrahiereKategorien(alleSF, kat2)) {
+		for (PDFSonderfertigkeiten sf : PDFSonderfertigkeiten.extrahiereKategorien(alleSF, kat2)) {
 			sf.gedruckt();
 		}
 
@@ -79,8 +78,7 @@ public class ZauberSeite extends PDFSeite {
 			}
 			repr = z.getRepräsentation();
 
-			if (z.getSpezialisierungen() != null
-					&& z.getSpezialisierungen().length() > 0) {
+			if (z.getSpezialisierungen() != null && z.getSpezialisierungen().length() > 0) {
 				for (String s : z.getSpezialisierungen().split(",")) {
 					s = s.trim();
 
@@ -101,10 +99,8 @@ public class ZauberSeite extends PDFSeite {
 			}
 		}
 
-		Collections.sort(
-				zauberListe,
-				new ZauberComparator(k
-						.getOptionsDaten(Konfiguration.ZAUBER_HAUSZAUBEROBEN)));
+		Collections.sort(zauberListe,
+				new ZauberComparator(k.getOptionsDaten(KonfigurationGlobal.ZAUBER_HAUSZAUBEROBEN)));
 
 		/* Höhe der Seite bestimmen */
 		hoehe = Math.max(zauberListe.size(), sfListe.size());
@@ -124,27 +120,26 @@ public class ZauberSeite extends PDFSeite {
 		 * Repräsentation 11: Merkmal 12: Anmerkung
 		 */
 
-		if (!mehrereRepr
-				&& !k.getOptionsDaten(Konfiguration.ZAUBER_IMMER_REPRAESENTATION)) {
+		if (!mehrereRepr && !k.getOptionsDaten(KonfigurationGlobal.ZAUBER_IMMER_REPRAESENTATION)) {
 			// Keine Repräsentations-Spalte
 			bonus += zauberSpalten[10];
 			zauberSpalten[10] = 0;
 		}
 
-		if (!k.getOptionsDaten(Konfiguration.ZAUBER_SEITENZAHLEN)) {
+		if (!k.getOptionsDaten(KonfigurationGlobal.ZAUBER_SEITENZAHLEN)) {
 			// Keine Seitenzahlen
 			bonus += zauberSpalten[4];
 			zauberSpalten[4] = 0;
 		}
 
-		if (k.getOptionsDaten(Konfiguration.ZAUBER_NOTIZEN_WERTE)) {
+		if (k.getOptionsDaten(KonfigurationGlobal.ZAUBER_NOTIZEN_WERTE)) {
 			for (int i = 5; i <= 8; i++) {
 				zauberSpalten[i] += bonus / 4;
 			}
 			for (int i = 8, j = bonus % 4; j > 0; i--, j--) {
 				zauberSpalten[i]++;
 			}
-		} else if (k.getOptionsDaten(Konfiguration.ZAUBER_NOTIZEN_ANMERKUNGEN)) {
+		} else if (k.getOptionsDaten(KonfigurationGlobal.ZAUBER_NOTIZEN_ANMERKUNGEN)) {
 			for (int i = 5; i <= 8; i++) {
 				zauberSpalten[i] = 0;
 			}
@@ -155,7 +150,7 @@ public class ZauberSeite extends PDFSeite {
 			}
 		}
 
-		if (k.getOptionsDaten(Konfiguration.ZAUBER_NOTIZEN_KEINE)) {
+		if (k.getOptionsDaten(KonfigurationGlobal.ZAUBER_NOTIZEN_KEINE)) {
 			zauberBreite = cellCountX - sfBreite - 1;
 		} else {
 			zauberBreite = cellCountX;
@@ -173,9 +168,8 @@ public class ZauberSeite extends PDFSeite {
 			titelzeile(guteEigenschaften);
 			zeichneZauber(zauberListe, zauberBreite, zauberSpalten, k);
 
-			if (k.getOptionsDaten(Konfiguration.ZAUBER_NOTIZEN_KEINE)) {
-				PDFSonderfertigkeiten.zeichneTabelle(this, cellCountX
-						- sfBreite, 2, cellCountX, cellCountY,
+			if (k.getOptionsDaten(KonfigurationGlobal.ZAUBER_NOTIZEN_KEINE)) {
+				PDFSonderfertigkeiten.zeichneTabelle(this, cellCountX - sfBreite, 2, cellCountX, cellCountY,
 						"Sonderfertigkeiten", sfListe);
 			}
 
@@ -183,13 +177,13 @@ public class ZauberSeite extends PDFSeite {
 		}
 	}
 
-	private void zeichneZauber(List<Zauber> zauberListe, int breite,
-			int[] spaltenBreite, Konfiguration ko) throws IOException {
+	private void zeichneZauber(List<Zauber> zauberListe, int breite, int[] spaltenBreite, Konfiguration ko)
+			throws IOException {
 		boolean probenwerte;
 		List<Zauber> seitenListe;
 		int count;
 
-		probenwerte = ko.getOptionsDaten(Konfiguration.GLOBAL_PROBENWERTE);
+		probenwerte = ko.getOptionsDaten(KonfigurationGlobal.GLOBAL_PROBENWERTE);
 
 		seitenListe = new ArrayList<Zauber>();
 
@@ -211,8 +205,7 @@ public class ZauberSeite extends PDFSeite {
 			seitenListe.add(null);
 		}
 
-		drawTabelle(0, breite, 2, seitenListe.toArray(), new ZauberTabelle(
-				spaltenBreite, breite, probenwerte));
+		drawTabelle(0, breite, 2, seitenListe.toArray(), new ZauberTabelle(spaltenBreite, breite, probenwerte));
 	}
 
 	private class ZauberComparator implements Comparator<Zauber> {
@@ -296,11 +289,9 @@ public class ZauberSeite extends PDFSeite {
 	private class ZauberTabelle extends AbstractTabellenZugriff {
 		boolean probenWerte;
 
-		public ZauberTabelle(int[] spaltenBreite, int breite,
-				boolean probenWerte) {
-			super(new String[] { null, "Probe", "ZfW", "", "Seite", "ZD", "RW",
-					"AsP", "WD", "SKT", "Rep", "Merkmal", "Anmerkung" },
-					spaltenBreite, 0, "Zaubername", breite);
+		public ZauberTabelle(int[] spaltenBreite, int breite, boolean probenWerte) {
+			super(new String[] { null, "Probe", "ZfW", "", "Seite", "ZD", "RW", "AsP", "WD", "SKT", "Rep", "Merkmal",
+					"Anmerkung" }, spaltenBreite, 0, "Zaubername", breite);
 			this.probenWerte = probenWerte;
 		}
 

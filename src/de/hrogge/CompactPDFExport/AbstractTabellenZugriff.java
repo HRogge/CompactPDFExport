@@ -27,8 +27,7 @@ public abstract class AbstractTabellenZugriff implements ITabellenZugriff {
 	protected int columnWidth[];
 	protected int variabel, colCount;
 
-	public AbstractTabellenZugriff(String[] col, int[] colwidth, int colcount,
-			String titel, int width) {
+	public AbstractTabellenZugriff(String[] col, int[] colwidth, int colcount, String titel, int width) {
 		int uebrig;
 
 		if (colcount == 0) {
@@ -55,23 +54,11 @@ public abstract class AbstractTabellenZugriff implements ITabellenZugriff {
 	}
 
 	@Override
-	public String getColumn(int x) {
-		return columns[x];
-	}
+	abstract public String get(Object obj, int x);
 
 	@Override
-	public int getWidth(int x) {
-		return columnWidth[x];
-	}
-
-	@Override
-	public int getColumnCount() {
-		return colCount;
-	}
-
-	@Override
-	public PDFont getFont(Object o, int x) {
-		return PDType1Font.HELVETICA;
+	public Color getBackgroundColor(Object o, int x) {
+		return null;
 	}
 
 	@Override
@@ -80,13 +67,13 @@ public abstract class AbstractTabellenZugriff implements ITabellenZugriff {
 	}
 
 	@Override
-	public Color getBackgroundColor(Object o, int x) {
-		return null;
+	public String getColumn(int x) {
+		return columns[x];
 	}
 
 	@Override
-	public int getIndent(Object o, int x) {
-		return 0;
+	public int getColumnCount() {
+		return colCount;
 	}
 
 	@Override
@@ -95,5 +82,17 @@ public abstract class AbstractTabellenZugriff implements ITabellenZugriff {
 	}
 
 	@Override
-	abstract public String get(Object obj, int x);
+	public PDFont getFont(Object o, int x) {
+		return PDType1Font.HELVETICA;
+	}
+
+	@Override
+	public int getIndent(Object o, int x) {
+		return 0;
+	}
+
+	@Override
+	public int getWidth(int x) {
+		return columnWidth[x];
+	}
 }

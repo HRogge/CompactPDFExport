@@ -22,9 +22,7 @@ import helden.plugin.datenxmlplugin.DatenAustausch3Interface;
 import java.awt.Dialog.ModalityType;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Properties;
@@ -40,7 +38,11 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.w3c.dom.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import de.hrogge.CompactPDFExport.gui.DruckAnsicht;
 import de.hrogge.CompactPDFExport.gui.Konfiguration;
@@ -57,6 +59,14 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 	private DruckAnsicht druckAnsicht;
 
 	private boolean debug;
+
+	private boolean tabHatFokus;
+
+	private boolean datenGeaendert;
+
+	private boolean zwangsUpdate;
+
+	private VorschauUpdaten updater;
 
 	public PluginStart() throws URISyntaxException {
 		druckAnsicht = null;
@@ -190,99 +200,30 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 
 		try {
 			ladeKonfiguration();
-		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
+		SwingUtilities.invokeLater(k);
 	}
 
-	protected void ladeKonfiguration() throws ParserConfigurationException {
-		Document request, result;
-		Element requestElement;
-		DocumentBuilderFactory factory;
-		NodeList propList;
-		Node propNode;
-		Properties p;
-		String key, value;
-
-		factory = DocumentBuilderFactory.newInstance();
-		request = factory.newDocumentBuilder().newDocument();
-
-		requestElement = request.createElement("action");
-		request.appendChild(requestElement);
-		requestElement.setAttribute("action", "listProperties");
-		requestElement.setAttribute("pluginName", "CompactPDFExport");
-
-		/* Parameter-Dokument vom Hauptprogramm laden */
-		result = (Document) this.dai.exec(request);
-		if (result == null) {
-			try {
-				zeigeXML(frame, "Got null from dai.exec", request);
-			} catch (Exception e) {
-			}
-			return;
+	@Override
+	public void stateChanged(ChangeEvent e) {
+		if (e.getSource().equals("neuer Held")) {
+			datenGeaendert = true;
+		} else if (e.getSource().equals("Kein Focus")) {
+			tabHatFokus = false;
+		} else if (e.getSource().equals("Focus")) {
+			tabHatFokus = true;
+		} else if (e.getSource().equals("Änderung")) {
+			datenGeaendert = true;
 		}
-		propList = result.getElementsByTagName("prop");
-
-		p = new Properties();
-		for (int i = 0; i < propList.getLength(); i++) {
-			propNode = propList.item(i);
-
-			key = propNode.getAttributes().getNamedItem("key").getNodeValue();
-			value = propNode.getAttributes().getNamedItem("value")
-					.getNodeValue();
-
-			p.setProperty(key, value);
-		}
-
-		konfig.konfigurationAnwenden(p);
-	}
-
-	protected void speichereKonfiguration() throws ParserConfigurationException {
-		Document request;
-		DocumentBuilderFactory factory;
-		Element actionElement;
-		Element keyvalueElement;
-		Properties p;
-		String key, value;
-
-		factory = DocumentBuilderFactory.newInstance();
-		request = factory.newDocumentBuilder().newDocument();
-
-		actionElement = request.createElement("action");
-		request.appendChild(actionElement);
-		actionElement.setAttribute("action", "saveProperties");
-		actionElement.setAttribute("pluginName", "CompactPDFExport");
-
-		p = this.konfig.konfigurationExportieren();
-
-		for (Object k : p.keySet()) {
-			if (!(k instanceof String)) {
-				continue;
-			}
-
-			key = (String) k;
-			value = p.getProperty(key);
-
-			keyvalueElement = request.createElement("prop");
-			actionElement.appendChild(keyvalueElement);
-			keyvalueElement.setAttribute("key", key);
-			keyvalueElement.setAttribute("value", value);
-		}
-
-		if (this.dai.exec(request) == null) {
-			try {
-				zeigeXML(frame, "Got null from dai.exec", request);
-			} catch (Exception e) {
-			}
-		}
+		new Thread(updater).start();
 	}
 
 	protected void einstellungenAction() {
-		int result = JOptionPane.showOptionDialog(frame, konfig.getPanel(),
-				"Einstellungen für kompakten Heldenbogen",
-				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null,
-				null, 0);
+		int result = JOptionPane.showOptionDialog(frame, konfig.getPanel(), "Einstellungen für kompakten Heldenbogen",
+				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, 0);
 
 		if (result == JOptionPane.OK_OPTION) {
 			datenGeaendert = true;
@@ -290,12 +231,17 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 
 			try {
 				speichereKonfiguration();
-			} catch (ParserConfigurationException e) {
-				// TODO Auto-generated catch block
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
+		} else {
+			try {
+				ladeKonfiguration();
+			} catch (Exception e) {
+				e.printStackTrace();
+				return;
+			}
 		}
-
 		return;
 	}
 
@@ -315,57 +261,115 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		}
 	}
 
-	private void zeigeXML(JFrame frame, String errorMessage, Document doc)
-			throws TransformerFactoryConfigurationError, TransformerException {
+	protected void ladeKonfiguration() throws ParserConfigurationException, SAXException, IOException {
+		DocumentBuilderFactory factory;
+		DocumentBuilder builder;
+		Document request, result, localxml;
+		Element requestElement;
+		NodeList nodeList;
+		Element element;
+		Properties p;
+		String key, value, xml;
 
+		factory = DocumentBuilderFactory.newInstance();
+		builder = factory.newDocumentBuilder();
+		request = builder.newDocument();
+
+		requestElement = request.createElement("action");
+		request.appendChild(requestElement);
+		requestElement.setAttribute("action", "listProperties");
+		requestElement.setAttribute("pluginName", "CompactPDFExport");
+
+		/* Parameter-Dokument vom Hauptprogramm laden */
+		result = (Document) this.dai.exec(request);
+		if (result == null) {
+			try {
+				zeigeXML(frame, "Got null from dai.exec", request);
+			} catch (Exception e) {
+			}
+			return;
+		}
+
+		nodeList = result.getElementsByTagName("prop");
+
+		/* lade properties dieses Plugins */
+		p = new Properties();
+		for (int i = 0; i < nodeList.getLength(); i++) {
+			element = (Element) nodeList.item(i);
+
+			key = element.getAttribute("key");
+			value = element.getAttribute("value");
+
+			p.setProperty(key, value);
+		}
+
+		xml = p.getProperty("xmlsettings");
+		if (xml != null) {
+			/* use XML configuration */
+			localxml = builder.parse(new InputSource(new StringReader(xml)));
+
+			konfig.readFromXML((Element) localxml.getFirstChild());
+		} else {
+			/* fall back on old settings */
+			konfig.konfigurationAnwenden(p);
+		}
+	}
+
+	protected void speichereKonfiguration() throws ParserConfigurationException, TransformerException {
+		DocumentBuilderFactory factory;
+		DocumentBuilder builder;
+		Document request, localxml;
 		TransformerFactory transformerFactory;
 		Transformer transformer;
 		StringWriter writer;
+		Element actionElement, propElement, rootElement;
 
-		if (!debug) {
-			return;
-		}
+		factory = DocumentBuilderFactory.newInstance();
+		builder = factory.newDocumentBuilder();
+		request = builder.newDocument();
+
+		actionElement = request.createElement("action");
+		request.appendChild(actionElement);
+		actionElement.setAttribute("action", "saveProperties");
+		actionElement.setAttribute("pluginName", "CompactPDFExport");
+
+		/* generate local settings */
+		localxml = builder.newDocument();
+		rootElement = localxml.createElement("settings");
+		localxml.appendChild(rootElement);
+		konfig.appendToXml(localxml, rootElement);
 
 		/* Transformer initialisieren */
 		transformerFactory = TransformerFactory.newInstance();
 		transformer = transformerFactory.newTransformer();
-		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-		transformer.setOutputProperty(
-				"{http://xml.apache.org/xslt}indent-amount", "4");
+		transformer.setOutputProperty(OutputKeys.INDENT, "false");
 
 		/* Textform des XMLs generieren */
 		writer = new StringWriter();
-		if (errorMessage != null) {
-			new RuntimeException(errorMessage).printStackTrace(new PrintWriter(
-					writer));
+		transformer.transform(new DOMSource(localxml), new StreamResult(writer));
+
+		/* store in Heldentool Settings */
+		propElement = request.createElement("prop");
+		propElement.setAttribute("key", "xmlsettings");
+		propElement.setAttribute("value", writer.toString());
+		actionElement.appendChild(propElement);
+
+		if (this.dai.exec(request) == null) {
+			try {
+				zeigeXML(frame, "Got null from dai.exec", request);
+			} catch (Exception e) {
+			}
 		}
-
-		transformer.transform(new DOMSource(doc), new StreamResult(writer));
-
-		/*
-		 * Anzeige in Java Dialog
-		 */
-		JTextArea textarea = new JTextArea(writer.toString());
-		JScrollPane scrollpane = new JScrollPane(textarea);
-
-		JDialog dialog = new JDialog(frame, "Debug output for CompactPDFExport");
-		dialog.add(scrollpane);
-		dialog.setModalityType(ModalityType.MODELESS);
-		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-		dialog.pack();
-		dialog.setVisible(true);
 	}
 
-	private org.w3c.dom.Document heldEinlesen()
-			throws ParserConfigurationException, Exception {
+	private org.w3c.dom.Document heldEinlesen() throws ParserConfigurationException, Exception {
 		DocumentBuilder documentBuilder;
 		org.w3c.dom.Document request;
 		org.w3c.dom.Document doc;
 		Object obj;
 
 		/* Baue die nötigen XML-Objekte auf */
-		DocumentBuilderFactory documentFactory = DocumentBuilderFactory
-				.newInstance();
+		DocumentBuilderFactory documentFactory = DocumentBuilderFactory.newInstance();
 		documentBuilder = documentFactory.newDocumentBuilder();
 
 		/* Generiere XML-Request */
@@ -388,31 +392,50 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 			return null;
 		}
 		if (!(obj instanceof org.w3c.dom.Document)) {
-			throw new Exception("Unbekannter Rückgabewert auf Request: "
-					+ obj.getClass().getCanonicalName());
+			throw new Exception("Unbekannter Rückgabewert auf Request: " + obj.getClass().getCanonicalName());
 		}
 
 		doc = (org.w3c.dom.Document) obj;
 		return doc;
 	}
 
-	private boolean tabHatFokus;
-	private boolean datenGeaendert;
-	private boolean zwangsUpdate;
-	private VorschauUpdaten updater;
+	private void zeigeXML(JFrame frame, String errorMessage, Document doc) throws TransformerFactoryConfigurationError,
+			TransformerException {
 
-	@Override
-	public void stateChanged(ChangeEvent e) {
-		if (e.getSource().equals("neuer Held")) {
-			datenGeaendert = true;
-		} else if (e.getSource().equals("Kein Focus")) {
-			tabHatFokus = false;
-		} else if (e.getSource().equals("Focus")) {
-			tabHatFokus = true;
-		} else if (e.getSource().equals("Änderung")) {
-			datenGeaendert = true;
+		TransformerFactory transformerFactory;
+		Transformer transformer;
+		StringWriter writer;
+
+		if (!debug) {
+			return;
 		}
-		new Thread(updater).start();
+
+		/* Transformer initialisieren */
+		transformerFactory = TransformerFactory.newInstance();
+		transformer = transformerFactory.newTransformer();
+		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+		transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+
+		/* Textform des XMLs generieren */
+		writer = new StringWriter();
+		if (errorMessage != null) {
+			new RuntimeException(errorMessage).printStackTrace(new PrintWriter(writer));
+		}
+
+		transformer.transform(new DOMSource(doc), new StreamResult(writer));
+
+		/*
+		 * Anzeige in Java Dialog
+		 */
+		JTextArea textarea = new JTextArea(writer.toString());
+		JScrollPane scrollpane = new JScrollPane(textarea);
+
+		JDialog dialog = new JDialog(frame, "Debug output for CompactPDFExport");
+		dialog.add(scrollpane);
+		dialog.setModalityType(ModalityType.MODELESS);
+		dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+		dialog.pack();
+		dialog.setVisible(true);
 	}
 
 	private class VorschauUpdaten implements Runnable {
@@ -438,14 +461,13 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 
 					druckAnsicht.updateAnsicht(pddoc);
 				} catch (Exception e1) {
-					System.err.println("EXCEPTION!!!");
 					e1.printStackTrace();
 				} finally {
 					if (pddoc != null) {
 						try {
 							pddoc.close();
 						} catch (IOException e) {
-							System.err.println("EXCEPTION2!!!");
+							e.printStackTrace();
 						}
 					}
 				}

@@ -29,22 +29,22 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
 
 public class PDFSeite {
-	private static final int DEFAULT_USER_SPACE_UNIT_DPI = 72;
-	private static final float MM_TO_UNITS = 1 / (10 * 2.54f)
-			* DEFAULT_USER_SPACE_UNIT_DPI;
-
-	protected static float randHorizontal, randVertikal, randText;
-	protected static PDJpeg hintergrundBild;
-	protected static boolean hintergrundVerzerren;
-
-	public static void init(float randHorizontal, float randVertikal,
-			float randText, PDJpeg hintergrund, boolean hintergrundVerzerren) {
+	public static void init(float randHorizontal, float randVertikal, float randText, PDJpeg hintergrund,
+			boolean hintergrundVerzerren) {
 		PDFSeite.randHorizontal = randHorizontal;
 		PDFSeite.randVertikal = randVertikal;
 		PDFSeite.randText = randText;
 		PDFSeite.hintergrundBild = hintergrund;
 		PDFSeite.hintergrundVerzerren = hintergrundVerzerren;
 	}
+
+	private static final int DEFAULT_USER_SPACE_UNIT_DPI = 72;
+
+	private static final float MM_TO_UNITS = 1 / (10 * 2.54f) * DEFAULT_USER_SPACE_UNIT_DPI;
+	protected static float randHorizontal, randVertikal, randText;
+	protected static PDJpeg hintergrundBild;
+
+	protected static boolean hintergrundVerzerren;
 
 	protected final int cellCountX = 63;
 
@@ -86,12 +86,10 @@ public class PDFSeite {
 	}
 
 	public void addRect(int x1, int y1, int x2, int y2) throws IOException {
-		stream.addRect(getX(x1), getY(y1), getX(x2) - getX(x1), getY(y2)
-				- getY(y1));
+		stream.addRect(getX(x1), getY(y1), getX(x2) - getX(x1), getY(y2) - getY(y1));
 	}
 
-	public float berechneTextUeberlauf(PDFont font, int x1, int x2, int height,
-			String text) throws IOException {
+	public float berechneTextUeberlauf(PDFont font, int x1, int x2, int height, String text) throws IOException {
 		PDFontDescriptor descr = font.getFontDescriptor();
 		float boxProp, textProp;
 		float boxWidth, boxHeight;
@@ -111,8 +109,7 @@ public class PDFSeite {
 		return 1.0f;
 	}
 
-	public void drawImage(int x1, int y1, int x2, int y2, PDJpeg bild)
-			throws IOException {
+	public void drawImage(int x1, int y1, int x2, int y2, PDJpeg bild) throws IOException {
 		float x, y, w, h;
 
 		x = getX(x1);
@@ -124,8 +121,7 @@ public class PDFSeite {
 		internalDrawImage(bild, x, y, w, h);
 	}
 
-	public void drawLabeledBox(int x1, int y1, int x2, int y2, String label)
-			throws IOException {
+	public void drawLabeledBox(int x1, int y1, int x2, int y2, String label) throws IOException {
 		stream.setStrokingColor(Color.BLACK);
 		stream.setNonStrokingColor(Color.GRAY);
 		stream.setLineWidth(1f);
@@ -143,8 +139,7 @@ public class PDFSeite {
 		}
 	}
 
-	public int drawTabelle(int x1, int x2, int y1, Object[] objects,
-			ITabellenZugriff table) throws IOException {
+	public int drawTabelle(int x1, int x2, int y1, Object[] objects, ITabellenZugriff table) throws IOException {
 		int i, x, span;
 		boolean newSpan;
 		int colX[];
@@ -163,15 +158,13 @@ public class PDFSeite {
 				}
 
 				for (i = 0; i < table.getColumnCount(); i++) {
-					if (table.getBackgroundColor(objects[j], i) == null
-							|| table.getWidth(i) == 0) {
+					if (table.getBackgroundColor(objects[j], i) == null || table.getWidth(i) == 0) {
 						continue;
 					}
 
 					x = colX[i + 1];
 
-					stream.setNonStrokingColor(table.getBackgroundColor(
-							objects[j], i));
+					stream.setNonStrokingColor(table.getBackgroundColor(objects[j], i));
 					addRect(colX[i], y1 + j + 1, x, y1 + j + 2);
 					stream.fill(PathIterator.WIND_NON_ZERO);
 				}
@@ -189,8 +182,7 @@ public class PDFSeite {
 			if (newSpan) {
 				span = table.getColumnSpan(i);
 
-				drawText(PDType1Font.HELVETICA_BOLD, colX[i], colX[i + span],
-						y1, table.getColumn(i), true);
+				drawText(PDType1Font.HELVETICA_BOLD, colX[i], colX[i + span], y1, table.getColumn(i), true);
 			}
 
 			if (colX[i + 1] == x2) {
@@ -201,8 +193,7 @@ public class PDFSeite {
 			}
 			if (span > 1) {
 				stream.setLineWidth(0.1f);
-				addLine(colX[i + 1], y1 + 1, colX[i + 1], y1 + objects.length
-						+ 1);
+				addLine(colX[i + 1], y1 + 1, colX[i + 1], y1 + objects.length + 1);
 			} else {
 				stream.setLineWidth(1f);
 				addLine(colX[i + 1], y1, colX[i + 1], y1 + objects.length + 1);
@@ -228,10 +219,8 @@ public class PDFSeite {
 					x = colX[i + 1];
 
 					if (table.getWidth(i) > 0) {
-						drawText(table.getFont(objects[j], i),
-								colX[i] + table.getIndent(objects[j], i), x, y1
-										+ j + 1, table.get(objects[j], i),
-								table.getCentered(objects[j], i));
+						drawText(table.getFont(objects[j], i), colX[i] + table.getIndent(objects[j], i), x, y1 + j + 1,
+								table.get(objects[j], i), table.getCentered(objects[j], i));
 					}
 				}
 			}
@@ -239,8 +228,7 @@ public class PDFSeite {
 		return y1 + objects.length + 2;
 	}
 
-	public void drawText(PDFont font, int x1, int x2, int y1, int y2,
-			String text, boolean center) throws IOException {
+	public void drawText(PDFont font, int x1, int x2, int y1, int y2, String text, boolean center) throws IOException {
 		PDFontDescriptor descr = font.getFontDescriptor();
 		float boxProp, textProp;
 		float boxWidth, boxHeight;
@@ -276,22 +264,19 @@ public class PDFSeite {
 			stream.setFont(font, boxHeight / textHeight);
 
 			if (center) {
-				shiftX = boxWidth / 2 - textWidth * (boxHeight / textHeight)
-						/ 2;
+				shiftX = boxWidth / 2 - textWidth * (boxHeight / textHeight) / 2;
 			} else {
 				shiftX = 0f;
 			}
 			shiftY = -descr.getDescent() / 1000 * (boxHeight / textHeight);
 		}
 
-		stream.moveTextPositionByAmount(getX(x1) + randText + shiftX, getY(y2)
-				+ randText + shiftY);
+		stream.moveTextPositionByAmount(getX(x1) + randText + shiftX, getY(y2) + randText + shiftY);
 		stream.drawString(text);
 		stream.endText();
 	}
 
-	public void drawText(PDFont font, int x1, int x2, int y1, String text,
-			boolean center) throws IOException {
+	public void drawText(PDFont font, int x1, int x2, int y1, String text, boolean center) throws IOException {
 		drawText(font, x1, x2, y1, y1 + 1, text, center);
 	}
 
@@ -319,11 +304,11 @@ public class PDFSeite {
 
 		if (hintergrundBild != null) {
 			if (hintergrundVerzerren) {
-				stream.drawXObject(hintergrundBild, 0, 0, page.findMediaBox()
-						.getWidth(), page.findMediaBox().getHeight());
+				stream.drawXObject(hintergrundBild, 0, 0, page.findMediaBox().getWidth(), page.findMediaBox()
+						.getHeight());
 			} else {
-				internalDrawImage(hintergrundBild, 0, 0, page.findMediaBox()
-						.getWidth(), page.findMediaBox().getHeight());
+				internalDrawImage(hintergrundBild, 0, 0, page.findMediaBox().getWidth(), page.findMediaBox()
+						.getHeight());
 			}
 		}
 	}
@@ -334,21 +319,17 @@ public class PDFSeite {
 	}
 
 	protected void titelzeile(String[] guteEigenschaften) throws IOException {
-		String[] titel = { "MU:", "KL:", "IN:", "CH:", "FF:", "GE:", "KO:",
-				"KK:" };
+		String[] titel = { "MU:", "KL:", "IN:", "CH:", "FF:", "GE:", "KO:", "KK:" };
 
 		for (int i = 0; i < titel.length; i++) {
 			int x = i * 8 + 1;
 
-			drawText(PDType1Font.HELVETICA_BOLD, x + 0, x + 3, 0, 2, titel[i],
-					true);
-			drawText(PDType1Font.HELVETICA_BOLD, x + 3, x + 6, 0, 2,
-					guteEigenschaften[i], true);
+			drawText(PDType1Font.HELVETICA_BOLD, x + 0, x + 3, 0, 2, titel[i], true);
+			drawText(PDType1Font.HELVETICA_BOLD, x + 3, x + 6, 0, 2, guteEigenschaften[i], true);
 		}
 	}
 
-	private void internalDrawImage(PDJpeg bild, float x, float y, float w,
-			float h) throws IOException {
+	private void internalDrawImage(PDJpeg bild, float x, float y, float w, float h) throws IOException {
 		float tmp;
 		if (w / bild.getWidth() > h / bild.getHeight()) {
 			tmp = h * bild.getWidth() / bild.getHeight();

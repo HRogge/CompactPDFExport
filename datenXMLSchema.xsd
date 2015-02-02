@@ -153,6 +153,7 @@
 			<xs:sequence>
 				<xs:element ref="text" />
 				<xs:element ref="textkurz" />
+				<xs:element name="tarnidentitaet" type="xs:string" />
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -342,11 +343,29 @@
 				<xs:element ref="namemitkommentar" />
 				<xs:element ref="istvorteil" />
 				<xs:element ref="istnachteil" />
-				<xs:element minOccurs="0" ref="istschlechteeigenschaft" />
 				<xs:element minOccurs="0" ref="wert" />
+				<xs:element minOccurs="0" ref="istschlechteeigenschaft" />
 				<xs:element minOccurs="0" ref="istgabe" />
 				<xs:element minOccurs="0" maxOccurs="unbounded" ref="bereich" />
-				<xs:element minOccurs="0" ref="auswahlen" />
+				<!-- <xs:element minOccurs="0" ref="auswahlen" /> -->
+				<xs:element minOccurs="0"  name="auswahlen">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element minOccurs="0" maxOccurs="unbounded" name="auswahl">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element minOccurs="0" name="name" type="xs:string" />
+										<xs:element minOccurs="0" name="wert" type="xs:decimal" />
+										<xs:element minOccurs="0" name="kommentar" type="xs:string" />
+									</xs:sequence>
+								</xs:complexType>
+
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+
+				</xs:element>
+
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -371,7 +390,20 @@
 				<xs:element ref="dauer" />
 				<xs:element ref="kosten" />
 				<xs:element ref="probe" />
-				<xs:element minOccurs="0" ref="auswahlen" />
+				<xs:element minOccurs="0" name="auswahlen">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element minOccurs="0" maxOccurs="unbounded" name="auswahl">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element minOccurs="1" maxOccurs="1" ref="name" />
+										<xs:element maxOccurs="unbounded" ref="feld" />
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
 				<xs:element ref="kommentar" />
 				<xs:element ref="namemitkommentar" />
 				<xs:element maxOccurs="unbounded" ref="bereich" />
@@ -437,6 +469,7 @@
 				<xs:element ref="quelle" />
 				<xs:element ref="kontrollwert" />
 				<xs:element ref="mr" />
+				<xs:element ref="leittalent" />
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
@@ -472,10 +505,96 @@
 				<xs:element ref="einzelpreis" />
 				<xs:element ref="gesamtpreis" />
 				<xs:element ref="quelle" />
+				<xs:element minOccurs="0" ref="details" />
 				<xs:element ref="arten" />
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
+	<xs:element name="details">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" ref="tier" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="tier">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="eigenschaften">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="astralenergie" minOccurs="0"
+								maxOccurs="1" type="xs:decimal" />
+							<xs:element name="ausdauer" minOccurs="0" maxOccurs="1"
+								type="xs:decimal" />
+							<xs:element name="charisma" minOccurs="0" maxOccurs="1"
+								type="xs:decimal" />
+							<xs:element name="fingerfertigkeit" minOccurs="0"
+								maxOccurs="1" type="xs:decimal" />
+							<xs:element name="gefahrenwert" minOccurs="0"
+								maxOccurs="1" type="xs:decimal" />
+							<xs:element name="geschwindigkeit" minOccurs="0"
+								maxOccurs="1" type="xs:decimal" />
+							<xs:element name="geschwindigkeit2" minOccurs="0"
+								maxOccurs="1" type="xs:decimal" />
+							<xs:element name="geschwindigkeit3" minOccurs="0"
+								maxOccurs="1" type="xs:decimal" />
+							<xs:element name="gewandtheit" minOccurs="0"
+								maxOccurs="1" type="xs:decimal" />
+							<xs:element name="intuition" minOccurs="0" maxOccurs="1"
+								type="xs:decimal" />
+							<xs:element name="klugheit" minOccurs="0" maxOccurs="1"
+								type="xs:decimal" />
+							<xs:element name="konstitution" minOccurs="0"
+								maxOccurs="1" type="xs:decimal" />
+							<xs:element name="koerperkraft" minOccurs="0"
+								maxOccurs="1" type="xs:decimal" />
+							<xs:element name="lebensenergie" minOccurs="0"
+								maxOccurs="1" type="xs:decimal" />
+							<xs:element name="loyalitaet" minOccurs="0" maxOccurs="1"
+								type="xs:decimal" />
+							<xs:element name="magieresistenz" minOccurs="0"
+								maxOccurs="1" type="xs:decimal" />
+							<xs:element name="magieresistenz2" minOccurs="0"
+								maxOccurs="1" type="xs:decimal" />
+							<xs:element name="mut" minOccurs="0" maxOccurs="1"
+								type="xs:decimal" />
+							<xs:element name="ruestungsschutz" minOccurs="0"
+								maxOccurs="1" type="xs:decimal" />
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element ref="vorteile" />
+				<xs:element ref="sonderfertigkeiten" />
+				<xs:element name="gattung" type="xs:string" />
+				<xs:element name="familie" type="xs:string" />
+				<xs:element name="groesse" type="xs:string" />
+				<xs:element name="ini">
+					<xs:complexType mixed="true">
+						<xs:attribute name="mul" type="xs:integer" />
+						<xs:attribute name="sum" type="xs:integer" />
+						<xs:attribute name="w" type="xs:integer" />
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="angriffe">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="angriff" minOccurs="0" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:attribute name="at" use="required" type="xs:integer" />
+									<xs:attribute name="dk" use="required" />
+									<xs:attribute name="name" use="required" />
+									<xs:attribute name="pa" use="required" type="xs:integer" />
+									<xs:attribute name="tp" use="required" />
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
 	<xs:element name="gesamtgewicht" type="xs:decimal" />
 	<xs:element name="angelegt" type="xs:boolean" />
 	<xs:element name="angelegt1" type="xs:boolean" />
@@ -520,8 +639,8 @@
 				<xs:element ref="geschwindigkeitinklbe" />
 				<xs:element ref="ini" />
 				<xs:choice>
-  					  <xs:element ref="ruestungeinfach" />
-			          <xs:element ref="ruestungzonen" />
+					<xs:element ref="ruestungeinfach" />
+					<xs:element ref="ruestungzonen" />
 				</xs:choice>
 				<xs:element ref="nahkampfwaffen" />
 				<xs:element ref="fernkampfwaffen" />
@@ -575,13 +694,13 @@
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
-  	<xs:element name="ruestungeinfach">
-    	<xs:complexType>
-      		<xs:sequence>
-        		<xs:element ref="gesamt"/>
-        		<xs:element ref="behinderung"/>
-      		</xs:sequence>
-    	</xs:complexType>
+	<xs:element name="ruestungeinfach">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="gesamt" />
+				<xs:element ref="behinderung" />
+			</xs:sequence>
+		</xs:complexType>
 	</xs:element>
 	<xs:element name="gesamtschutz" type="xs:integer" />
 	<xs:element name="nahkampfwaffen">
@@ -639,7 +758,7 @@
 			<xs:sequence>
 				<xs:element minOccurs="0" maxOccurs="unbounded" ref="fernkampfwaffe" />
 			</xs:sequence>
-			<xs:attribute name="inbenutzung" use="required" type="xs:boolean" />			
+			<xs:attribute name="inbenutzung" use="required" type="xs:boolean" />
 		</xs:complexType>
 	</xs:element>
 	<xs:element name="fernkampfwaffe">
@@ -660,38 +779,38 @@
 	<xs:element name="tpmod" type="xs:string" />
 	<xs:element name="ladezeit" type="xs:integer" />
 	<xs:element name="kampftalent" type="xs:string" />
-  <xs:element name="schilder">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:element minOccurs="0" maxOccurs="unbounded" ref="schild"/>
-      </xs:sequence>
-	  <xs:attribute name="inbenutzung" use="required" type="xs:boolean" />      
-    </xs:complexType>
-  </xs:element>
-  <xs:element name="schild">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:element ref="nummer"/>
-        <xs:element ref="name"/>
-        <xs:element ref="ini"/>
-        <xs:element ref="mod"/>
-        <xs:element ref="pa"/>
-        <xs:element ref="bfmin"/>
-        <xs:element ref="bfakt"/>
-        <xs:element ref="bf"/>
-        <xs:element ref="typ"/>
-      </xs:sequence>
-    </xs:complexType>
-  </xs:element>
-  <xs:element name="mod" type="xs:string"/>
-  <xs:element name="bf" type="xs:string"/>
-  <xs:element name="typ" type="xs:string"/>
-  <xs:element name="ruestungen">
+	<xs:element name="schilder">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="schild" />
+			</xs:sequence>
+			<xs:attribute name="inbenutzung" use="required" type="xs:boolean" />
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="schild">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="nummer" />
+				<xs:element ref="name" />
+				<xs:element ref="ini" />
+				<xs:element ref="mod" />
+				<xs:element ref="pa" />
+				<xs:element ref="bfmin" />
+				<xs:element ref="bfakt" />
+				<xs:element ref="bf" />
+				<xs:element ref="typ" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="mod" type="xs:string" />
+	<xs:element name="bf" type="xs:string" />
+	<xs:element name="typ" type="xs:string" />
+	<xs:element name="ruestungen">
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element minOccurs="0" maxOccurs="unbounded" ref="ruestung" />
 			</xs:sequence>
-			<xs:attribute name="inbenutzung" use="required" type="xs:boolean" />			
+			<xs:attribute name="inbenutzung" use="required" type="xs:boolean" />
 		</xs:complexType>
 	</xs:element>
 	<xs:element name="gewicht" type="xs:decimal" />
@@ -714,27 +833,17 @@
 	<xs:element name="namemitkommentar" type="xs:string" />
 	<xs:element name="wert" type="xs:integer" />
 	<xs:element name="bereich" type="xs:string" />
-	<xs:element name="auswahlen">
-		<xs:complexType>
-			<xs:sequence>
-				<xs:element minOccurs="0" maxOccurs="unbounded" ref="auswahl" />
-			</xs:sequence>
-		</xs:complexType>
-	</xs:element>
-	<xs:element name="auswahl">
-		<xs:complexType mixed="true">
-			<xs:choice minOccurs="0" maxOccurs="unbounded">
-				<xs:element ref="name" />
-				<xs:element ref="feld" />
-			</xs:choice>
-		</xs:complexType>
-	</xs:element>
 	<xs:element name="feld">
-		<xs:complexType mixed="true">
-			<xs:attribute name="feldname" use="required" />
-			<xs:attribute name="nr" use="required" type="xs:integer" />
+		<xs:complexType>
+			<xs:simpleContent>
+				<xs:extension base="xs:string">
+					<xs:attribute name="feldname" use="required" type="xs:string" />
+					<xs:attribute name="nr" use="required" type="xs:integer" />
+				</xs:extension>
+			</xs:simpleContent>
 		</xs:complexType>
 	</xs:element>
+
 	<xs:element name="nameausfuehrlich" type="xs:string" />
 	<xs:element name="kosten" type="xs:string" />
 	<xs:element name="probe" type="xs:string" />
@@ -791,32 +900,32 @@
 	<xs:element name="pa" type="xs:string" />
 	<xs:element name="tp" type="xs:string" />
 	<xs:element name="ini" type="xs:integer" />
-	<xs:element name="quelle" >
-    <xs:complexType mixed="true">
-      <xs:attribute name="buch" use="required" type="xs:string"/>
-      <xs:attribute name="seite" use="required" type="xs:integer"/>
-    </xs:complexType>
+	<xs:element name="quelle">
+		<xs:complexType mixed="true">
+			<xs:attribute name="buch" use="required" type="xs:string" />
+			<xs:attribute name="seite" use="required" type="xs:integer" />
+		</xs:complexType>
 	</xs:element>
-	
+
 	<xs:element name="ruestung">
 		<xs:complexType>
-				<xs:sequence minOccurs="0">
-					<xs:element ref="nummer" />
-					<xs:element ref="name" />
-					<xs:element ref="grundlage" />
-					<xs:element ref="be" />
-					<xs:element ref="rs" />
-					<xs:element ref="kopf" />
-					<xs:element ref="brust" />
-					<xs:element ref="ruecken" />
-					<xs:element ref="bauch" />
-					<xs:element ref="linkerarm" />
-					<xs:element ref="rechterarm" />
-					<xs:element ref="linkesbein" />
-					<xs:element ref="rechtesbein" />
-					<xs:element ref="gesamt" />
-					<xs:element ref="gesamtzonenschutz" />
-					<xs:element ref="behinderung" />
+			<xs:sequence minOccurs="0">
+				<xs:element ref="nummer" />
+				<xs:element ref="name" />
+				<xs:element ref="grundlage" />
+				<xs:element ref="be" />
+				<xs:element ref="rs" />
+				<xs:element ref="kopf" />
+				<xs:element ref="brust" />
+				<xs:element ref="ruecken" />
+				<xs:element ref="bauch" />
+				<xs:element ref="linkerarm" />
+				<xs:element ref="rechterarm" />
+				<xs:element ref="linkesbein" />
+				<xs:element ref="rechtesbein" />
+				<xs:element ref="gesamt" />
+				<xs:element ref="gesamtzonenschutz" />
+				<xs:element ref="behinderung" />
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>
