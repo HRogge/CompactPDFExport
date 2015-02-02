@@ -1,12 +1,11 @@
 package de.hrogge.CompactPDFExport.gui.editor;
 
-import javax.swing.JTable;
 
 public class ProbeCellEditor extends AbstractTextCellEditor {
 	private static final long serialVersionUID = 319928586397459991L;
 
-	public ProbeCellEditor(JTable table) {
-		super(table);
+	public ProbeCellEditor() {
+		super();
 	}
 
 	@Override

@@ -222,8 +222,16 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 	}
 
 	protected void einstellungenAction() {
-		int result = JOptionPane.showOptionDialog(frame, konfig.getPanel(), "Einstellungen für kompakten Heldenbogen",
-				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, 0);
+		int result = -1;
+		
+		try {
+			result = JOptionPane.showOptionDialog(frame, konfig.getPanel(), "Einstellungen für kompakten Heldenbogen",
+					JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, 0);
+		} catch (RuntimeException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+			return;
+		}
 
 		if (result == JOptionPane.OK_OPTION) {
 			datenGeaendert = true;

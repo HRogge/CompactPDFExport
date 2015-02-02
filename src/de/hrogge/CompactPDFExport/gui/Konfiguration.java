@@ -32,7 +32,7 @@ public class Konfiguration implements ISerializeXML {
 		seiten.add(seite2);
 		seiten.add(seite3);
 		seiten.add(seite4);
-
+		seiten.add(new KonfigurationTalentInstanzen(seite2.getModel()));
 		tabbedPane = new JTabbedPane();
 
 		panel = new JPanel(new BorderLayout());

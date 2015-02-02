@@ -25,7 +25,7 @@ public abstract class KonfigurationElemente<E extends EigeneDaten> implements IK
 	private String xmlListName;
 	private String xmlNodeName;
 
-	protected List<E> datenListe;
+	private List<E> datenListe;
 
 	private JPanel panel;
 	private JScrollPane scrollpane;
@@ -46,7 +46,7 @@ public abstract class KonfigurationElemente<E extends EigeneDaten> implements IK
 
 		this.datenListe = new ArrayList<>();
 
-		tableModel = getModel();
+		tableModel = createModel(this.datenListe);
 		table = new JTable(tableModel);
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -100,11 +100,15 @@ public abstract class KonfigurationElemente<E extends EigeneDaten> implements IK
 		}
 	}
 
+	public EigeneDatenModel<E> getModel() {
+		return tableModel;
+	}
+
 	@Override
 	public JPanel getPanel() {
 		return panel;
 	}
-
+	
 	@Override
 	public String getTitel() {
 		return titel;
@@ -140,6 +144,8 @@ public abstract class KonfigurationElemente<E extends EigeneDaten> implements IK
 
 	protected abstract E createElement();
 
+	protected abstract EigeneDatenModel<E> createModel(List<E> daten);
+	
 	protected void fireNewButton() {
 		datenListe.add(createElement());
 		tableModel.fireTableRowsInserted(datenListe.size() - 1, datenListe.size() - 1);
@@ -160,6 +166,4 @@ public abstract class KonfigurationElemente<E extends EigeneDaten> implements IK
 			removeButton.setEnabled(true);
 		}
 	}
-
-	protected abstract EigeneDatenModel<E> getModel();
 }

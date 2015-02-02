@@ -6,10 +6,6 @@ import javax.swing.table.TableCellEditor;
 import de.hrogge.CompactPDFExport.gui.editor.SKTCellEditor;
 
 public class SKTHandler extends AbstractTableColumnHandler {
-	public SKTHandler() {
-		super();
-	}
-
 	@Override
 	public TableCellEditor getEditor(JTable table) {
 		return new SKTCellEditor(table);

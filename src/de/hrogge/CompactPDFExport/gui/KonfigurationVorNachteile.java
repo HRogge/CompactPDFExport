@@ -1,5 +1,7 @@
 package de.hrogge.CompactPDFExport.gui;
 
+import java.util.List;
+
 import de.hrogge.CompactPDFExport.gui.daten.EigenerVorNachteil;
 import de.hrogge.CompactPDFExport.gui.handler.AbstractTableColumnHandler;
 import de.hrogge.CompactPDFExport.gui.handler.NameHandler;
@@ -20,7 +22,7 @@ public class KonfigurationVorNachteile extends KonfigurationElemente<EigenerVorN
 	}
 
 	@Override
-	protected VorNachteilModel getModel() {
-		return new VorNachteilModel(datenListe);
+	protected VorNachteilModel createModel(List<EigenerVorNachteil> daten) {
+		return new VorNachteilModel(daten);
 	}
 }
