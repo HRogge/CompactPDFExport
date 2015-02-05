@@ -95,7 +95,7 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 	@Override
 	public JComponent getPanel() {
 		zwangsUpdate = true;
-		new Thread(updater).start();
+		updater.updateVorschau();
 
 		return druckAnsicht.getPanel();
 	}
@@ -229,8 +229,7 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 			propNode = propList.item(i);
 
 			key = propNode.getAttributes().getNamedItem("key").getNodeValue();
-			value = propNode.getAttributes().getNamedItem("value")
-					.getNodeValue();
+			value = propNode.getAttributes().getNamedItem("value").getNodeValue();
 
 			p.setProperty(key, value);
 		}
@@ -279,14 +278,12 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 	}
 
 	protected void einstellungenAction() {
-		int result = JOptionPane.showOptionDialog(frame, konfig.getPanel(),
-				"Einstellungen für kompakten Heldenbogen",
-				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null,
-				null, 0);
+		int result = JOptionPane.showOptionDialog(frame, konfig.getPanel(), "Einstellungen für kompakten Heldenbogen",
+				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, 0);
 
 		if (result == JOptionPane.OK_OPTION) {
 			datenGeaendert = true;
-			new Thread(updater).start();
+			updater.updateVorschau();
 
 			try {
 				speichereKonfiguration();
@@ -315,8 +312,8 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		}
 	}
 
-	private void zeigeXML(JFrame frame, String errorMessage, Document doc)
-			throws TransformerFactoryConfigurationError, TransformerException {
+	private void zeigeXML(JFrame frame, String errorMessage, Document doc) throws TransformerFactoryConfigurationError,
+			TransformerException {
 
 		TransformerFactory transformerFactory;
 		Transformer transformer;
@@ -330,14 +327,12 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		transformerFactory = TransformerFactory.newInstance();
 		transformer = transformerFactory.newTransformer();
 		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-		transformer.setOutputProperty(
-				"{http://xml.apache.org/xslt}indent-amount", "4");
+		transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
 
 		/* Textform des XMLs generieren */
 		writer = new StringWriter();
 		if (errorMessage != null) {
-			new RuntimeException(errorMessage).printStackTrace(new PrintWriter(
-					writer));
+			new RuntimeException(errorMessage).printStackTrace(new PrintWriter(writer));
 		}
 
 		transformer.transform(new DOMSource(doc), new StreamResult(writer));
@@ -356,16 +351,14 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		dialog.setVisible(true);
 	}
 
-	private org.w3c.dom.Document heldEinlesen()
-			throws ParserConfigurationException, Exception {
+	private org.w3c.dom.Document heldEinlesen() throws ParserConfigurationException, Exception {
 		DocumentBuilder documentBuilder;
 		org.w3c.dom.Document request;
 		org.w3c.dom.Document doc;
 		Object obj;
 
 		/* Baue die nötigen XML-Objekte auf */
-		DocumentBuilderFactory documentFactory = DocumentBuilderFactory
-				.newInstance();
+		DocumentBuilderFactory documentFactory = DocumentBuilderFactory.newInstance();
 		documentBuilder = documentFactory.newDocumentBuilder();
 
 		/* Generiere XML-Request */
@@ -388,8 +381,7 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 			return null;
 		}
 		if (!(obj instanceof org.w3c.dom.Document)) {
-			throw new Exception("Unbekannter Rückgabewert auf Request: "
-					+ obj.getClass().getCanonicalName());
+			throw new Exception("Unbekannter Rückgabewert auf Request: " + obj.getClass().getCanonicalName());
 		}
 
 		doc = (org.w3c.dom.Document) obj;
@@ -412,27 +404,46 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		} else if (e.getSource().equals("Änderung")) {
 			datenGeaendert = true;
 		}
-		new Thread(updater).start();
+
+		updater.updateVorschau();
 	}
 
 	private class VorschauUpdaten implements Runnable {
+		private Document heldenDokument;
+		private Document letztesUpdate;
+
+		public void updateVorschau() {
+			if (!zwangsUpdate && (!tabHatFokus || !datenGeaendert)) {
+				return;
+			}
+
+			datenGeaendert = false;
+			zwangsUpdate = false;
+
+			try {
+				Document doc = heldEinlesen();
+				if (doc == null) {
+					return;
+				}
+
+				this.heldenDokument = doc;
+				new Thread(this).start();
+			} catch (Exception e1) {
+			}
+		}
+
 		@Override
 		public void run() {
 			PDDocument pddoc = null;
 
 			synchronized (this) {
-				if (!zwangsUpdate && (!tabHatFokus || !datenGeaendert)) {
+				Document doc = this.heldenDokument;
+
+				if (doc == letztesUpdate) {
 					return;
 				}
 
-				datenGeaendert = false;
-				zwangsUpdate = false;
-
 				try {
-					org.w3c.dom.Document doc = heldEinlesen();
-					if (doc == null) {
-						return;
-					}
 					PDFGenerator creator = new PDFGenerator();
 					pddoc = creator.erzeugePDFDokument(doc, konfig);
 

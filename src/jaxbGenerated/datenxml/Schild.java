@@ -30,6 +30,7 @@ import javax.xml.bind.annotation.XmlType;
  *         &lt;element ref="{}name"/>
  *         &lt;element ref="{}ini"/>
  *         &lt;element ref="{}mod"/>
+ *         &lt;element ref="{}at"/>
  *         &lt;element ref="{}pa"/>
  *         &lt;element ref="{}bfmin"/>
  *         &lt;element ref="{}bfakt"/>
@@ -49,6 +50,7 @@ import javax.xml.bind.annotation.XmlType;
     "name",
     "ini",
     "mod",
+    "at",
     "pa",
     "bfmin",
     "bfakt",
@@ -66,6 +68,8 @@ public class Schild {
     protected BigInteger ini;
     @XmlElement(required = true)
     protected String mod;
+    @XmlElement(required = true)
+    protected String at;
     @XmlElement(required = true)
     protected String pa;
     @XmlElement(required = true)
@@ -173,6 +177,29 @@ public class Schild {
         this.mod = value;
     }
 
+    /**
+     * Gets the value of the at property.
+     *
+     * @return
+     *     possible object is
+     *     {@link String }
+     *
+     */
+    public String getAt() {
+        return at;
+    }
+
+    /**
+     * Sets the value of the pa property.
+     *
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *
+     */
+    public void setAt(String value) {
+        this.at = value;
+    }
     /**
      * Gets the value of the pa property.
      * 

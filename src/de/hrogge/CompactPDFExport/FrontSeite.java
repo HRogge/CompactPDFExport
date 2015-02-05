@@ -966,9 +966,9 @@ public class FrontSeite extends PDFSeite {
 
 	private class ParierwaffenTabelle extends AbstractTabellenZugriff {
 		public ParierwaffenTabelle(int breite) {
-			super(new String[] { "#", null, "PA", "WM", "INI", "Bruchfaktor",
+			super(new String[] { "#", null, "AT", "PA", "WM", "INI", "Bruchfaktor",
 					"", "", "", "" },
-					new int[] { 2, 0, 3, 4, 3, 2, 2, 2, 2, 2 }, 0,
+					new int[] { 2, 0, 3, 3, 4, 3, 2, 2, 2, 2, 2 }, 0,
 					"Parierwaffe/Schild", breite);
 		}
 
@@ -982,12 +982,14 @@ public class FrontSeite extends PDFSeite {
 			case 1:
 				return s.getName();
 			case 2:
-				return s.getPa();
+				return s.getAt();
 			case 3:
-				return s.getMod();
+				return s.getPa();
 			case 4:
-				return s.getIni().toString();
+				return s.getMod();
 			case 5:
+				return s.getIni().toString();
+			case 6:
 				return s.getBfakt().toString();
 			}
 			return "";
