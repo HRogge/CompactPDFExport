@@ -351,7 +351,7 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		dialog.setVisible(true);
 	}
 
-	private org.w3c.dom.Document heldEinlesen() throws ParserConfigurationException, Exception {
+	private synchronized Document heldEinlesen() throws ParserConfigurationException, Exception {
 		DocumentBuilder documentBuilder;
 		org.w3c.dom.Document request;
 		org.w3c.dom.Document doc;

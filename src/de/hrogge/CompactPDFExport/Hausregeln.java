@@ -120,10 +120,10 @@ public class Hausregeln {
 		}
 		
 		Properties p = eigeneZauber.get(key);
-
 		if (p == null) {
 			return null;
 		}
+
 
 		Zauber z = new Zauber();
 		z.setNamemitvariante(p.getProperty("name", "-"));

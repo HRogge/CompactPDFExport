@@ -18,6 +18,7 @@ package de.hrogge.CompactPDFExport;
 
 import java.awt.Color;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.Collator;
 import java.util.*;
@@ -635,9 +636,14 @@ public class FrontSeite extends PDFSeite {
 			}
 			if (v.getAuswahlen() != null
 					&& v.getAuswahlen().getAuswahl().size() > 0) {
-				for (String auswahl : v.getAuswahlen().getAuswahl()) {
+				for (Vorteil.Auswahlen.Auswahl auswahl : v.getAuswahlen().getAuswahl()) {
+					BigDecimal decWert = auswahl.getWert();
+
+					if (decWert != null) {
+						wert = decWert.toString();
+					}
 					gruppe.add(new PDFVorteil(
-							v.getBezeichner() + ": " + auswahl,
+							v.getBezeichner() + ": " + auswahl.getName(),
 							wert));
 				}
 			} else {
