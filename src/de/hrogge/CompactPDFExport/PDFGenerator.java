@@ -27,14 +27,17 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
-import javax.xml.bind.*;
-
-import jaxbGenerated.datenxml.*;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
 
 import org.apache.pdfbox.exceptions.COSVisitorException;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import de.hrogge.CompactPDFExport.gui.Konfiguration;
 
@@ -43,39 +46,27 @@ public class PDFGenerator {
 	private final float marginY = 10f;
 	private final float textMargin = 0.5f;
 
-	public PDDocument erzeugePDFDokument(Document doc, Konfiguration k) throws IOException, COSVisitorException,
-			JAXBException {
-		/* JAXB Repräsentation des XML-Dokuments erzeugen */
-		JAXBContext jaxbContext = JAXBContext.newInstance(jaxbGenerated.datenxml.Daten.class);
-
-		Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-		Daten daten = (Daten) jaxbUnmarshaller.unmarshal(doc.getDocumentElement());
-
-		return internErzeugePDFDokument(k, daten);
-	}
-
 	public void exportierePDF(JFrame frame, File output, Document input, Konfiguration k, boolean speichernDialog)
-			throws IOException, COSVisitorException, JAXBException {
+			throws IOException, COSVisitorException {
 		PDDocument doc = null;
+		Element root = input.getDocumentElement();
 
-		/* JAXB Repräsentation des XML-Dokuments erzeugen */
-		JAXBContext jaxbContext = JAXBContext.newInstance(jaxbGenerated.datenxml.Daten.class);
-
-		Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-		Daten daten = (Daten) jaxbUnmarshaller.unmarshal(input.getDocumentElement());
-
+		XPathFactory xpathfactory = XPathFactory.newInstance();
+		XPath xpath = xpathfactory.newXPath();
+		
 		try {
-			doc = internErzeugePDFDokument(k, daten);
+			doc = internErzeugePDFDokument(k, xpath, root);
 
 			if (output == null) {
 				String ordner = k.getTextDaten(Konfiguration.GLOBAL_ZIELORDNER);
 				if (speichernDialog) {
-					output = waehlePDFFile(frame, daten, ordner);
+					output = waehlePDFFile(frame, xpath, root, ordner);
 					if (output == null) {
 						return;
 					}
 				} else {
-					output = new File(ordner, daten.getAngaben().getName() + ".pdf");
+					String name = xpath.compile("angaben/name").evaluate(root);
+					output = new File(ordner, name + ".pdf");
 				}
 			}
 
@@ -98,30 +89,18 @@ public class PDFGenerator {
 	}
 
 	private void extrahiereKommandos(List<String> list, String notiz) {
-		if (notiz == null) {
+		if (notiz == null || !notiz.startsWith("@")) {
 			return;
 		}
 
-		StringTokenizer zeilen = new StringTokenizer(notiz, "\r\n");
-		while (zeilen.hasMoreTokens()) {
-			String zeile = zeilen.nextToken();
-
-			if (!zeile.startsWith("@")) {
-				continue;
-			}
-
-			StringTokenizer st = new StringTokenizer(zeile.substring(1), " \n\r");
-
-			while (st.hasMoreTokens()) {
-				list.add(st.nextToken());
-			}
+		StringTokenizer st = new StringTokenizer(notiz.substring(1), " \n\r");
+		while (st.hasMoreTokens()) {
+			list.add(st.nextToken());
 		}
 	}
 
-	private PDDocument internErzeugePDFDokument(Konfiguration k, Daten daten) throws IOException {
+	private PDDocument internErzeugePDFDokument(Konfiguration k, XPath xpath, Element root) throws IOException {
 		String[] guteEigenschaften;
-		List<PDFSonderfertigkeiten> sflist;
-		List<Gegenstand> ausruestung;
 		boolean tzm;
 		PDDocument doc;
 		String pfad;
@@ -135,28 +114,32 @@ public class PDFGenerator {
 
 		charakterBild = null;
 		hintergrundBild = null;
-		tzm = daten.getConfig().getRsmodell().equals("zone");
+		
+		tzm = xpath.compile("config/rsmodel").evaluate(root).equals("zone");
 
 		/*
 		 * Gute Eigenschaften auslesen, da sie seitenübergreifend gebraucht
 		 * werden
 		 */
-		Eigenschaften eigenschaften = daten.getEigenschaften();
 		guteEigenschaften = new String[8];
-		guteEigenschaften[0] = eigenschaften.getMut().getAkt().toString();
-		guteEigenschaften[1] = eigenschaften.getKlugheit().getAkt().toString();
-		guteEigenschaften[2] = eigenschaften.getIntuition().getAkt().toString();
-		guteEigenschaften[3] = eigenschaften.getCharisma().getAkt().toString();
-		guteEigenschaften[4] = eigenschaften.getFingerfertigkeit().getAkt().toString();
-		guteEigenschaften[5] = eigenschaften.getGewandtheit().getAkt().toString();
-		guteEigenschaften[6] = eigenschaften.getKonstitution().getAkt().toString();
-		guteEigenschaften[7] = eigenschaften.getKoerperkraft().getAkt().toString();
+		guteEigenschaften[0] = xpath.compile("eigenschaften/mut/akt").evaluate(root); 
+		guteEigenschaften[1] = xpath.compile("eigenschaften/klugheit/akt").evaluate(root);
+		guteEigenschaften[2] = xpath.compile("eigenschaften/intuition/akt").evaluate(root);
+		guteEigenschaften[3] = xpath.compile("eigenschaften/charisma/akt").evaluate(root);
+		guteEigenschaften[4] = xpath.compile("eigenschaften/fingerfertigkeit/akt").evaluate(root);
+		guteEigenschaften[5] = xpath.compile("eigenschaften/gewandheit/akt").evaluate(root);
+		guteEigenschaften[6] = xpath.compile("eigenschaften/konstitution/akt").evaluate(root);
+		guteEigenschaften[7] = xpath.compile("eigenschaften/koerperkraft/akt").evaluate(root);
 
-		sflist = new ArrayList<PDFSonderfertigkeiten>();
-		for (Sonderfertigkeit sf : daten.getSonderfertigkeiten().getSonderfertigkeit()) {
-			if (sf.getAuswahlen() != null && sf.getAuswahlen().getAuswahl().size() > 0) {
-				for (Sonderfertigkeit.Auswahlen.Auswahl a : sf.getAuswahlen().getAuswahl()) {
-					sflist.add(new PDFSonderfertigkeiten(sf, a.getName()));
+		List<PDFSonderfertigkeiten> sflist = new ArrayList<PDFSonderfertigkeiten>();
+		NodeList sfNodes = (NodeList)xpath.compile("sonderfertigkeiten/*").evaluate(root, XPathConstants.NODESET);
+		for (int i=0; i<sfNodes.getLength(); i++) {
+			Node sf = sfNodes.item(i);
+			
+			NodeList auswahlen = (NodeList)xpath.compile("auswahlen/*/name").evaluate(sf, XPathConstants.NODESET);
+			if (auswahlen.getLength() > 0) {
+				for (int j=0; j<auswahlen.getLength(); j++) {
+					sflist.add(new PDFSonderfertigkeiten(sf, auswahlen.item(j).getNodeValue()));
 				}
 			} else {
 				sflist.add(new PDFSonderfertigkeiten(sf));
@@ -168,6 +151,46 @@ public class PDFGenerator {
 		/* Kommandos aus Notizen extrahieren */
 		Notizen n = daten.getAngaben().getNotizen();
 		commands = new ArrayList<>();
+		
+		StringTokenizer st = new StringTokenizer(n.getN0(), "\r\n");
+		if (st.countTokens() > 1) {
+			if (st.hasMoreTokens()) {
+				n.setN0(st.nextToken());
+			}
+			if (st.hasMoreTokens()) {
+				n.setN1(st.nextToken());
+			}
+			if (st.hasMoreTokens()) {
+				n.setN2(st.nextToken());
+			}
+			if (st.hasMoreTokens()) {
+				n.setN3(st.nextToken());
+			}
+			if (st.hasMoreTokens()) {
+				n.setN4(st.nextToken());
+			}
+			if (st.hasMoreTokens()) {
+				n.setN5(st.nextToken());
+			}
+			if (st.hasMoreTokens()) {
+				n.setN6(st.nextToken());
+			}
+			if (st.hasMoreTokens()) {
+				n.setN7(st.nextToken());
+			}
+			if (st.hasMoreTokens()) {
+				n.setN8(st.nextToken());
+			}
+			if (st.hasMoreTokens()) {
+				n.setN9(st.nextToken());
+			}
+			if (st.hasMoreTokens()) {
+				n.setN10(st.nextToken());
+			}
+			if (st.hasMoreTokens()) {
+				n.setN11(st.nextToken());
+			}
+		}
 		extrahiereKommandos(commands, n.getN0());
 		extrahiereKommandos(commands, n.getN1());
 		extrahiereKommandos(commands, n.getN2());

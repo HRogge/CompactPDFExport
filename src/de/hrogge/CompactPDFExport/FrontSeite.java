@@ -23,66 +23,49 @@ import java.math.BigInteger;
 import java.text.Collator;
 import java.util.*;
 
-import jaxbGenerated.datenxml.*;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import de.hrogge.CompactPDFExport.PDFSonderfertigkeiten.Kategorie;
 import de.hrogge.CompactPDFExport.gui.Konfiguration;
+import org.w3c.dom.Text;
 
 public class FrontSeite extends PDFSeite {
 	public FrontSeite(PDDocument d) throws IOException {
 		super(d);
 	}
 
-	public void erzeugeSeite(Daten daten, PDJpeg bild, PDJpeg hintergrund,
+	public void erzeugeSeite(ExtXPath xpath, PDJpeg bild, PDJpeg hintergrund,
 			String[] guteEigenschaften, List<PDFSonderfertigkeiten> alleSF,
-			Hausregeln h, List<String> commands, boolean tzm, Konfiguration k) throws IOException {
+			String /* Hausregeln */ h, List<String> commands, boolean tzm, Konfiguration k) throws IOException, XPathExpressionException {
 		int patzerHoehe, patzerBreite, festerHeaderHoehe, professionsZeilen;
 		int notizen, kampfBreite, blockBreite, vorNachTeileLaenge;
 		int leer, y, bloecke, hoehe, charakterDatenHoehe, sfY;
-		List<Kampfset> kampfsets;
-		List<Nahkampfwaffe> nahkampf;
-		List<Fernkampfwaffe> fernkampf;
 		List<PDFVorteil> vorteile, nachteile;
-		List<Kampfset> ruestung;
-		List<Schild> schilde;
 		List<PDFSonderfertigkeiten> sfListe;
 
 		boolean zeigeFernkampf, zeigeRuestung, zeigeSchilde;
 
-		kampfsets = new ArrayList<Kampfset>();
-
-		for (Kampfset set : daten.getKampfsets().getKampfset()) {
-			if (set.isTzm() != tzm || !set.isInbenutzung()) {
-				continue;
-			}
-
-			kampfsets.add(set);
-		}
-
-		if (kampfsets.size() == 0) {
-			/*
-			 * KEINE aktiven Kampfsets... zumindest das erste nehmen und
-			 * aktivieren!
-			 */
-			for (Kampfset set : daten.getKampfsets().getKampfset()) {
-				if (set.isTzm() == tzm) {
-					kampfsets.add(set);
-
-					set.setInbenutzung(true);
-					break;
-				}
-			}
+		tzm = true;
+		NodeList kampfsets = xpath.evaluateList(
+				"kampfsets/kampfset[@inbenutzung='true' and @tzm=$0]", Boolean.toString(tzm));
+		if (kampfsets.getLength() == 0) {
+			kampfsets = xpath.evaluateList("kampfsets/kampfset[@tzm=$0]", Boolean.toString(tzm));
 		}
 
 		/* Vor und Nachteile sind statisch */
 		vorteile = new ArrayList<PDFVorteil>();
 		nachteile = new ArrayList<PDFVorteil>();
 
-		extrahiereVorNachteile(daten, vorteile, nachteile);
+		extrahiereVorNachteile(xpath, vorteile, nachteile);
 
 		for (String cmd : commands) {
 			String[] split = cmd.split(":");
@@ -94,16 +77,15 @@ public class FrontSeite extends PDFSeite {
 			else if (split.length > 2) {
 				continue;
 			}
-			PDFVorteil v = h.getEigenenVorteil(split[0], wert);
-			if (v != null) {
-				vorteile.add(v);
-			}
-			
-			v = h.getEigenenNachteil(split[0], wert);
-			if (v != null) {
-				nachteile.add(v);
-				System.out.println("1");
-			}
+//			PDFVorteil v = h.getEigenenVorteil(split[0], wert);
+//			if (v != null) {
+//				vorteile.add(v);
+//			}
+//
+//			v = h.getEigenenNachteil(split[0], wert);
+//			if (v != null) {
+//				nachteile.add(v);
+//			}
 		}
 
 		if (!k.getOptionsDaten(Konfiguration.FRONT_MEHRSF)) {
@@ -128,14 +110,30 @@ public class FrontSeite extends PDFSeite {
 		kampfBreite = blockBreite * 3 + 2;
 
 		/* Wieviele Zeilen werden fuer die Profession gebraucht ? */
-		professionsZeilen = berechneProfessionsZeilen(daten);
+		professionsZeilen = berechneProfessionsZeilen(xpath);
 
-		do {
+		Map<Integer, Node> nahkampf = new TreeMap<Integer, Node>();
+		Map<Integer, Node> fernkampf = new TreeMap<Integer, Node>();
+		Map<Integer, Node> ruestung = new TreeMap<Integer, Node>();
+		Map<Integer, Node> schilde = new TreeMap<Integer, Node>();
+
+		leer = -1;
+		notizen = 0;
+		patzerBreite = 0;
+
+		zeigeFernkampf = false;
+		zeigeRuestung = false;
+		zeigeSchilde = false;
+
+		for (int visibleSets = kampfsets.getLength(); visibleSets > 0 && leer < 0; visibleSets--) {
+			NodeList list;
+			int number;
+			
 			/* Variable Daten für Frontseite erfassen */
-			nahkampf = new ArrayList<Nahkampfwaffe>();
-			fernkampf = new ArrayList<Fernkampfwaffe>();
-			ruestung = new ArrayList<Kampfset>();
-			schilde = new ArrayList<Schild>();
+			nahkampf.clear();
+			fernkampf.clear();
+			ruestung.clear();
+			schilde.clear();
 
 			zeigeFernkampf = k
 					.getOptionsDaten(Konfiguration.FRONT_IMMER_FERNKAMPF);
@@ -143,33 +141,34 @@ public class FrontSeite extends PDFSeite {
 					.getOptionsDaten(Konfiguration.FRONT_IMMER_RUESTUNGEN);
 			zeigeSchilde = k.getOptionsDaten(Konfiguration.FRONT_IMMER_SCHILDE);
 
-			for (Kampfset set : kampfsets) {
-				for (Nahkampfwaffe w : set.getNahkampfwaffen()
-						.getNahkampfwaffe()) {
-					w.setNummer(set.getNr());
-					nahkampf.add(w);
+			for (int setidx = 0; setidx < visibleSets; setidx++) {
+				number = xpath.evaluateInt("@nr", kampfsets.item(setidx));
+				list = xpath.evaluateList("nahkampfwaffen/nahkampfwaffe", kampfsets.item(setidx));
+				for (int idx = 0; idx < list.getLength(); idx++) {
+					nahkampf.put(number, list.item(idx));
 				}
 
-				for (Fernkampfwaffe w : set.getFernkampfwaffen()
-						.getFernkampfwaffe()) {
-					w.setNummer(set.getNr());
-					fernkampf.add(w);
+				list = xpath.evaluateList("fernkampfwaffen/fernkampfwaffe", kampfsets.item(setidx));
+				for (int idx = 0; idx < list.getLength(); idx++) {
+					fernkampf.put(number, list.item(idx));
 					zeigeFernkampf = true;
 				}
 
-				for (Schild s : set.getSchilder().getSchild()) {
-					s.setNummer(set.getNr());
-					schilde.add(s);
+				list = xpath.evaluateList("schilder/schild", kampfsets.item(setidx));
+				for (int idx = 0; idx < list.getLength(); idx++) {
+					schilde.put(number, list.item(idx));
 					zeigeSchilde = true;
 				}
-				if (set.getRuestungen().getRuestung().size() > 0) {
-					ruestung.add(set);
+
+				list = xpath.evaluateList("ruestungen/ruestung", kampfsets.item(setidx));
+				if (list.getLength() > 0) {
+					ruestung.put(number, kampfsets.item(setidx));
 					zeigeRuestung = true;
 				}
 			}
 
 			/* Layout Parameter */
-			if (kampfsets.size() == 1) {
+			if (kampfsets.getLength() == 1) {
 				patzerBreite = (kampfBreite - 1) / 2;
 			} else {
 				patzerBreite = (kampfBreite - 1) * 2 / 5;
@@ -207,14 +206,11 @@ public class FrontSeite extends PDFSeite {
 				notizen = 0;
 			}
 
-			if (leer < 0) {
-				/*
-				 * letztes Kampfset entfernen um genug Platz für den Rest zu
-				 * bekommen
-				 */
-				kampfsets.remove(kampfsets.size() - 1);
+			if (leer >= 0) {
+				break;
 			}
-		} while (leer < 0);
+		}
+
 
 		/* Kann Seite gekürzt werden ? */
 		if (notizen > 8) {
@@ -230,28 +226,28 @@ public class FrontSeite extends PDFSeite {
 		stream.setStrokingColor(Color.BLACK);
 		stream.setLineWidth(1f);
 
-		y = charakterDatenHoehe = charakterDaten(daten, professionsZeilen);
+		y = charakterDatenHoehe = charakterDaten(xpath, professionsZeilen);
 
-		festerHeaderHoehe = basisWerte(y, daten, bild, guteEigenschaften, k);
+		festerHeaderHoehe = basisWerte(y, xpath, bild, guteEigenschaften, k);
 
 		/* Padding für Kampfblöcke und Vor/Nachteile */
-		while (leer > 0) {
+		for (int i=65535; leer > 0; ) {
 			if (leer > 0) {
-				nahkampf.add(null);
+				nahkampf.put(i++, null);
 				leer--;
 			}
 
 			if (zeigeFernkampf && leer > 0) {
-				fernkampf.add(null);
+				fernkampf.put(i++, null);
 				leer--;
 			}
 
 			if (zeigeRuestung && leer > 0) {
-				ruestung.add(null);
+				ruestung.put(i++, null);
 				leer--;
 			}
 			if (zeigeSchilde && leer > 0) {
-				schilde.add(null);
+				schilde.put(i++, null);
 				leer--;
 			}
 		}
@@ -277,77 +273,70 @@ public class FrontSeite extends PDFSeite {
 		if (notizen > 0) {
 			drawLabeledBox(0, y, kampfBreite, y + notizen - 1, "Notizen");
 
-			if (!daten.getAngaben().getNotizen().getText().equals("Notizen")) {
-				Notizen n = daten.getAngaben().getNotizen();
-
-				String[] t = { n.getN0(), n.getN1(), n.getN2(), n.getN3(),
-						n.getN4(), n.getN5(), n.getN6(), n.getN7(), n.getN8(),
-						n.getN9(), n.getN10(), n.getN11() };
-
-				for (int i = 0, j = 0; j < notizen - 2 && i < t.length
-						&& t[i] != null; i++) {
-					if (!t[i].startsWith("@")) {
-						drawText(PDType1Font.HELVETICA, 0, kampfBreite, y + j
-								+ 1, t[i], false);
-						j++;
-					}
+			String[] t = xpath.evaluate("angaben/notizen/text").split("\n");
+			for (int i = 0, j = 0; j < notizen - 2 && i < t.length
+					&& t[i] != null; i++) {
+				if (t[i].length() > 0 &&!t[i].startsWith("@")) {
+					drawText(PDType1Font.HELVETICA, 0, kampfBreite, y + j
+							+ 1, t[i], false);
+					j++;
 				}
 			}
 			y += notizen;
 		}
 
 		y = drawTabelle(0, kampfBreite, y,
-				nahkampf.toArray(new Nahkampfwaffe[nahkampf.size()]),
-				new NahkampfTable(kampfBreite));
+				nahkampf.values().toArray(),
+				new NahkampfTable(xpath, kampfBreite));
 		if (zeigeFernkampf) {
 			y = drawTabelle(0, kampfBreite, y,
-					fernkampf.toArray(new Fernkampfwaffe[fernkampf.size()]),
-					new FernkampfTabelle(kampfBreite));
+					fernkampf.values().toArray(),
+					new FernkampfTabelle(xpath, kampfBreite));
 		}
 		if (zeigeRuestung) {
-			y = drawTabelle(0, kampfBreite, y, ruestung.toArray(),
-					new RuestungsTabelle(kampfBreite, tzm));
+			y = drawTabelle(0, kampfBreite, y, ruestung.values().toArray(),
+					new RuestungsTabelle(xpath, kampfBreite, tzm));
 		}
 		if (zeigeSchilde) {
-			y = drawTabelle(0, kampfBreite, y, schilde.toArray(),
-					new ParierwaffenTabelle(kampfBreite));
+			y = drawTabelle(0, kampfBreite, y, schilde.values().toArray(),
+					new ParierwaffenTabelle(xpath, kampfBreite));
 		}
 
 		/* 13 Zeilen fuer den Rest */
 		y = cellCountY - patzerHoehe;
 		patzerBlock(0, patzerBreite, y);
 
-		y = initiativeAusweichen(kampfsets, patzerBreite + 1, kampfBreite, y,
+		y = initiativeAusweichen(xpath, kampfsets, patzerBreite + 1, kampfBreite, y,
 				tzm);
 
-		y = waffenlos(kampfsets, patzerBreite + 1, kampfBreite, y, tzm);
+		y = waffenlos(xpath, kampfsets, patzerBreite + 1, kampfBreite, y, tzm);
 
-		y = basisKampfBlock(daten.getEigenschaften(), patzerBreite + 1,
+		y = basisKampfBlock(xpath, patzerBreite + 1,
 				kampfBreite, y);
 
 		stream.close();
 	}
 
-	private int basisKampfBlock(Eigenschaften eigen, int x1, int x2, int y)
-			throws IOException {
+	private int basisKampfBlock(ExtXPath xpath, int x1, int x2, int y)
+			throws IOException, XPathExpressionException {
 		String[][] werte;
 
 		werte = new String[4][3];
 		werte[0] = new String[] { "Attacke",
-				eigen.getAttacke().getAkt().toString(), "(MU+GE+KK)/5" };
+				xpath.evaluate("eigenschaften/attacke/akt"), "(MU+GE+KK)/5" };
 		werte[1] = new String[] { "Parade",
-				eigen.getParade().getAkt().toString(), "(IN+GE+KK)/5" };
+				xpath.evaluate("eigenschaften/parade/akt"), "(IN+GE+KK)/5" };
 		werte[2] = new String[] { "Fernkampf",
-				eigen.getFernkampfBasis().getAkt().toString(), "(IN+FF+KK)/5" };
+				xpath.evaluate("eigenschaften/fernkampf-basis/akt"), "(IN+FF+KK)/5" };
 		werte[3] = new String[] { "Initiative",
-				eigen.getInitiative().getAkt().toString(), "(2xMU+IN+GE)/5" };
+				xpath.evaluate("eigenschaften/initiative/akt"), "(2xMU+IN+GE)/5" };
 
 		drawTabelle(x1, x2, y, werte, new BasisKampfTabelle(x2 - x1));
 		return y + werte.length + 2;
 	}
 
-	private int basisWerte(int offsetY, Daten daten, PDJpeg bild,
-			String[] guteEigW, Konfiguration k) throws IOException {
+	private int basisWerte(int offsetY, ExtXPath xpath, PDJpeg bild,
+			String[] guteEigW, Konfiguration k) throws IOException, XPathExpressionException {
 		int boxW;
 		int offset2, offset3, offset4;
 		int height;
@@ -364,47 +353,44 @@ public class FrontSeite extends PDFSeite {
 				"Wundschwelle", "Regeneration LE", "Regeneration AE" };
 		String[] sonstigeW;
 
-		Angaben angaben = daten.getAngaben();
-		Eigenschaften eigenschaften = daten.getEigenschaften();
-
 		if (k.getOptionsDaten(Konfiguration.FRONT_KAUFBAREEIGENSCHAFTEN)) {
-			guteEig[0] += " (" + kaufbar(eigenschaften.getMut()) + ")";
-			guteEig[1] += " (" + kaufbar(eigenschaften.getKlugheit()) + ")";
-			guteEig[2] += " (" + kaufbar(eigenschaften.getIntuition()) + ")";
-			guteEig[3] += " (" + kaufbar(eigenschaften.getCharisma()) + ")";
-			guteEig[4] += " (" + kaufbar(eigenschaften.getFingerfertigkeit())
+			guteEig[0] += " (" + kaufbar(xpath, "mut") + ")";
+			guteEig[1] += " (" + kaufbar(xpath, "klugheit") + ")";
+			guteEig[2] += " (" + kaufbar(xpath, "intuition") + ")";
+			guteEig[3] += " (" + kaufbar(xpath, "charisma") + ")";
+			guteEig[4] += " (" + kaufbar(xpath, "fingerfertigkeit")
 					+ ")";
-			guteEig[5] += " (" + kaufbar(eigenschaften.getGewandtheit()) + ")";
-			guteEig[6] += " (" + kaufbar(eigenschaften.getKonstitution()) + ")";
-			guteEig[7] += " (" + kaufbar(eigenschaften.getKoerperkraft()) + ")";
+			guteEig[5] += " (" + kaufbar(xpath, "gewandheit") + ")";
+			guteEig[6] += " (" + kaufbar(xpath, "konstitution") + ")";
+			guteEig[7] += " (" + kaufbar(xpath, "koerperkraft") + ")";
 		}
 
 		basisW = new String[basis.length];
-		basisW[0] = eigenschaften.getLebensenergie().getAkt().toString();
-		basisW[1] = eigenschaften.getAusdauer().getAkt().toString();
-		if (angaben.isMagisch()) {
-			basisW[2] = eigenschaften.getAstralenergie().getAkt().toString();
+		basisW[0] = xpath.evaluate("eigenschaften/lebensenergie/akt");
+		basisW[1] = xpath.evaluate("eigenschaften/ausdauer/akt");
+		if (xpath.evaluateBool("angaben/magisch")) {
+			basisW[2] = xpath.evaluate("eigenschaften/astralenergie/akt");
 		} else {
 			basisW[2] = "";
 		}
-		if (angaben.isGeweiht()) {
-			basisW[3] = eigenschaften.getKarmaenergie().getAkt().toString();
+		if (xpath.evaluateBool("angaben/geweiht")) {
+			basisW[3] = xpath.evaluate("eigenschaften/karmaenergie/akt");
 		} else {
 			basisW[3] = "";
 		}
-		basisW[4] = eigenschaften.getMagieresistenz().getAkt().toString();
-		basisW[5] = angaben.getAp().getGesamt().toString();
-		basisW[6] = angaben.getAp().getGenutzt().toString();
-		basisW[7] = angaben.getAp().getFrei().toString();
+		basisW[4] = xpath.evaluate("eigenschaften/magieresistenz/akt");;
+		basisW[5] = xpath.evaluate("angaben/ap/gesammt");
+		basisW[6] = xpath.evaluate("angaben/ap/genutzt");
+		basisW[7] = xpath.evaluate("angaben/ap/frei");
 
 		sonstigeW = new String[sonstige.length];
-		sonstigeW[0] = eigenschaften.getGeschwindigkeit().getAkt().toString();
-		sonstigeW[1] = eigenschaften.getSozialstatus().getAkt().toString();
-		sonstigeW[2] = angaben.getStufe41().getAkt().toString();
-		sonstigeW[3] = angaben.getWundschwelle().toString();
-		sonstigeW[4] = angaben.getLeregeneration();
-		if (angaben.isMagisch()) {
-			sonstigeW[5] = angaben.getAspregeneration();
+		sonstigeW[0] = xpath.evaluate("eigenschaften/geschwindigkeit/akt");
+		sonstigeW[1] = xpath.evaluate("eigenschaften/sozialstatus/akt");
+		sonstigeW[2] = xpath.evaluate("angaben/stufe41/akt");
+		sonstigeW[3] = xpath.evaluate("angaben/wundschwelle");
+		sonstigeW[4] = xpath.evaluate("angaben/leregeneration");
+		if (xpath.evaluateBool("angaben/magisch")) {
+			sonstigeW[5] = xpath.evaluate("angaben/aspregeneration");
 		} else {
 			sonstigeW[5] = "";
 		}
@@ -474,7 +460,7 @@ public class FrontSeite extends PDFSeite {
 					true);
 		}
 		int len = sonstige.length;
-		if (!angaben.isMagisch()) {
+		if (xpath.evaluateBool("angaben/magisch")) {
 			len--;
 		}
 		for (int y = 0; y < len; y++) {
@@ -490,56 +476,53 @@ public class FrontSeite extends PDFSeite {
 		return offsetY + 2 + height;
 	}
 
-	private int berechneProfessionsZeilen(Daten daten) throws IOException {
-		Angaben angaben = daten.getAngaben();
+	private int berechneProfessionsZeilen(ExtXPath xpath) throws IOException, XPathExpressionException {
 		float breite;
-
-		if (angaben.getRasse().length() < 20
-				&& angaben.getKultur().length() < 40
-				&& angaben.getProfession().getText().length() < 60) {
+		String profession = xpath.evaluate("angaben/profession/text");
+		if (xpath.evaluate("angaben/rasse").length() < 20
+				&& xpath.evaluate("angaben/kultur").length() < 40
+				&& profession.length() < 60) {
 			return 0;
 		}
 
 		/* Maximaler Stauchungsfaktor 1.5 */
-		breite = berechneTextUeberlauf(PDType1Font.HELVETICA, 6, cellCountX, 1,
-				angaben.getProfession().getText());
+		breite = berechneTextUeberlauf(PDType1Font.HELVETICA, 6, cellCountX, 1, profession);
 		return (int) Math.ceil(breite / 1.5f);
 	}
 
-	private int charakterDaten(Daten daten, int professionsZeilen)
-			throws IOException {
-		Angaben angaben = daten.getAngaben();
+	private int charakterDaten(ExtXPath xpath, int professionsZeilen)
+			throws IOException, XPathExpressionException {
 		int zeile = 0;
 		String profession;
 
 		/* erste Zeile */
 		drawText(PDType1Font.HELVETICA_BOLD, 0, 4, zeile, "Name:", false);
-		drawText(PDType1Font.HELVETICA, 4, 31, zeile, angaben.getName(), true);
+		drawText(PDType1Font.HELVETICA, 4, 31, zeile, xpath.evaluate("angaben/name"), true);
 
 		drawText(PDType1Font.HELVETICA_BOLD, 30, 34, zeile, "Stand:", false);
-		drawText(PDType1Font.HELVETICA, 34, 40, zeile, angaben.getStand(),
+		drawText(PDType1Font.HELVETICA, 34, 40, zeile, xpath.evaluate("angaben/stand"),
 				false);
 
 		drawText(PDType1Font.HELVETICA_BOLD, 40, 43, zeile, "Alter:", false);
-		drawText(PDType1Font.HELVETICA, 43, 46, zeile, angaben.getAlter()
+		drawText(PDType1Font.HELVETICA, 43, 46, zeile, xpath.evaluate("angaben/alter")
 				.toString(), true);
 
 		drawText(PDType1Font.HELVETICA_BOLD, 46, 52, zeile, "Geburtstag:",
 				false);
 		drawText(PDType1Font.HELVETICA, 52, cellCountX, zeile,
-				angaben.getGeburtstag(), true);
+				xpath.evaluate("angaben/geburtstag"), true);
 		zeile++;
 
 		/* zweite Zeile (evt. mehrfach) */
-		profession = angaben.getProfession().getText().trim();
+		profession = xpath.evaluate("angaben/profession/text");
 		if (professionsZeilen == 0) {
 			drawText(PDType1Font.HELVETICA_BOLD, 0, 4, zeile, "Rasse:", false);
-			drawText(PDType1Font.HELVETICA, 4, 11, zeile, angaben.getRasse(),
+			drawText(PDType1Font.HELVETICA, 4, 11, zeile, xpath.evaluate("angaben/rasse"),
 					true);
 
 			drawText(PDType1Font.HELVETICA_BOLD, 11, 15, zeile, "Kultur:",
 					false);
-			drawText(PDType1Font.HELVETICA, 15, 30, zeile, angaben.getKultur(),
+			drawText(PDType1Font.HELVETICA, 15, 30, zeile, xpath.evaluate("angaben/kultur"),
 					true);
 
 			drawText(PDType1Font.HELVETICA_BOLD, 30, 36, zeile, "Profession:",
@@ -550,13 +533,13 @@ public class FrontSeite extends PDFSeite {
 			zeile++;
 		} else {
 			drawText(PDType1Font.HELVETICA_BOLD, 0, 4, zeile, "Rasse:", false);
-			drawText(PDType1Font.HELVETICA, 4, 30, zeile, angaben.getRasse(),
+			drawText(PDType1Font.HELVETICA, 4, 30, zeile, xpath.evaluate("angaben/rasse"),
 					true);
 
 			drawText(PDType1Font.HELVETICA_BOLD, 30, 35, zeile, "Kultur:",
 					false);
 			drawText(PDType1Font.HELVETICA, 35, cellCountX, zeile,
-					angaben.getKultur(), true);
+					xpath.evaluate("angaben/kultur"), true);
 			zeile++;
 
 			drawText(PDType1Font.HELVETICA_BOLD, 0, 6, zeile, "Profession:",
@@ -589,25 +572,25 @@ public class FrontSeite extends PDFSeite {
 
 		/* dritte Zeile */
 		drawText(PDType1Font.HELVETICA_BOLD, 0, 7, zeile, "Geschlecht:", false);
-		drawText(PDType1Font.HELVETICA, 7, 9, zeile, angaben.getGeschlecht()
+		drawText(PDType1Font.HELVETICA, 7, 9, zeile, xpath.evaluate("angaben/geschlecht")
 				.substring(0, 1), false);
 
 		drawText(PDType1Font.HELVETICA_BOLD, 11, 15, zeile, "Größe:", false);
-		drawText(PDType1Font.HELVETICA, 15, 20, zeile, angaben.getGroesse()
+		drawText(PDType1Font.HELVETICA, 15, 20, zeile, xpath.evaluate("angaben/groesse")
 				.toString() + " cm", false);
 
 		drawText(PDType1Font.HELVETICA_BOLD, 20, 25, zeile, "Gewicht:", false);
-		drawText(PDType1Font.HELVETICA, 25, 30, zeile, angaben.getGewicht()
+		drawText(PDType1Font.HELVETICA, 25, 30, zeile, xpath.evaluate("angaben/gewicht")
 				.toString() + " kg", false);
 
 		drawText(PDType1Font.HELVETICA_BOLD, 30, 36, zeile, "Haarfarbe:", false);
-		drawText(PDType1Font.HELVETICA, 36, 44, zeile, angaben.getHaarfarbe(),
+		drawText(PDType1Font.HELVETICA, 36, 44, zeile, xpath.evaluate("angaben/haarfarbe"),
 				false);
 
 		drawText(PDType1Font.HELVETICA_BOLD, 44, 52, zeile, "Augenfarbe:",
 				false);
 		drawText(PDType1Font.HELVETICA, 52, cellCountX, zeile,
-				angaben.getAugenfarbe(), true);
+				xpath.evaluate("angaben/augenfarbe"), true);
 		zeile++;
 
 		/* Linien für Charakter-Daten */
@@ -619,41 +602,34 @@ public class FrontSeite extends PDFSeite {
 		return zeile + 1;
 	}
 
-	private void extrahiereVorNachteile(Daten daten, List<PDFVorteil> vorteile,
-			List<PDFVorteil> nachteile) {
-		for (Vorteil v : daten.getVorteile().getVorteil()) {
-			List<PDFVorteil> gruppe = null;
-			String wert = "";
-			
-			if (v.isIstvorteil()) {
-				gruppe = vorteile;
-			} else if (v.isIstnachteil()) {
-				gruppe = nachteile;
-			}
+	private void extrahiereGruppe(ExtXPath xpath, Node node, List<PDFVorteil> target) throws XPathExpressionException {
+		NodeList nl = xpath.evaluateList("auswahlen/auswahl", node);
+		String bezeichner = xpath.evaluate("bezeichner", node);
+		for (int i=0; i<nl.getLength(); i++) {
+			String name = xpath.evaluate("name", nl.item(i));
+			String wert = xpath.evaluate("wert", nl.item(i));
 
-			if (v.getWert() != null) {
-				wert = v.getWert().toString();
-			}
-			if (v.getAuswahlen() != null
-					&& v.getAuswahlen().getAuswahl().size() > 0) {
-				for (Vorteil.Auswahlen.Auswahl auswahl : v.getAuswahlen().getAuswahl()) {
-					BigDecimal decWert = auswahl.getWert();
-
-					if (decWert != null) {
-						wert = decWert.toString();
-					}
-					gruppe.add(new PDFVorteil(
-							v.getBezeichner() + ": " + auswahl.getName(),
-							wert));
-				}
-			} else {
-				gruppe.add(new PDFVorteil(v.getBezeichner(), wert));
-			}
+			target.add(new PDFVorteil(bezeichner + ": " + name, wert));
+		}
+		if (nl.getLength() == 0){
+			target.add(new PDFVorteil(bezeichner, xpath.evaluate("wert", node)));
 		}
 	}
 
-	private int initiativeAusweichen(List<Kampfset> sets, int x1, int x2,
-			int y, boolean tzm) throws IOException {
+	private void extrahiereVorNachteile(ExtXPath xpath, List<PDFVorteil> vorteile,
+			List<PDFVorteil> nachteile) throws XPathExpressionException {
+		NodeList nl = xpath.evaluateList("vorteile/vorteil[istvorteil[contains(text(), 'true')]]");
+		for (int i=0; i<nl.getLength(); i++) {
+			extrahiereGruppe(xpath, nl.item(i), vorteile);
+		}
+		nl = xpath.evaluateList("vorteile/vorteil[istvorteil[contains(text(), 'false')]]");
+		for (int i=0; i<nl.getLength(); i++) {
+			extrahiereGruppe(xpath, nl.item(i), nachteile);
+		}
+	}
+
+	private int initiativeAusweichen(ExtXPath xpath, NodeList sets, int x1, int x2,
+			int y, boolean tzm) throws IOException, XPathExpressionException {
 		String[][] data;
 		List<String> data0, data1;
 
@@ -661,35 +637,34 @@ public class FrontSeite extends PDFSeite {
 		data1 = new ArrayList<String>();
 		data0.add("Initiative");
 		data1.add("Ausweichen");
-		for (Kampfset set : sets) {
+		for (int idx=0; idx < sets.getLength(); idx++) {
 			long ini;
 
-			ini = set.getIni().longValue();
+			ini = xpath.evaluateInt("ini", sets.item(idx));
 			if (tzm) {
-				ini -= Long.parseLong(set.getRuestungzonen().getBehinderung());
+				ini -= xpath.evaluateInt("ruestungzonen/behinderung", sets.item(idx));
 			} else {
-				ini -= Long
-						.parseLong(set.getRuestungeinfach().getBehinderung());
+				ini -= xpath.evaluateInt("ruestungeinfach/behinderung", sets.item(idx));
 			}
 			data0.add(Long.toString(ini));
-			data1.add(set.getAusweichen().toString());
+			data1.add(xpath.evaluate("ausweichen", sets.item(idx)));
 		}
 
 		data = new String[2][4];
 		data[0] = data0.toArray(new String[data0.size()]);
 		data[1] = data1.toArray(new String[data0.size()]);
 
-		drawTabelle(x1, x2, y, data, new IniAusweichenTabelle(sets.size() + 1,
+		drawTabelle(x1, x2, y, data, new IniAusweichenTabelle(sets.getLength() + 1,
 				x2 - x1));
 		return y + 4;
 	}
 
-	private String kaufbar(Eigenschaftswerte e) {
+	private String kaufbar(ExtXPath xpath, String name) throws XPathExpressionException {
 		int akt, mod, start;
 
-		akt = e.getAkt().intValue();
-		mod = e.getModi().intValue();
-		start = e.getStart().intValue();
+		akt = xpath.evaluateInt("eigenschaft/$0/akt", name);
+		mod = xpath.evaluateInt("eigenschaft/$0/modi", name);
+		start = xpath.evaluateInt("eigenschaft/$0/start", name);
 
 		return Integer.toString(((start - mod) * 3 + 1) / 2 - (akt - mod));
 	}
@@ -785,12 +760,12 @@ public class FrontSeite extends PDFSeite {
 		x = 0;
 
 		drawTabelle(x, x + viertelBreite, offset, box1.toArray(),
-				new VorteilTabelle(breite));
+				new VorteilTabelle("Vorteile", breite));
 		x += viertelBreite + 1;
 
 		if (box2.size() > 0) {
 			drawTabelle(x, x + viertelBreite, offset, box2.toArray(),
-					new VorteilTabelle(breite));
+					new VorteilTabelle("Vorteile", breite));
 			x += viertelBreite + 1;
 		}
 
@@ -806,46 +781,45 @@ public class FrontSeite extends PDFSeite {
 		return offset + count + 2;
 	}
 
-	private int waffenlos(List<Kampfset> sets, int x1, int x2, int y,
-			boolean tzm) throws IOException {
+	private int waffenlos(ExtXPath xpath, NodeList sets, int x1, int x2, int y,
+			boolean tzm) throws IOException, XPathExpressionException {
 		String[][] daten;
 		int anzahl;
 		String be;
 
-		if (sets.size() == 0) {
+		if (sets.getLength() == 0) {
 			drawTabelle(x1, x2, y, new String[] { null, null },
 					new WaffenlosTabelle(x2 - x1, 1));
 		}
 		daten = new String[2][8];
 		daten[0][0] = "Raufen";
-		daten[0][1] = sets.get(0).getRaufen().getTp();
+		daten[0][1] = xpath.evaluate("raufen/tp", sets.item(0));
 		daten[1][0] = "Ringen";
-		daten[1][1] = sets.get(0).getRingen().getTp();
+		daten[1][1] = xpath.evaluate("ringen/tp", sets.item(0));
 
 		if (tzm) {
-			be = sets.get(0).getRuestungzonen().getBehinderung();
+			be = xpath.evaluate("ruestungszonen/behinderung", sets.item(0));
 		} else {
-			be = sets.get(0).getRuestungeinfach().getBehinderung();
+			be = xpath.evaluate("ruestungeinfach/behinderung", sets.item(0));
 		}
-		for (int i = 0; i < sets.size(); i++) {
-			daten[0][2 + i * 2] = sets.get(i).getRaufen().getAt();
-			daten[0][3 + i * 2] = sets.get(i).getRaufen().getPa();
-			daten[1][2 + i * 2] = sets.get(i).getRingen().getAt();
-			daten[1][3 + i * 2] = sets.get(i).getRingen().getPa();
+		for (int i = 0; i < sets.getLength(); i++) {
+			daten[0][2 + i * 2] = xpath.evaluate("raufen/at", sets.item(i));
+			daten[0][3 + i * 2] = xpath.evaluate("raufen/pa", sets.item(i));
+			daten[1][2 + i * 2] = xpath.evaluate("ringen/at", sets.item(i));
+			daten[1][3 + i * 2] = xpath.evaluate("ringen/pa", sets.item(i));
 
 			if (tzm) {
-				if (!sets.get(i).getRuestungzonen().getBehinderung().equals(be)) {
+				if (!xpath.evaluate("ruestungszonen/behinderung", sets.item(i)).equals(be)) {
 					be = null;
 				}
 			} else {
-				if (!sets.get(i).getRuestungeinfach().getBehinderung()
-						.equals(be)) {
+				if (!xpath.evaluate("ruestungeinfach/behinderung", sets.item(i)).equals(be)) {
 					be = null;
 				}
 			}
 		}
 
-		anzahl = be != null ? 4 : (2 + sets.size() * 2);
+		anzahl = be != null ? 4 : (2 + sets.getLength() * 2);
 		drawTabelle(x1, x2, y, daten, new WaffenlosTabelle(x2 - x1, anzahl));
 		return y + 4;
 	}
@@ -864,38 +838,47 @@ public class FrontSeite extends PDFSeite {
 	}
 
 	private class FernkampfTabelle extends AbstractTabellenZugriff {
-		public FernkampfTabelle(int breite) {
+		private ExtXPath xpath;
+		public FernkampfTabelle(ExtXPath xpath, int breite) {
 			super(new String[] { "#", null, "AT", "TP", "Entfernung",
 					"TP/Entfernung" }, new int[] { 2, 0, 3, 5, 10, 8 }, 0,
 					"Fernkampfwaffe", breite);
+			this.xpath = xpath;
 		}
 
 		@Override
 		public String get(Object obj, int x) {
-			Fernkampfwaffe waffe = (Fernkampfwaffe) obj;
+			Node n = (Node) obj;
 
-			switch (x) {
-			case 0:
-				return waffe.getNummer().toString();
-			case 1:
-				return waffe.getName();
-			case 2:
-				return waffe.getAt();
-			case 3:
-				return waffe.getTp();
-			case 4:
-				return waffe.getReichweite();
-			case 5:
-				return waffe.getTpmod();
+			try {
+				switch (x) {
+					case 0:
+						return xpath.evaluate("../../@nr", n);
+					case 1:
+						return xpath.evaluate("name", n);
+					case 2:
+						return xpath.evaluate("at", n);
+					case 3:
+						return xpath.evaluate("tp", n);
+					case 4:
+						return xpath.evaluate("reichweite", n);
+					case 5:
+						return xpath.evaluate("tpmod", n);
+				}
+			} catch (XPathExpressionException e) {
 			}
 			return "";
 		}
 
 		@Override
 		public Color getBackgroundColor(Object o, int x) {
-			Fernkampfwaffe waffe = (Fernkampfwaffe) o;
+			Node n = (Node) o;
 
-			return waffe.getNummer().longValue() == 2 ? Color.LIGHT_GRAY : null;
+			try {
+				return (xpath.evaluateInt("../../@nr", n) & 1) == 0 ? Color.LIGHT_GRAY : null;
+			} catch (XPathExpressionException e) {
+				return null;
+			}
 		}
 	}
 
@@ -919,49 +902,59 @@ public class FrontSeite extends PDFSeite {
 	}
 
 	private class NahkampfTable extends AbstractTabellenZugriff {
-		public NahkampfTable(int width) {
+		private ExtXPath xpath;
+		public NahkampfTable(ExtXPath xpath, int width) {
 			super(new String[] { "#", null, "AT", "PA", "TP", "TP/KK", "DK",
 					"INI", "Bruchfaktor", "", "", "", "" }, new int[] { 2, 0,
 					3, 3, 4, 4, 3, 3, 2, 2, 2, 2, 2 }, 0, "Nahkampfwaffe",
 					width);
+			this.xpath = xpath;
 		}
 
 		@Override
 		public String get(Object obj, int x) {
-			Nahkampfwaffe waffe = (Nahkampfwaffe) obj;
+			Node n = (Node)obj;
 
-			switch (x) {
-			case 0:
-				return waffe.getNummer().toString();
-			case 1:
-				return waffe.getName();
-			case 2:
-				return waffe.getAt();
-			case 3:
-				return waffe.getPa();
-			case 4:
-				return waffe.getTpinkl();
-			case 5:
-				return waffe.getTpkk().getSchwelle().toString() + "/"
-						+ waffe.getTpkk().getSchrittweite().toString();
-			case 6:
-				return waffe.getDk().replace(" ", "");
-			case 7:
-				return waffe.getIni().toString();
-			case 8:
-				if (waffe.getBfakt().intValue() == -9) {
-					return "-";
+			try {
+				switch (x) {
+				case 0:
+					return xpath.evaluate("../../@nr", n);
+				case 1:
+					return xpath.evaluate("name", n);
+				case 2:
+					return xpath.evaluate("at", n);
+				case 3:
+					return xpath.evaluate("pa", n);
+				case 4:
+					return xpath.evaluate("tpinkl", n);
+				case 5:
+					return xpath.evaluate("tpkk/schwelle", n) + "/"
+							+ xpath.evaluate("tpkk/schrittweite", n);
+				case 6:
+					return xpath.evaluate("dk", n).replace(" ", "");
+				case 7:
+					return xpath.evaluate("ini", n);
+				case 8:
+					int bf = xpath.evaluateInt("bfakt", n);
+					if (bf < -7) {
+						return "-";
+					}
+					return Integer.toString(bf);
 				}
-				return waffe.getBfakt().toString();
+			} catch (XPathExpressionException e) {
 			}
 			return "";
 		}
 
 		@Override
 		public Color getBackgroundColor(Object o, int x) {
-			Nahkampfwaffe waffe = (Nahkampfwaffe) o;
+			Node n = (Node)o;
 
-			return waffe.getNummer().longValue() == 2 ? Color.LIGHT_GRAY : null;
+			try {
+				return (xpath.evaluateInt("../../@nr", n) & 1) == 0 ? Color.LIGHT_GRAY : null;
+			} catch (XPathExpressionException e) {
+				return null;
+			}
 		}
 
 		@Override
@@ -971,41 +964,50 @@ public class FrontSeite extends PDFSeite {
 	}
 
 	private class ParierwaffenTabelle extends AbstractTabellenZugriff {
-		public ParierwaffenTabelle(int breite) {
+		private ExtXPath xpath;
+		public ParierwaffenTabelle(ExtXPath xpath, int breite) {
 			super(new String[] { "#", null, "AT", "PA", "WM", "INI", "Bruchfaktor",
 					"", "", "", "" },
 					new int[] { 2, 0, 3, 3, 4, 3, 2, 2, 2, 2, 2 }, 0,
 					"Parierwaffe/Schild", breite);
+			this.xpath = xpath;
 		}
 
 		@Override
 		public String get(Object obj, int x) {
-			Schild s = (Schild) obj;
+			Node n = (Node) obj;
 
-			switch (x) {
-			case 0:
-				return s.getNummer().toString();
-			case 1:
-				return s.getName();
+			try {
+				switch (x) {
+					case 0:
+						return xpath.evaluate("../../@nr", n);
+					case 1:
+						return xpath.evaluate("name", n);
 			case 2:
-				return s.getAt();
+				return xpath.evaluate("at", n);
 			case 3:
-				return s.getPa();
+				return xpath.evaluate("pa", n);
 			case 4:
-				return s.getMod();
+				return xpath.evaluate("mod", n);
 			case 5:
-				return s.getIni().toString();
+				return xpath.evaluate("ini", n);
 			case 6:
-				return s.getBfakt().toString();
+				return xpath.evaluate("bfakt", n);
+			}
+			} catch (XPathExpressionException e) {
 			}
 			return "";
 		}
 
 		@Override
 		public Color getBackgroundColor(Object o, int x) {
-			Schild waffe = (Schild) o;
+			Node n = (Node)o;
 
-			return waffe.getNummer().longValue() == 2 ? Color.LIGHT_GRAY : null;
+			try {
+				return (xpath.evaluateInt("../../@nr", n) & 1) == 0 ? Color.LIGHT_GRAY : null;
+			} catch (XPathExpressionException e) {
+				return null;
+			}
 		}
 
 		@Override
@@ -1029,12 +1031,14 @@ public class FrontSeite extends PDFSeite {
 
 	private class RuestungsTabelle extends AbstractTabellenZugriff {
 		private boolean tzm;
+		private ExtXPath xpath;
 
-		public RuestungsTabelle(int breite, boolean tzm) {
+		public RuestungsTabelle(ExtXPath xpath, int breite, boolean tzm) {
 			super(new String[] { "#", null, "RS", "BE", "Ko", "Br", "Rü", "Ba",
 					"LA", "RA", "LB", "RB" }, new int[] { 2, 0, 3, 3, 2, 2, 2,
 					2, 2, 2, 2, 2 }, tzm ? 0 : 4, "Rüstung", breite);
 			this.tzm = tzm;
+			this.xpath = xpath;
 		}
 
 		public RuestungsTabelle(String[] col, int[] colwidth, int colcount,
@@ -1044,63 +1048,71 @@ public class FrontSeite extends PDFSeite {
 
 		@Override
 		public String get(Object obj, int x) {
-			Kampfset set = (Kampfset) obj;
+			Node n = (Node) obj;
 
+			try {
 			switch (x) {
 			case 0:
-				return set.getNr().toString();
-			case 1:
-				return erzeugeName(set);
-			case 2:
-				if (!tzm) {
-					return filter(set.getRuestungeinfach().getGesamt());
-				}
-				return filter(set.getRuestungzonen().getGesamtzonenschutz());
+					return xpath.evaluate("../../@nr", n);
+				case 1:
+					return erzeugeName(n);
+				case 2:
+					if (!tzm) {
+						return filter(xpath.evaluateInt("ruestungeinfach/gesammt", n));
+					}
+					return filter(xpath.evaluateInt("ruestungzonen/gesamtzonenschutz", n));
 			case 3:
 				if (!tzm) {
-					return set.getRuestungeinfach().getBehinderung();
+					return xpath.evaluate("ruestungeinfach/behinderung", n);
 				}
-				return set.getRuestungzonen().getBehinderung();
+				return xpath.evaluate("ruestungzonen/behinderung", n);
 			case 4:
-				return filter(set.getRuestungzonen().getKopf());
+				return filter(xpath.evaluateInt("ruestungzonen/kopf", n));
 			case 5:
-				return filter(set.getRuestungzonen().getBrust());
+				return filter(xpath.evaluateInt("ruestungzonen/brust", n));
 			case 6:
-				return filter(set.getRuestungzonen().getRuecken());
+				return filter(xpath.evaluateInt("ruestungzonen/ruecken", n));
 			case 7:
-				return filter(set.getRuestungzonen().getBauch());
+				return filter(xpath.evaluateInt("ruestungzonen/bauch", n));
 			case 8:
-				return filter(set.getRuestungzonen().getLinkerarm());
+				return filter(xpath.evaluateInt("ruestungzonen/linkerarm", n));
 			case 9:
-				return filter(set.getRuestungzonen().getRechterarm());
+				return filter(xpath.evaluateInt("ruestungzonen/rechterarm", n));
 			case 10:
-				return filter(set.getRuestungzonen().getLinkesbein());
+				return filter(xpath.evaluateInt("ruestungzonen/linkesbein", n));
 			case 11:
-				return filter(set.getRuestungzonen().getRechtesbein());
+				return filter(xpath.evaluateInt("ruestungzonen/rechtesbein", n));
+			}
+			} catch (XPathExpressionException e) {
 			}
 			return "";
 		}
 
 		@Override
 		public Color getBackgroundColor(Object o, int x) {
-			Kampfset waffe = (Kampfset) o;
+			Node n = (Node)o;
 
-			return waffe.getNr().longValue() == 2 ? Color.LIGHT_GRAY : null;
+			try {
+				return (xpath.evaluateInt("../../@nr", n) & 1) == 0 ? Color.LIGHT_GRAY : null;
+			} catch (XPathExpressionException e) {
+				return null;
+			}
 		}
 
-		protected String filter(BigInteger input) {
-			if (input.intValue() == 0) {
+		protected String filter(int input) {
+			if (input == 0) {
 				return "";
 			}
-			return input.toString();
+			return Integer.toString(input);
 		}
 
-		private String erzeugeName(Kampfset set) {
+		private String erzeugeName(Node n) throws XPathExpressionException {
 			List<String> l = new ArrayList<String>();
 			String text;
 
-			for (Ruestung r : set.getRuestungen().getRuestung()) {
-				l.add(r.getName());
+			NodeList nl = xpath.evaluateList("ruestungen/ruestung/name", n);
+			for (int idx = 0; idx < nl.getLength(); idx++) {
+				l.add(nl.item(idx).getTextContent());
 			}
 
 			Collections.sort(l, Collator.getInstance());
@@ -1122,10 +1134,6 @@ public class FrontSeite extends PDFSeite {
 	}
 
 	private class VorteilTabelle extends AbstractTabellenZugriff {
-		public VorteilTabelle(int breite) {
-			super(new String[] { null }, new int[] { 0 }, 0, "Vorteile", breite);
-		}
-
 		public VorteilTabelle(String titel, int breite) {
 			super(new String[] { null, "Wert" }, new int[] { 0, 2 }, 0, titel,
 					breite);

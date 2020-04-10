@@ -7,6 +7,7 @@ import jaxbGenerated.datenxml.Gegenstand;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
+import org.w3c.dom.NodeList;
 
 public class SonstigesSeite extends PDFSeite {
 	public SonstigesSeite(PDDocument d) throws IOException {
@@ -14,7 +15,7 @@ public class SonstigesSeite extends PDFSeite {
 	}
 
 	public void erzeugeSeite(PDJpeg hintergrund, String[] guteEigenschaften,
-			List<PDFSonderfertigkeiten> alleSF, List<Gegenstand> ausruestung) throws IOException {
+			List<PDFSonderfertigkeiten> alleSF, NodeList ausruestung) throws IOException {
 		List<PDFSonderfertigkeiten> sfListe;
 		int col;
 		int x;

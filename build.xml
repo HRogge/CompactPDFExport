@@ -5,14 +5,13 @@
     <target name="create_run_jar">
         <jar destfile="CompactPDFExport.jar" filesetmanifest="mergewithoutmain">
             <manifest>
-                <attribute name="Main-Class" value="de.hrogge.CompactPDFExport.MainStart"/>
-                <attribute name="Class-Path" value="."/>
+				<attribute name="Class-Path" value="."/>
+<!--            	<attribute name="Main-Class" value="de.hrogge.CompactPDFExport.MainStart"/> -->
             	<attribute name="HeldenPluginClass" value="de.hrogge.CompactPDFExport.PluginStart.class"/>
             </manifest>
-            <fileset dir="bin/"/>
-            <zipfileset excludes="META-INF/*.SF" src="lib/commons-logging-1.1.1.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="lib/pdfbox-1.7.1.jar"/>
-            <zipfileset excludes="META-INF/*.SF" src="lib/fontbox-1.7.1.jar"/>
+        	<include name=""/>
+            <fileset dir="./bin/"/>
+        	<zipgroupfileset dir="./lib" includes="*.jar"/>
         </jar>
     </target>
 	
@@ -20,7 +19,7 @@
 		<zip destfile="CompactPDFExport.zip">
 		    <zipfileset dir="src/" prefix="src/"/>
 		    <zipfileset dir="." includes="build.xml,LICENSE.txt"/>
-		    <zipfileset dir="lib/" prefix="lib/" excludes="helden5*.jar"/>
+		    <zipfileset dir="lib/" prefix="lib/"/>
 		</zip>
 	</target>
 </project>

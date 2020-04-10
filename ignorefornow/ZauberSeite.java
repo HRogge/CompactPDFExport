@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.text.Collator;
 import java.util.*;
 
+import javax.xml.xpath.XPath;
+
 import jaxbGenerated.datenxml.Daten;
 import jaxbGenerated.datenxml.Zauber;
 
@@ -27,6 +29,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
+import org.w3c.dom.Element;
 
 import de.hrogge.CompactPDFExport.PDFSonderfertigkeiten.Kategorie;
 import de.hrogge.CompactPDFExport.gui.Konfiguration;
@@ -36,7 +39,7 @@ public class ZauberSeite extends PDFSeite {
 		super(d);
 	}
 
-	public void erzeugeSeite(Daten daten, PDJpeg hintergrund,
+	public void erzeugeSeite(ExtXPath xpath, PDJpeg hintergrund,
 			String[] guteEigenschaften, List<PDFSonderfertigkeiten> alleSF,
 			Hausregeln hausregeln, List<String> commands, Konfiguration k)
 			throws IOException {

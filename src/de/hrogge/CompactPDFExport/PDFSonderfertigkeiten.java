@@ -248,6 +248,14 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 				break;
 			}
 			this.typ = "Generische Talent-SF:";
+			if (sf.getName().contains("Berufsgeheimnis")) {
+				int split;
+				this.typ = "Berufsgeheimnis";
+				
+				split = auswahl.lastIndexOf(';');
+				this.name = auswahl.substring(split+1).trim() + " (" + auswahl.substring(0, split).trim() + ")";
+				break;
+			}
 			this.name = n;
 			break;
 		case UNBEKANNT:

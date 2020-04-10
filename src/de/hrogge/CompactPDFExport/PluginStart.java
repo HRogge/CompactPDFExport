@@ -68,7 +68,7 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 		updater = new VorschauUpdaten();
 
 		/* set to true to see some debugging XML output */
-		debug = false;
+		debug = true;
 	}
 
 	@Override
