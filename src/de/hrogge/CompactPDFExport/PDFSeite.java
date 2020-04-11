@@ -19,6 +19,7 @@ package de.hrogge.CompactPDFExport;
 import java.awt.Color;
 import java.awt.geom.PathIterator;
 import java.io.IOException;
+import java.io.StringWriter;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -27,6 +28,14 @@ import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDFontDescriptor;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
+import org.w3c.dom.Node;
+
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 public class PDFSeite {
 	private static final int DEFAULT_USER_SPACE_UNIT_DPI = 72;
@@ -79,6 +88,19 @@ public class PDFSeite {
 
 		this.rightEdge = this.leftEdge + this.pageWidth;
 		this.topEdge = this.bottomEdge + this.pageHeight;
+	}
+
+	public static String nodeToString(Node node) {
+		StringWriter sw = new StringWriter();
+		try {
+			Transformer t = TransformerFactory.newInstance().newTransformer();
+			t.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+			t.setOutputProperty(OutputKeys.INDENT, "yes");
+			t.transform(new DOMSource(node), new StreamResult(sw));
+		} catch (TransformerException te) {
+			System.out.println("nodeToString Transformer Exception");
+		}
+		return sw.toString();
 	}
 
 	public void addLine(int x1, int y1, int x2, int y2) throws IOException {

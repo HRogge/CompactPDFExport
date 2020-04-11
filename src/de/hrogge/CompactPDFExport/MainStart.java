@@ -19,13 +19,24 @@ package de.hrogge.CompactPDFExport;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 
 import javax.swing.JOptionPane;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -36,9 +47,9 @@ public class MainStart {
 			SAXException, IOException {
 		File input, output;
 
-		if (args.length != 3) {
+		if (args.length != 2) {
 			System.err
-					.println("Bitte Ein-, Ausgabedatei, und Zauber-Notizen (true/false) als Parameter angeben.");
+					.println("Bitte Ein-, Ausgabedatei als Parameter angeben.");
 			System.exit(1);
 		}
 
@@ -55,12 +66,12 @@ public class MainStart {
 		Document doc = documentBuilder.parse(new InputSource(reader));
 
 		Konfiguration k = new Konfiguration();
-		if (JOptionPane.OK_OPTION != JOptionPane.showOptionDialog(null,
-				k.getPanel(), "Einstellungen für kompakten Heldenbogen",
-				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null,
-				null, 0)) {
-			return;
-		}
+//		if (JOptionPane.OK_OPTION != JOptionPane.showOptionDialog(null,
+//				k.getPanel(), "Einstellungen für kompakten Heldenbogen",
+//				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null,
+//				null, 0)) {
+//			return;
+//		}
 
 		try {
 			PDFGenerator creator = new PDFGenerator();
@@ -68,6 +79,27 @@ public class MainStart {
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(1);
+		}
+	}
+	
+	public static final void prettyPrint(Node node) {
+		Transformer tf;
+		try {
+			tf = TransformerFactory.newInstance().newTransformer();
+			tf.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+			tf.setOutputProperty(OutputKeys.INDENT, "yes");
+			Writer out = new StringWriter();
+			tf.transform(new DOMSource(node), new StreamResult(out));
+			System.out.println(out.toString());
+		} catch (TransformerConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransformerFactoryConfigurationError e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (TransformerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 }

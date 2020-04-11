@@ -5,9 +5,13 @@ import java.io.IOException;
 import java.text.Collator;
 import java.util.*;
 
-import jaxbGenerated.datenxml.Sonderfertigkeit;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
 
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> {
 	private static final Collator col = Collator.getInstance();
@@ -98,15 +102,17 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 	private String name;;
 	private boolean _gedruckt;
 
-	public PDFSonderfertigkeiten(Sonderfertigkeit sf) {
-		this.kategorie = berechneKategorie(sf);
-		berechneTypName(sf, this.kategorie, null);
+	public PDFSonderfertigkeiten(ExtXPath xpath, Node sf) throws XPathExpressionException {
+		List<String> bereich = berechneBereiche(xpath, sf);
+		this.kategorie = berechneKategorie(bereich);
+		berechneTypName(xpath, sf, this.kategorie, null, bereich);
 		_gedruckt = false;
 	}
 
-	public PDFSonderfertigkeiten(Sonderfertigkeit sf, String auswahl) {
-		this.kategorie = berechneKategorie(sf);
-		berechneTypName(sf, this.kategorie, auswahl);
+	public PDFSonderfertigkeiten(ExtXPath xpath, Node sf, String auswahl) throws XPathExpressionException {
+		List<String> bereich = berechneBereiche(xpath, sf);
+		this.kategorie = berechneKategorie(bereich);
+		berechneTypName(xpath, sf, this.kategorie, auswahl, bereich);
 		_gedruckt = false;
 	}
 
@@ -156,8 +162,15 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 		return _gedruckt;
 	}
 
-	private Kategorie berechneKategorie(Sonderfertigkeit sf) {
-		List<String> bereich = sf.getBereich();
+	private List<String> berechneBereiche(ExtXPath xpath, Node sf) throws XPathExpressionException {
+		NodeList bereiche = xpath.evaluateList("bereich", sf);
+		List<String> bereich = new ArrayList<String>();
+		for (int i=0; i<bereiche.getLength(); i++) {
+			bereich.add(bereiche.item(i).getFirstChild().getNodeValue());
+		}
+		return bereich;
+	}
+	private Kategorie berechneKategorie(List<String> bereich) {
 		if (bereich.contains("Manöver")) {
 			return Kategorie.WAFFENLOS;
 		}
@@ -191,64 +204,64 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 		return Kategorie.UNBEKANNT;
 	}
 
-	private void berechneTypName(Sonderfertigkeit sf, Kategorie k,
-			String auswahl) {
-		String n;
+	private void berechneTypName(ExtXPath xpath, Node sf, Kategorie k,
+			String auswahl, List<String> bereich) throws XPathExpressionException {
+		String nameausfuehrlich;
 		int idx;
 
-		n = sf.getNameausfuehrlich();
-		idx = n.indexOf(": ");
+		nameausfuehrlich = xpath.evaluate("nameausfuehrlich",  sf);
+		idx = nameausfuehrlich.indexOf(": ");
 
 		switch (k) {
 		case KAMPF:
 			this.typ = "Kampfsonderfertigkeit:";
-			this.name = sf.getNameausfuehrlich();
+			this.name = nameausfuehrlich;
 			break;
 		case WAFFENLOS:
 			this.typ = "Waffenloses Manöver:";
-			this.name = sf.getNameausfuehrlich();
+			this.name = nameausfuehrlich;
 			break;
 		case MAGISCH:
 			if (auswahl != null) {
-				this.typ = sf.getBezeichner();
+				this.typ = xpath.evaluate("bezeichner", sf);
 				this.name = auswahl;
 			} else if (idx != -1) {
-				this.typ = n.substring(0, idx + 1);
-				this.name = n.substring(idx + 2);
+				this.typ = nameausfuehrlich.substring(0, idx + 1);
+				this.name = nameausfuehrlich.substring(idx + 2);
 			} else {
 				this.typ = "Generische Magische SF:";
-				this.name = n;
+				this.name = nameausfuehrlich;
 			}
 			break;
 		case ZAUBERSPEZ:
 			this.typ = "Zauberspezialisierung:";
-			this.name = n.substring(n.indexOf(' ') + 1);
+			this.name = nameausfuehrlich.substring(nameausfuehrlich.indexOf(' ') + 1);
 			break;
 		case GEWEIHT:
 			this.typ = "Generische Karmale SF:";
-			this.name = n;
+			this.name = nameausfuehrlich;
 			break;
 		case LITURGIE:
-			this.typ = "Liturgie Grad " + sf.getGrad().toString() + ":";
-			this.name = sf.getName();
+			this.typ = "Liturgie Grad " + xpath.evaluate("grad", sf) + ":";
+			this.name = xpath.evaluate("name",  sf);
 			break;
 		case TALENTSPEZ:
 			this.typ = "Talentspezialisierung:";
-			this.name = n.substring(n.indexOf(' ') + 1);
+			this.name = nameausfuehrlich.substring(nameausfuehrlich.indexOf(' ') + 1);
 			break;
 		case TALENT:
-			if (sf.getBereich().contains("Geländekunde")) {
+			if (bereich.contains("Geländekunde")) {
 				this.typ = "Geländekunde:";
-				this.name = n;
+				this.name = nameausfuehrlich;
 				break;
 			}
-			if (sf.getBezeichner().equals("Kulturkunde")) {
+			if (bereich.contains("Kulturkunde")) {
 				this.typ = "Kulturkunde:";
 				this.name = auswahl;
 				break;
 			}
 			this.typ = "Generische Talent-SF:";
-			if (sf.getName().contains("Berufsgeheimnis")) {
+			if (xpath.evaluate("name", sf).contains("Berufsgeheimnis")) {
 				int split;
 				this.typ = "Berufsgeheimnis";
 				
@@ -256,16 +269,16 @@ public class PDFSonderfertigkeiten implements Comparable<PDFSonderfertigkeiten> 
 				this.name = auswahl.substring(split+1).trim() + " (" + auswahl.substring(0, split).trim() + ")";
 				break;
 			}
-			this.name = n;
+			this.name = nameausfuehrlich;
 			break;
 		case UNBEKANNT:
 			this.typ = "Unbekannt:";
-			this.name = n;
+			this.name = nameausfuehrlich;
 			break;
 		}
 	}
 
 	public enum Kategorie {
-		KAMPF, WAFFENLOS, GEWEIHT, LITURGIE, TALENT, TALENTSPEZ, MAGISCH, ZAUBERSPEZ, UNBEKANNT;
+		KAMPF, GEWEIHT, LITURGIE, TALENT, TALENTSPEZ, MAGISCH, ZAUBERSPEZ, WAFFENLOS, UNBEKANNT;
 	}
 }

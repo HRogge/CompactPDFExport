@@ -45,7 +45,7 @@ public class FrontSeite extends PDFSeite {
 
 	public void erzeugeSeite(ExtXPath xpath, PDJpeg bild, PDJpeg hintergrund,
 			String[] guteEigenschaften, List<PDFSonderfertigkeiten> alleSF,
-			String /* Hausregeln */ h, List<String> commands, boolean tzm, Konfiguration k) throws IOException, XPathExpressionException {
+			Hausregeln h, List<String> commands, boolean tzm, Konfiguration k) throws IOException, XPathExpressionException {
 		int patzerHoehe, patzerBreite, festerHeaderHoehe, professionsZeilen;
 		int notizen, kampfBreite, blockBreite, vorNachTeileLaenge;
 		int leer, y, bloecke, hoehe, charakterDatenHoehe, sfY;
@@ -211,7 +211,6 @@ public class FrontSeite extends PDFSeite {
 			}
 		}
 
-
 		/* Kann Seite gekürzt werden ? */
 		if (notizen > 8) {
 			int alteHoehe = hoehe;
@@ -373,13 +372,13 @@ public class FrontSeite extends PDFSeite {
 		} else {
 			basisW[2] = "";
 		}
-		if (xpath.evaluateBool("angaben/geweiht")) {
+		if (xpath.evaluateBool("angaben/geweiht/text()")) {
 			basisW[3] = xpath.evaluate("eigenschaften/karmaenergie/akt");
 		} else {
 			basisW[3] = "";
 		}
 		basisW[4] = xpath.evaluate("eigenschaften/magieresistenz/akt");;
-		basisW[5] = xpath.evaluate("angaben/ap/gesammt");
+		basisW[5] = xpath.evaluate("angaben/ap/gesamt");
 		basisW[6] = xpath.evaluate("angaben/ap/genutzt");
 		basisW[7] = xpath.evaluate("angaben/ap/frei");
 
@@ -460,7 +459,7 @@ public class FrontSeite extends PDFSeite {
 					true);
 		}
 		int len = sonstige.length;
-		if (xpath.evaluateBool("angaben/magisch")) {
+		if (!xpath.evaluateBool("angaben/magisch")) {
 			len--;
 		}
 		for (int y = 0; y < len; y++) {

@@ -21,9 +21,7 @@ import java.text.Collator;
 import java.util.*;
 
 import javax.xml.xpath.XPath;
-
-import jaxbGenerated.datenxml.Daten;
-import jaxbGenerated.datenxml.Talent;
+import javax.xml.xpath.XPathExpressionException;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.font.PDFont;
@@ -33,6 +31,7 @@ import org.w3c.dom.Element;
 
 import de.hrogge.CompactPDFExport.PDFSonderfertigkeiten.Kategorie;
 import de.hrogge.CompactPDFExport.gui.Konfiguration;
+import org.w3c.dom.NodeList;
 
 public class TalentSeite extends PDFSeite {
 	static public String getStern(Talent t) {
@@ -71,7 +70,7 @@ public class TalentSeite extends PDFSeite {
 	public void erzeugeSeite(ExtXPath xpath, PDJpeg hintergrund,
 			String[] guteEigenschaften, List<PDFSonderfertigkeiten> alleSF,
 			Hausregeln hausregeln, List<String> commands, Konfiguration k)
-			throws IOException {
+			throws IOException, XPathExpressionException {
 		TalentGruppe metatalente;
 		List<TalentGruppe> gruppen;
 		List<PDFSonderfertigkeiten> sfListe;
@@ -100,7 +99,31 @@ public class TalentSeite extends PDFSeite {
 				false));
 
 		/* Talente in Gruppen einsortieren */
-		for (Talent t : daten.getTalentliste().getTalent()) {
+		NodeList talente = xpath.evaluateList("talentliste/talent");
+		for (int idx=0; idx<talente.getLength(); idx++) {
+			Talent t = new Talent();
+			t.name = xpath.evaluate("name", talente.item(idx));
+			t.meisterhandwerk = xpath.evaluateBool("meisterhandwerk", talente.item(idx));
+			t.leittalent = xpath.evaluateBool("leittalent", talente.item(idx));
+			t.basis = xpath.evaluateBool("basis", talente.item(idx));
+			t.nameausfuehrlich = xpath.evaluate("nameausfuehrlich", talente.item(idx));
+			t.at = xpath.evaluate("at", talente.item(idx));
+			t.pa = xpath.evaluate("pa", talente.item(idx));
+			t.behinderung = xpath.evaluate("behinderung", talente.item(idx));
+			t.mirakelplus = xpath.evaluateBool("mirakelplus", talente.item(idx));
+			t.mirakelminus = xpath.evaluateBool("mirakelminus", talente.item(idx));
+			t.metatalent = xpath.evaluateBool("metatalent", talente.item(idx));
+			t.bereich = xpath.evaluate("bereich", talente.item(idx));
+			t.komplexität = xpath.evaluate("komplexität", talente.item(idx));
+			t.lernkomplexität = xpath.evaluate("lernkomplexität", talente.item(idx));
+			t.spezialisierungen = xpath.evaluate("spezialisierungen", talente.item(idx));
+			t.muttersprache = xpath.evaluateBool("muttersprache", talente.item(idx));
+			t.zweitlehrsprache = xpath.evaluateBool("zweitlehrsprache", talente.item(idx));
+			t.schriftmuttersprache = xpath.evaluateBool("schriftmuttersprache", talente.item(idx));
+			t.sprachkomplexität = xpath.evaluate("sprachkomplexität", talente.item(idx));
+			t.probe = xpath.evaluate("probe", talente.item(idx));
+			t.probenwerte = xpath.evaluate("probenwerte", talente.item(idx));
+			t.wert = xpath.evaluateInt("wert", talente.item(idx));
 			talentHinzufuegen(gruppen, t);
 		}
 
@@ -117,7 +140,7 @@ public class TalentSeite extends PDFSeite {
 			}
 		}
 
-		if (!daten.getConfig().isMetatalente()) {
+		if (!xpath.evaluateBool("config/metatalente")) {
 			gruppen.remove(metatalente);
 		}
 
@@ -145,8 +168,7 @@ public class TalentSeite extends PDFSeite {
 		}
 
 		/* berechne Layout */
-		links = berechneLayout(gruppen, hoehe, daten.getConfig()
-				.isMetatalente());
+		links = berechneLayout(gruppen, hoehe, xpath.evaluateBool("config/metatalente"));
 
 		linksFrei = (hoehe - 2) - gesammtLaenge(gruppen, 0, links);
 		rechtsFrei = (hoehe - 2)
@@ -495,7 +517,7 @@ public class TalentSeite extends PDFSeite {
 			super();
 			referenz = t;
 			spezName = spezialisierung;
-			spezValue = t.getWert().intValue() + 2;
+			spezValue = t.getWert() + 2;
 		}
 
 		public String getSpezName() {
@@ -534,7 +556,7 @@ public class TalentSeite extends PDFSeite {
 			switch (x) {
 			case 0:
 				name = t.getName();
-				if (t.getSprachkomplexität() != null) {
+				if (t.getSprachkomplexität() != null && t.getSprachkomplexität().length() > 0) {
 					name += " (" + t.getSprachkomplexität() + ")";
 				}
 				if (t.getBereich().contains("Liturgiekenntnis")) {

@@ -3,19 +3,20 @@ package de.hrogge.CompactPDFExport;
 import java.io.IOException;
 import java.util.*;
 
-import jaxbGenerated.datenxml.Gegenstand;
-
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import javax.xml.xpath.XPathExpressionException;
 
 public class SonstigesSeite extends PDFSeite {
 	public SonstigesSeite(PDDocument d) throws IOException {
 		super(d);
 	}
 
-	public void erzeugeSeite(PDJpeg hintergrund, String[] guteEigenschaften,
-			List<PDFSonderfertigkeiten> alleSF, NodeList ausruestung) throws IOException {
+	public void erzeugeSeite(ExtXPath xpath, PDJpeg hintergrund, String[] guteEigenschaften,
+			List<PDFSonderfertigkeiten> alleSF, List<Gegenstand> ausruestung) throws IOException, XPathExpressionException {
 		List<PDFSonderfertigkeiten> sfListe;
 		int col;
 		int x;
@@ -25,7 +26,7 @@ public class SonstigesSeite extends PDFSeite {
 		initPDFStream(60);
 		titelzeile(guteEigenschaften);
 		col = 3;
-		
+
 		x = 0;
 		while (col > 0 && sfFilter(sfListe) > 0) {
 			PDFSonderfertigkeiten.zeichneTabelle(this, x, 2, x+20, cellCountY,

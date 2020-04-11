@@ -12,9 +12,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import jaxbGenerated.datenxml.Talent;
-import jaxbGenerated.datenxml.Zauber;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -146,7 +143,7 @@ public class Hausregeln {
 		z.setAnmerkung(p.getProperty("anmerkung", ""));
 
 		z.setMr("");
-		z.setWert(new BigInteger(wert));
+		z.setWert(Integer.parseInt(wert));
 
 		return z;
 	}
@@ -168,7 +165,7 @@ public class Hausregeln {
 
 		t.setAt("");
 		t.setPa("");
-		t.setWert(new BigInteger(wert));
+		t.setWert(Integer.parseInt(wert));
 		return t;
 	}
 

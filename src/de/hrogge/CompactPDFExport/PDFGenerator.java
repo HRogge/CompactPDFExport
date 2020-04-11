@@ -20,16 +20,18 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.StringTokenizer;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
 
 import org.apache.pdfbox.exceptions.COSVisitorException;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -46,34 +48,38 @@ public class PDFGenerator {
 	private final float marginY = 10f;
 	private final float textMargin = 0.5f;
 
+	public PDDocument erzeugePDFDokument(Konfiguration k, Document doc) throws IOException, XPathExpressionException, ParserConfigurationException {
+		return this.internErzeugePDFDokument(k, new ExtXPath(doc.getDocumentElement()));
+	}
+
 	public void exportierePDF(JFrame frame, File output, Document input, Konfiguration k, boolean speichernDialog)
-			throws IOException, COSVisitorException {
+			throws IOException, COSVisitorException, XPathExpressionException, ParserConfigurationException {
 		PDDocument doc = null;
 		Element root = input.getDocumentElement();
 
-		XPathFactory xpathfactory = XPathFactory.newInstance();
-		XPath xpath = xpathfactory.newXPath();
-		
+		ExtXPath xpath = new ExtXPath(root);
+
 		try {
-			doc = internErzeugePDFDokument(k, xpath, root);
+			doc = internErzeugePDFDokument(k, xpath);
 
 			if (output == null) {
 				String ordner = k.getTextDaten(Konfiguration.GLOBAL_ZIELORDNER);
 				if (speichernDialog) {
-					output = waehlePDFFile(frame, xpath, root, ordner);
+					String name = xpath.evaluate("angaben/name");
+					output = waehlePDFFile(frame, name, ordner);
 					if (output == null) {
 						return;
 					}
 				} else {
-					String name = xpath.compile("angaben/name").evaluate(root);
+					String name = xpath.evaluate("angaben/name");
 					output = new File(ordner, name + ".pdf");
 				}
 			}
 
 			if (output.exists()) {
-				int result = JOptionPane.showConfirmDialog(frame, "Die Datei " + output.getAbsolutePath()
-						+ " existiert schon.\nSoll sie überschrieben werden?", "Datei überschreiben?",
-						JOptionPane.YES_NO_OPTION);
+				int result = JOptionPane.showConfirmDialog(frame,
+						"Die Datei " + output.getAbsolutePath() + " existiert schon.\nSoll sie überschrieben werden?",
+						"Datei überschreiben?", JOptionPane.YES_NO_OPTION);
 
 				if (result != JOptionPane.YES_OPTION) {
 					return;
@@ -99,7 +105,8 @@ public class PDFGenerator {
 		}
 	}
 
-	private PDDocument internErzeugePDFDokument(Konfiguration k, XPath xpath, Element root) throws IOException {
+	private PDDocument internErzeugePDFDokument(Konfiguration k, ExtXPath xpath)
+			throws IOException, XPathExpressionException, ParserConfigurationException {
 		String[] guteEigenschaften;
 		boolean tzm;
 		PDDocument doc;
@@ -114,95 +121,57 @@ public class PDFGenerator {
 
 		charakterBild = null;
 		hintergrundBild = null;
-		
-		tzm = xpath.compile("config/rsmodel").evaluate(root).equals("zone");
+
+		tzm = xpath.evaluate("config/rsmodel").equals("zone");
 
 		/*
 		 * Gute Eigenschaften auslesen, da sie seitenübergreifend gebraucht
 		 * werden
 		 */
 		guteEigenschaften = new String[8];
-		guteEigenschaften[0] = xpath.compile("eigenschaften/mut/akt").evaluate(root); 
-		guteEigenschaften[1] = xpath.compile("eigenschaften/klugheit/akt").evaluate(root);
-		guteEigenschaften[2] = xpath.compile("eigenschaften/intuition/akt").evaluate(root);
-		guteEigenschaften[3] = xpath.compile("eigenschaften/charisma/akt").evaluate(root);
-		guteEigenschaften[4] = xpath.compile("eigenschaften/fingerfertigkeit/akt").evaluate(root);
-		guteEigenschaften[5] = xpath.compile("eigenschaften/gewandheit/akt").evaluate(root);
-		guteEigenschaften[6] = xpath.compile("eigenschaften/konstitution/akt").evaluate(root);
-		guteEigenschaften[7] = xpath.compile("eigenschaften/koerperkraft/akt").evaluate(root);
+		guteEigenschaften[0] = xpath.evaluate("eigenschaften/mut/akt");
+		guteEigenschaften[1] = xpath.evaluate("eigenschaften/klugheit/akt");
+		guteEigenschaften[2] = xpath.evaluate("eigenschaften/intuition/akt");
+		guteEigenschaften[3] = xpath.evaluate("eigenschaften/charisma/akt");
+		guteEigenschaften[4] = xpath.evaluate("eigenschaften/fingerfertigkeit/akt");
+		guteEigenschaften[5] = xpath.evaluate("eigenschaften/gewandtheit/akt");
+		guteEigenschaften[6] = xpath.evaluate("eigenschaften/konstitution/akt");
+		guteEigenschaften[7] = xpath.evaluate("eigenschaften/koerperkraft/akt");
 
 		List<PDFSonderfertigkeiten> sflist = new ArrayList<PDFSonderfertigkeiten>();
-		NodeList sfNodes = (NodeList)xpath.compile("sonderfertigkeiten/*").evaluate(root, XPathConstants.NODESET);
-		for (int i=0; i<sfNodes.getLength(); i++) {
+		NodeList sfNodes = xpath.evaluateList("sonderfertigkeiten/*");
+		for (int i = 0; i < sfNodes.getLength(); i++) {
 			Node sf = sfNodes.item(i);
-			
-			NodeList auswahlen = (NodeList)xpath.compile("auswahlen/*/name").evaluate(sf, XPathConstants.NODESET);
+
+			NodeList auswahlen = xpath.evaluateList("auswahlen/*/name", sf);
 			if (auswahlen.getLength() > 0) {
-				for (int j=0; j<auswahlen.getLength(); j++) {
-					sflist.add(new PDFSonderfertigkeiten(sf, auswahlen.item(j).getNodeValue()));
+				for (int j = 0; j < auswahlen.getLength(); j++) {
+					sflist.add(new PDFSonderfertigkeiten(xpath, sf, auswahlen.item(j).getFirstChild().getNodeValue()));
 				}
 			} else {
-				sflist.add(new PDFSonderfertigkeiten(sf));
+				sflist.add(new PDFSonderfertigkeiten(xpath, sf));
 			}
 		}
 
-		ausruestung = new ArrayList<>(daten.getGegenstaende().getGegenstand());
+		NodeList ausruestungNodes = xpath.evaluateList("gegenstaende/gegenstand");
+		List <Gegenstand> ausruestung = new ArrayList<>();
+		for (int idx=0; idx<ausruestungNodes.getLength(); idx++) {
+			Gegenstand g = new Gegenstand();
+			g.name = xpath.evaluate("name", ausruestungNodes.item(idx));
+			g.anzahl = xpath.evaluate("anzahl", ausruestungNodes.item(idx));
+			g.gewicht = xpath.evaluate("gewicht", ausruestungNodes.item(idx));
+			ausruestung.add(g);
+		}
 
 		/* Kommandos aus Notizen extrahieren */
-		Notizen n = daten.getAngaben().getNotizen();
+
+		String nxml = xpath.evaluate("angaben/notizen/text");
 		commands = new ArrayList<>();
-		
-		StringTokenizer st = new StringTokenizer(n.getN0(), "\r\n");
-		if (st.countTokens() > 1) {
-			if (st.hasMoreTokens()) {
-				n.setN0(st.nextToken());
-			}
-			if (st.hasMoreTokens()) {
-				n.setN1(st.nextToken());
-			}
-			if (st.hasMoreTokens()) {
-				n.setN2(st.nextToken());
-			}
-			if (st.hasMoreTokens()) {
-				n.setN3(st.nextToken());
-			}
-			if (st.hasMoreTokens()) {
-				n.setN4(st.nextToken());
-			}
-			if (st.hasMoreTokens()) {
-				n.setN5(st.nextToken());
-			}
-			if (st.hasMoreTokens()) {
-				n.setN6(st.nextToken());
-			}
-			if (st.hasMoreTokens()) {
-				n.setN7(st.nextToken());
-			}
-			if (st.hasMoreTokens()) {
-				n.setN8(st.nextToken());
-			}
-			if (st.hasMoreTokens()) {
-				n.setN9(st.nextToken());
-			}
-			if (st.hasMoreTokens()) {
-				n.setN10(st.nextToken());
-			}
-			if (st.hasMoreTokens()) {
-				n.setN11(st.nextToken());
-			}
+
+		StringTokenizer st = new StringTokenizer(nxml, "\r\n");
+		while (st.hasMoreTokens()) {
+			extrahiereKommandos(commands, st.nextToken());
 		}
-		extrahiereKommandos(commands, n.getN0());
-		extrahiereKommandos(commands, n.getN1());
-		extrahiereKommandos(commands, n.getN2());
-		extrahiereKommandos(commands, n.getN3());
-		extrahiereKommandos(commands, n.getN4());
-		extrahiereKommandos(commands, n.getN5());
-		extrahiereKommandos(commands, n.getN6());
-		extrahiereKommandos(commands, n.getN7());
-		extrahiereKommandos(commands, n.getN8());
-		extrahiereKommandos(commands, n.getN9());
-		extrahiereKommandos(commands, n.getN10());
-		extrahiereKommandos(commands, n.getN11());
 
 		try {
 			/* PDF erzeugen */
@@ -212,7 +181,7 @@ public class PDFGenerator {
 			 * Bilder müssen bei PDFBox geladen werden bevor die Content-Streams
 			 * erzeugt werden
 			 */
-			pfad = daten.getAngaben().getBildPfad();
+			pfad = xpath.evaluate("angaben/bildPfad");
 			if (pfad != null && pfad.length() > 0) {
 				try {
 					BufferedImage img = ImageIO.read(new File(pfad));
@@ -241,18 +210,17 @@ public class PDFGenerator {
 
 			/* Seiten erzeugen */
 			FrontSeite page1 = new FrontSeite(doc);
-			page1.erzeugeSeite(daten, charakterBild, hintergrundBild, guteEigenschaften, sflist, hausregeln, commands,
-					tzm, k);
-
+			page1.erzeugeSeite(xpath, charakterBild, hintergrundBild, guteEigenschaften, sflist, hausregeln, commands, tzm,
+					k);
 			TalentSeite page2 = new TalentSeite(doc);
-			page2.erzeugeSeite(daten, hintergrundBild, guteEigenschaften, sflist, hausregeln, commands, k);
+			page2.erzeugeSeite(xpath, hintergrundBild, guteEigenschaften, sflist, hausregeln, commands, k);
 
-			if (daten.getAngaben().isMagisch()) {
+			if (xpath.evaluateBool("angaben/magisch")) {
 				ZauberSeite page3 = new ZauberSeite(doc);
-				page3.erzeugeSeite(daten, hintergrundBild, guteEigenschaften, sflist, hausregeln, commands, k);
+				page3.erzeugeSeite(xpath, hintergrundBild, guteEigenschaften, sflist, hausregeln, commands, k);
 			}
 
-			/* Leerzeilen zu Sonderfertigkeitsliste hinzufügen */
+			// Leerzeilen zu Sonderfertigkeitsliste hinzufügen
 			for (int i = 1; i < sflist.size(); i++) {
 				if (sflist.get(i - 1).getKategorie() != sflist.get(i).getKategorie()) {
 					sflist.add(i, null);
@@ -262,7 +230,7 @@ public class PDFGenerator {
 
 			while (hatNichtGedruckteSonderfertigkeit(sflist) || ausruestung.size() > 0) {
 				SonstigesSeite page4 = new SonstigesSeite(doc);
-				page4.erzeugeSeite(hintergrundBild, guteEigenschaften, sflist, ausruestung);
+				page4.erzeugeSeite(xpath, hintergrundBild, guteEigenschaften, sflist, ausruestung);
 			}
 		} catch (IOException e) {
 			if (doc != null) {
@@ -283,7 +251,7 @@ public class PDFGenerator {
 		return false;
 	}
 
-	private File waehlePDFFile(JFrame frame, Daten daten, String zielverzeichnis) {
+	private File waehlePDFFile(JFrame frame, String name, String zielverzeichnis) {
 		JFileChooser chooser = new JFileChooser();
 		chooser.setApproveButtonText("PDF Export");
 		chooser.setApproveButtonToolTipText("Aktuellen Helden als PDF exportieren");
@@ -293,6 +261,8 @@ public class PDFGenerator {
 			public boolean accept(File f) {
 				return f.isDirectory() || f.getName().endsWith(".pdf");
 			}
+
+
 
 			@Override
 			public String getDescription() {
@@ -305,7 +275,7 @@ public class PDFGenerator {
 		chooser.setMultiSelectionEnabled(false);
 		chooser.setDialogType(JFileChooser.SAVE_DIALOG);
 		chooser.setDialogTitle("PDF Export speichern...");
-		chooser.setSelectedFile(new File(daten.getAngaben().getName() + ".pdf"));
+		chooser.setSelectedFile(new File(name + ".pdf"));
 		if (chooser.showSaveDialog(frame) != JFileChooser.APPROVE_OPTION) {
 			return null;
 		}

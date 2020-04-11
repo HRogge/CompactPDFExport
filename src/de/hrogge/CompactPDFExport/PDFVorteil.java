@@ -6,7 +6,12 @@ public class PDFVorteil implements Comparable<PDFVorteil>{
 	
 	public PDFVorteil(String name, String wert) {
 		this.name = name;
-		this.wert = wert;
+		if (wert != null) {
+			this.wert = wert;
+		}
+		else {
+			this.wert = "";
+		}
 	}
 
 	public String getName() {

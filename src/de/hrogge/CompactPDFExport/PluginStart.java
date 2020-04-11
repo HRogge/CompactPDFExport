@@ -38,7 +38,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.w3c.dom.*;
 
@@ -445,7 +444,7 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 
 				try {
 					PDFGenerator creator = new PDFGenerator();
-					pddoc = creator.erzeugePDFDokument(doc, konfig);
+					pddoc = creator.erzeugePDFDokument(konfig, doc);
 
 					druckAnsicht.updateAnsicht(pddoc);
 				} catch (Exception e1) {

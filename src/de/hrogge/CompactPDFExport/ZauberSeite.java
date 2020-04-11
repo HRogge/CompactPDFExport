@@ -21,9 +21,7 @@ import java.text.Collator;
 import java.util.*;
 
 import javax.xml.xpath.XPath;
-
-import jaxbGenerated.datenxml.Daten;
-import jaxbGenerated.datenxml.Zauber;
+import javax.xml.xpath.XPathExpressionException;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.font.PDFont;
@@ -33,6 +31,7 @@ import org.w3c.dom.Element;
 
 import de.hrogge.CompactPDFExport.PDFSonderfertigkeiten.Kategorie;
 import de.hrogge.CompactPDFExport.gui.Konfiguration;
+import org.w3c.dom.NodeList;
 
 public class ZauberSeite extends PDFSeite {
 	public ZauberSeite(PDDocument d) throws IOException {
@@ -42,7 +41,7 @@ public class ZauberSeite extends PDFSeite {
 	public void erzeugeSeite(ExtXPath xpath, PDJpeg hintergrund,
 			String[] guteEigenschaften, List<PDFSonderfertigkeiten> alleSF,
 			Hausregeln hausregeln, List<String> commands, Konfiguration k)
-			throws IOException {
+			throws IOException, XPathExpressionException {
 		List<PDFSonderfertigkeiten> sfListe;
 		List<Zauber> zauberListe;
 		int zauberBreite, sfBreite, hoehe, bonus;
@@ -73,7 +72,32 @@ public class ZauberSeite extends PDFSeite {
 		mehrereRepr = false;
 		repr = null;
 
-		for (Zauber z : daten.getZauberliste().getZauber()) {
+		NodeList zauberliste = xpath.evaluateList("zauberliste/zauber");
+		for (int idx=0; idx < zauberliste.getLength(); idx++) {
+			Zauber z = new Zauber();
+			z.name = xpath.evaluate("name", zauberliste.item(idx));
+			z.variante = xpath.evaluate("variante", zauberliste.item(idx));
+			z.namemitvariante = xpath.evaluate("namemitvariante", zauberliste.item(idx));
+			z.nameausfuehrlich = xpath.evaluate("nameausfuehrlich", zauberliste.item(idx));
+			z.wert = xpath.evaluateInt("wert", zauberliste.item(idx));
+			z.spezialisierungen = xpath.evaluate("spezialisierungen", zauberliste.item(idx));
+			z.probe = xpath.evaluate("probe", zauberliste.item(idx));
+			z.probenwerte = xpath.evaluate("probenwerte", zauberliste.item(idx));
+			z.bereich = xpath.evaluate("bereich", zauberliste.item(idx));
+			z.komplexität = xpath.evaluate("komplexität", zauberliste.item(idx));
+			z.lernkomplexität = xpath.evaluate("lernkomplexität", zauberliste.item(idx));
+			z.hauszauber = xpath.evaluateBool("hauszauber", zauberliste.item(idx));
+			z.hauszauberformatiert = xpath.evaluate("hauszauberformatiert", zauberliste.item(idx));
+			z.repräsentation = xpath.evaluate("repräsentation", zauberliste.item(idx));
+			z.merkmale = xpath.evaluate("merkmale", zauberliste.item(idx));
+			z.zauberdauer = xpath.evaluate("zauberdauer", zauberliste.item(idx));
+			z.kosten = xpath.evaluate("kosten", zauberliste.item(idx));
+			z.reichweite = xpath.evaluate("reichweite", zauberliste.item(idx));
+			z.wirkungsdauer = xpath.evaluate("wirkungsdauer", zauberliste.item(idx));
+			z.anmerkung = xpath.evaluate("anmerkung", zauberliste.item(idx));
+			z.kontrollwerte = xpath.evaluate("kontrollwerte", zauberliste.item(idx));
+			z.leittalent = xpath.evaluateBool("leittalent", zauberliste.item(idx));
+			z.seite = xpath.evaluate("quelle/@seite", zauberliste.item(idx));
 			zauberListe.add(z);
 
 			/* Prüfe auf mehrere Repräsentationen */
@@ -325,7 +349,7 @@ public class ZauberSeite extends PDFSeite {
 
 			switch (x) {
 			case 0:
-				if (z.getMr().length() > 0) {
+				if (z.getMr() != null && z.getMr().length() > 0) {
 					return z.getNamemitvariante() + " (" + z.getMr() + ")";
 				}
 				return z.getNamemitvariante();
@@ -338,10 +362,10 @@ public class ZauberSeite extends PDFSeite {
 			case 2:
 				return z.getWert().toString();
 			case 4:
-				if (z.getQuelle() == null) {
+				if (z.getSeite() == null) {
 					return "";
 				}
-				return z.getQuelle().getSeite().toString();
+				return z.getSeite();
 			case 5:
 				return z.getZauberdauer();
 			case 6:
