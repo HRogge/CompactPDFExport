@@ -20,10 +20,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
@@ -212,6 +209,7 @@ public class PDFGenerator {
 			FrontSeite page1 = new FrontSeite(doc);
 			page1.erzeugeSeite(xpath, charakterBild, hintergrundBild, guteEigenschaften, sflist, hausregeln, commands, tzm,
 					k);
+
 			TalentSeite page2 = new TalentSeite(doc);
 			page2.erzeugeSeite(xpath, hintergrundBild, guteEigenschaften, sflist, hausregeln, commands, k);
 

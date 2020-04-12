@@ -38,6 +38,24 @@ public class ZauberSeite extends PDFSeite {
 		super(d);
 	}
 
+	private String readElement(Element talent, String tag) {
+		NodeList l = talent.getElementsByTagName(tag);
+		if (l.getLength() == 0) {
+			return null;
+		}
+		return l.item(0).getTextContent();
+	}
+
+	private boolean readElementBool(Element talent, String tag) {
+		String value = readElement(talent, tag);
+		return value != null && value.equals("true");
+	}
+
+	private int readElementInt(Element talent, String tag) {
+		String value = readElement(talent, tag);
+		return Integer.parseInt(value);
+	}
+
 	public void erzeugeSeite(ExtXPath xpath, PDJpeg hintergrund,
 			String[] guteEigenschaften, List<PDFSonderfertigkeiten> alleSF,
 			Hausregeln hausregeln, List<String> commands, Konfiguration k)
@@ -75,28 +93,30 @@ public class ZauberSeite extends PDFSeite {
 		NodeList zauberliste = xpath.evaluateList("zauberliste/zauber");
 		for (int idx=0; idx < zauberliste.getLength(); idx++) {
 			Zauber z = new Zauber();
-			z.name = xpath.evaluate("name", zauberliste.item(idx));
-			z.variante = xpath.evaluate("variante", zauberliste.item(idx));
-			z.namemitvariante = xpath.evaluate("namemitvariante", zauberliste.item(idx));
-			z.nameausfuehrlich = xpath.evaluate("nameausfuehrlich", zauberliste.item(idx));
-			z.wert = xpath.evaluateInt("wert", zauberliste.item(idx));
-			z.spezialisierungen = xpath.evaluate("spezialisierungen", zauberliste.item(idx));
-			z.probe = xpath.evaluate("probe", zauberliste.item(idx));
-			z.probenwerte = xpath.evaluate("probenwerte", zauberliste.item(idx));
-			z.bereich = xpath.evaluate("bereich", zauberliste.item(idx));
-			z.komplexität = xpath.evaluate("komplexität", zauberliste.item(idx));
-			z.lernkomplexität = xpath.evaluate("lernkomplexität", zauberliste.item(idx));
-			z.hauszauber = xpath.evaluateBool("hauszauber", zauberliste.item(idx));
-			z.hauszauberformatiert = xpath.evaluate("hauszauberformatiert", zauberliste.item(idx));
-			z.repräsentation = xpath.evaluate("repräsentation", zauberliste.item(idx));
-			z.merkmale = xpath.evaluate("merkmale", zauberliste.item(idx));
-			z.zauberdauer = xpath.evaluate("zauberdauer", zauberliste.item(idx));
-			z.kosten = xpath.evaluate("kosten", zauberliste.item(idx));
-			z.reichweite = xpath.evaluate("reichweite", zauberliste.item(idx));
-			z.wirkungsdauer = xpath.evaluate("wirkungsdauer", zauberliste.item(idx));
-			z.anmerkung = xpath.evaluate("anmerkung", zauberliste.item(idx));
-			z.kontrollwerte = xpath.evaluate("kontrollwerte", zauberliste.item(idx));
-			z.leittalent = xpath.evaluateBool("leittalent", zauberliste.item(idx));
+			Element zauber = (Element)zauberliste.item(idx);
+
+			z.name = readElement(zauber, "name");
+			z.variante = readElement(zauber, "variante");
+			z.namemitvariante = readElement(zauber, "namemitvariante");
+			z.nameausfuehrlich = readElement(zauber, "nameausfuehrlich");
+			z.wert = readElementInt(zauber, "wert");
+			z.spezialisierungen = readElement(zauber, "spezialisierungen");
+			z.probe = readElement(zauber, "probe");
+			z.probenwerte = readElement(zauber, "probenwerte");
+			z.bereich = readElement(zauber, "bereich");
+			z.komplexität = readElement(zauber, "komplexität");
+			z.lernkomplexität = readElement(zauber, "lernkomplexität");
+			z.hauszauber = readElementBool(zauber, "hauszauber");
+			z.hauszauberformatiert = readElement(zauber, "hauszauberformatiert");
+			z.repräsentation = readElement(zauber, "repräsentation");
+			z.merkmale = readElement(zauber, "merkmale");
+			z.zauberdauer = readElement(zauber, "zauberdauer");
+			z.kosten = readElement(zauber, "kosten");
+			z.reichweite = readElement(zauber, "reichweite");
+			z.wirkungsdauer = readElement(zauber, "wirkungsdauer");
+			z.anmerkung = readElement(zauber, "anmerkung");
+			z.kontrollwerte = readElement(zauber, "kontrollwerte");
+			z.leittalent = readElementBool(zauber, "leittalent");
 			z.seite = xpath.evaluate("quelle/@seite", zauberliste.item(idx));
 			zauberListe.add(z);
 

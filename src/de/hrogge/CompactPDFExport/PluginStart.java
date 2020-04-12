@@ -302,7 +302,7 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 				return;
 			}
 
-			zeigeXML(frame, null, doc);
+			// zeigeXML(frame, null, doc);
 
 			PDFGenerator creator = new PDFGenerator();
 			creator.exportierePDF(frame, null, doc, konfig, dialog);
@@ -373,10 +373,10 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 
 		obj = dai.exec(request);
 		if (obj == null) {
-			try {
-				zeigeXML(frame, "Got null from dai.exec:\n", request);
-			} catch (Exception e) {
-			}
+//			try {
+//				zeigeXML(frame, "Got null from dai.exec:\n", request);
+//			} catch (Exception e) {
+//			}
 			return null;
 		}
 		if (!(obj instanceof org.w3c.dom.Document)) {
@@ -428,6 +428,7 @@ public class PluginStart implements HeldenXMLDatenPlugin3, ChangeListener {
 				this.heldenDokument = doc;
 				new Thread(this).start();
 			} catch (Exception e1) {
+				e1.printStackTrace();
 			}
 		}
 

@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.text.Collator;
 import java.util.*;
 
-import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpressionException;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -49,15 +48,13 @@ public class TalentSeite extends PDFSeite {
 		if (t.isMirakelminus()) {
 			stern += "-";
 		}
-		if (t.isMuttersprache() != null && t.isMuttersprache().booleanValue()) {
+		if (t.isMuttersprache()) {
 			stern += "m";
 		}
-		if (t.isZweitlehrsprache() != null
-				&& t.isZweitlehrsprache().booleanValue()) {
+		if (t.isZweitlehrsprache()) {
 			stern += "z";
 		}
-		if (t.isSchriftmuttersprache() != null
-				&& t.isSchriftmuttersprache().booleanValue()) {
+		if (t.isSchriftmuttersprache()) {
 			stern += "m";
 		}
 		return stern;
@@ -65,6 +62,36 @@ public class TalentSeite extends PDFSeite {
 
 	public TalentSeite(PDDocument d) throws IOException {
 		super(d);
+	}
+
+	private long lastTime = 0;
+	private void showTime(int idx) {
+		long now = new Date().getTime();
+		if (lastTime == 0) {
+			System.out.println("Idx: " + idx);
+		}
+		else {
+			System.out.println("Idx: " + idx + " Interval: " + (now - lastTime));
+		}
+		lastTime = now;
+	}
+
+	private String readElement(Element talent, String tag) {
+		NodeList l = talent.getElementsByTagName(tag);
+		if (l.getLength() == 0) {
+			return null;
+		}
+		return l.item(0).getTextContent();
+	}
+
+	private boolean readElementBool(Element talent, String tag) {
+		String value = readElement(talent, tag);
+		return value != null && value.equals("true");
+	}
+
+	private int readElementInt(Element talent, String tag) {
+		String value = readElement(talent, tag);
+		return Integer.parseInt(value);
 	}
 
 	public void erzeugeSeite(ExtXPath xpath, PDJpeg hintergrund,
@@ -102,28 +129,30 @@ public class TalentSeite extends PDFSeite {
 		NodeList talente = xpath.evaluateList("talentliste/talent");
 		for (int idx=0; idx<talente.getLength(); idx++) {
 			Talent t = new Talent();
-			t.name = xpath.evaluate("name", talente.item(idx));
-			t.meisterhandwerk = xpath.evaluateBool("meisterhandwerk", talente.item(idx));
-			t.leittalent = xpath.evaluateBool("leittalent", talente.item(idx));
-			t.basis = xpath.evaluateBool("basis", talente.item(idx));
-			t.nameausfuehrlich = xpath.evaluate("nameausfuehrlich", talente.item(idx));
-			t.at = xpath.evaluate("at", talente.item(idx));
-			t.pa = xpath.evaluate("pa", talente.item(idx));
-			t.behinderung = xpath.evaluate("behinderung", talente.item(idx));
-			t.mirakelplus = xpath.evaluateBool("mirakelplus", talente.item(idx));
-			t.mirakelminus = xpath.evaluateBool("mirakelminus", talente.item(idx));
-			t.metatalent = xpath.evaluateBool("metatalent", talente.item(idx));
-			t.bereich = xpath.evaluate("bereich", talente.item(idx));
-			t.komplexität = xpath.evaluate("komplexität", talente.item(idx));
-			t.lernkomplexität = xpath.evaluate("lernkomplexität", talente.item(idx));
-			t.spezialisierungen = xpath.evaluate("spezialisierungen", talente.item(idx));
-			t.muttersprache = xpath.evaluateBool("muttersprache", talente.item(idx));
-			t.zweitlehrsprache = xpath.evaluateBool("zweitlehrsprache", talente.item(idx));
-			t.schriftmuttersprache = xpath.evaluateBool("schriftmuttersprache", talente.item(idx));
-			t.sprachkomplexität = xpath.evaluate("sprachkomplexität", talente.item(idx));
-			t.probe = xpath.evaluate("probe", talente.item(idx));
-			t.probenwerte = xpath.evaluate("probenwerte", talente.item(idx));
-			t.wert = xpath.evaluateInt("wert", talente.item(idx));
+			Element talent = (Element)talente.item(idx);
+
+			t.name = readElement(talent, "name");
+			t.meisterhandwerk = readElementBool(talent, "meisterhandwerk");
+			t.leittalent = readElementBool(talent, "leittalent");
+			t.basis = readElementBool(talent, "basis");
+			t.nameausfuehrlich = readElement(talent, "nameausfuehrlich");
+			t.at = readElement(talent, "at");
+			t.pa = readElement(talent, "pa");
+			t.behinderung = readElement(talent, "behinderung");
+			t.mirakelplus = readElementBool(talent, "mirakelplus");
+			t.mirakelminus = readElementBool(talent, "mirakelminus");
+			t.metatalent = readElementBool(talent, "metatalent");
+			t.bereich = readElement(talent, "bereich");
+			t.komplexität = readElement(talent, "komplexität");
+			t.lernkomplexität = readElement(talent, "lernkomplexität");
+			t.spezialisierungen = readElement(talent, "spezialisierungen");
+			t.muttersprache = readElementBool(talent, "muttersprache");
+			t.zweitlehrsprache = readElementBool(talent, "zweitlehrsprache");
+			t.schriftmuttersprache = readElementBool(talent, "schriftmuttersprache");
+			t.sprachkomplexität = readElement(talent, "sprachkomplexität");
+			t.probe = readElement(talent, "probe");
+			t.probenwerte = readElement(talent, "probenwerte");
+			t.wert = readElementInt(talent, "wert");
 			talentHinzufuegen(gruppen, t);
 		}
 

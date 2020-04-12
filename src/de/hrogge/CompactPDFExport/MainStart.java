@@ -66,12 +66,12 @@ public class MainStart {
 		Document doc = documentBuilder.parse(new InputSource(reader));
 
 		Konfiguration k = new Konfiguration();
-//		if (JOptionPane.OK_OPTION != JOptionPane.showOptionDialog(null,
-//				k.getPanel(), "Einstellungen für kompakten Heldenbogen",
-//				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null,
-//				null, 0)) {
-//			return;
-//		}
+		if (JOptionPane.OK_OPTION != JOptionPane.showOptionDialog(null,
+				k.getPanel(), "Einstellungen für kompakten Heldenbogen",
+				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null,
+				null, 0)) {
+			return;
+		}
 
 		try {
 			PDFGenerator creator = new PDFGenerator();

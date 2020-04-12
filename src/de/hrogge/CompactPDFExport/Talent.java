@@ -2,9 +2,9 @@ package de.hrogge.CompactPDFExport;
 
 public class Talent {
     String name;
-    Boolean meisterhandwerk;
-    Boolean leittalent;
-    Boolean basis;
+    boolean meisterhandwerk;
+    boolean leittalent;
+    boolean basis;
     String nameausfuehrlich;
     Integer wert;
     String probe;
@@ -13,16 +13,16 @@ public class Talent {
     String at;
     String pa;
     String behinderung;
-    Boolean mirakelplus;
-    Boolean mirakelminus;
-    Boolean metatalent;
+    boolean mirakelplus;
+    boolean mirakelminus;
+    boolean metatalent;
     String bereich;
     String komplexität;
     String lernkomplexität;
     String spezialisierungen;
-    Boolean muttersprache;
-    Boolean zweitlehrsprache;
-    Boolean schriftmuttersprache;
+    boolean muttersprache;
+    boolean zweitlehrsprache;
+    boolean schriftmuttersprache;
     String sprachkomplexität;
     String probenwerte;
 
@@ -78,15 +78,15 @@ public class Talent {
         this.sprachkomplexität = sprachkomplexität;
     }
 
-    public Boolean isMuttersprache() {
+    public boolean isMuttersprache() {
         return muttersprache;
     }
 
-    public Boolean isZweitlehrsprache() {
+    public boolean isZweitlehrsprache() {
         return zweitlehrsprache;
     }
 
-    public Boolean isSchriftmuttersprache() {
+    public boolean isSchriftmuttersprache() {
         return schriftmuttersprache;
     }
 
@@ -98,15 +98,15 @@ public class Talent {
         this.name = name;
     }
 
-    public Boolean isMeisterhandwerk() {
+    public boolean isMeisterhandwerk() {
         return meisterhandwerk;
     }
 
-    public Boolean isLeittalent() {
+    public boolean isLeittalent() {
         return leittalent;
     }
 
-    public Boolean isBasis() {
+    public boolean isBasis() {
         return basis;
     }
 
@@ -174,15 +174,15 @@ public class Talent {
         this.behinderung = behinderung;
     }
 
-    public Boolean isMirakelplus() {
+    public boolean isMirakelplus() {
         return mirakelplus;
     }
 
-    public Boolean isMirakelminus() {
+    public boolean isMirakelminus() {
         return mirakelminus;
     }
 
-    public Boolean isMetatalent() {
+    public boolean isMetatalent() {
         return metatalent;
     }
 
